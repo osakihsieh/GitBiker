@@ -7,6 +7,7 @@ import {
   pinRepo as _pinRepo,
   unpinRepo as _unpinRepo,
   togglePin as _togglePin,
+  savePreferredEditor as _savePreferredEditor,
 } from './persistence.svelte';
 import {
   refreshStatus as _refreshStatus,
@@ -102,6 +103,9 @@ class AppState {
   // ── Repo lists ──
   recentRepos = $state<string[]>([]);
   pinnedRepos = $state<string[]>([]);
+
+  // ── Editor preference ──
+  preferredEditor = $state<string | null>(null);
 
   // ── UI state ──
   loading = $state(false);
@@ -333,6 +337,7 @@ class AppState {
   async pinRepo(path: string) { return _pinRepo(this, path); }
   async unpinRepo(path: string) { return _unpinRepo(this, path); }
   async togglePin(path: string) { return _togglePin(this, path); }
+  async savePreferredEditor(editor: string | null) { return _savePreferredEditor(this, editor); }
 
   // ── Git action wrappers (maintain existing API) ──
 

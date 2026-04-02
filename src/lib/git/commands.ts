@@ -135,14 +135,26 @@ export async function gitCheckoutFile(
   return invoke('git_checkout_file', { path, file, staging, kind });
 }
 
+// ── Editor Detection ─────────────────────────────────
+
+export interface EditorInfo {
+  id: string;
+  name: string;
+  command: string;
+}
+
+export async function detectEditors(): Promise<EditorInfo[]> {
+  return invoke('detect_editors');
+}
+
 // ── External Tools ────────────────────────────────────
 
 export async function openInFolder(path: string): Promise<void> {
   return invoke('open_in_folder', { path });
 }
 
-export async function openInEditor(path: string): Promise<void> {
-  return invoke('open_in_editor', { path });
+export async function openInEditor(path: string, editor?: string): Promise<void> {
+  return invoke('open_in_editor', { path, editor: editor ?? null });
 }
 
 export async function openInTerminal(path: string): Promise<void> {

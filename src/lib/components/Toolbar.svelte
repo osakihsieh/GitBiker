@@ -18,7 +18,7 @@
   async function handleOpenEditor() {
     if (!app.repoPath) return;
     try {
-      await openInEditor(app.repoPath);
+      await openInEditor(app.repoPath, app.preferredEditor ?? undefined);
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
     }
@@ -137,6 +137,8 @@
     </button>
   </div>
 
+  <div class="drag-spacer" data-tauri-drag-region></div>
+
   <div class="actions">
     <button class="btn" onclick={handlePull} disabled={pulling}>
       {#if pulling}<span class="spinner"></span>{:else}↓{/if} Pull
@@ -244,10 +246,14 @@
     background: var(--bg-hover);
     color: var(--text-primary);
   }
+  .drag-spacer {
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+  }
   .actions {
     display: flex;
     gap: var(--space-xs);
-    margin-left: auto;
   }
   .btn {
     background: var(--bg-surface);

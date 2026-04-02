@@ -15,7 +15,7 @@ import {
 } from './persistence.svelte';
 
 function createMockState(): PersistableState {
-  return { recentRepos: [], pinnedRepos: [] };
+  return { recentRepos: [], pinnedRepos: [], preferredEditor: null };
 }
 
 describe('persistence', () => {

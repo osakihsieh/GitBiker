@@ -180,7 +180,7 @@
           break;
         case 'open-editor':
           if (app.repoPath) {
-            await openInEditor(app.repoPath + '/' + file.path);
+            await openInEditor(app.repoPath + '/' + file.path, app.preferredEditor ?? undefined);
           }
           break;
       }

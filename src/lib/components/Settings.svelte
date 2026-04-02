@@ -1,6 +1,7 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename } from '$lib/git/commands';
+  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors } from '$lib/git/commands';
+  import type { EditorInfo } from '$lib/git/commands';
   import type { RemoteInfo } from '$lib/git/types';
 
   interface Props {
@@ -8,6 +9,51 @@
   }
 
   let { onClose }: Props = $props();
+
+  // Editor settings state
+  let detectedEditors = $state<EditorInfo[]>([]);
+  let detectingEditors = $state(false);
+  let customEditorCommand = $state('');
+  const CUSTOM_VALUE = '__custom__';
+
+  // Derive current selection value for the dropdown
+  let editorSelectValue = $derived.by(() => {
+    const pref = app.preferredEditor;
+    if (pref === null) return '';
+    if (detectedEditors.some((e) => e.command === pref)) return pref;
+    return CUSTOM_VALUE;
+  });
+
+  async function loadEditors() {
+    detectingEditors = true;
+    try {
+      detectedEditors = await detectEditors();
+    } catch {
+      detectedEditors = [];
+    } finally {
+      detectingEditors = false;
+    }
+  }
+
+  async function handleEditorChange(value: string) {
+    if (value === '') {
+      await app.savePreferredEditor(null);
+      app.addToast('已切換為自動偵測編輯器', 'success');
+    } else if (value === CUSTOM_VALUE) {
+      customEditorCommand = app.preferredEditor ?? '';
+    } else {
+      await app.savePreferredEditor(value);
+      const name = detectedEditors.find((e) => e.command === value)?.name ?? value;
+      app.addToast(`已設定預設編輯器：${name}`, 'success');
+    }
+  }
+
+  async function handleCustomEditorSave() {
+    const cmd = customEditorCommand.trim();
+    if (!cmd) return;
+    await app.savePreferredEditor(cmd);
+    app.addToast(`已設定自訂編輯器：${cmd}`, 'success');
+  }
 
   // Remote management state
   let remotes = $state<RemoteInfo[]>([]);
@@ -72,6 +118,11 @@
     }
   }
 
+  // Load editors on mount
+  $effect(() => {
+    loadEditors();
+  });
+
   // Load remotes when settings opens and repo is available
   $effect(() => {
     if (app.repoPath) loadRemotes();
@@ -134,6 +185,54 @@
           {/each}
         </div>
       </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">預設編輯器</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">編輯器</span>
+          <span class="setting-desc">
+            {#if detectingEditors}
+              偵測中…
+            {:else if app.preferredEditor === null}
+              將自動偵測可用的編輯器
+            {:else if editorSelectValue === CUSTOM_VALUE}
+              自訂指令：{app.preferredEditor}
+            {:else}
+              已選擇 {detectedEditors.find((e) => e.command === app.preferredEditor)?.name ?? app.preferredEditor}
+            {/if}
+          </span>
+        </div>
+        <select
+          class="editor-select"
+          value={editorSelectValue}
+          onchange={(e) => handleEditorChange(e.currentTarget.value)}
+          disabled={detectingEditors}
+        >
+          <option value="">自動偵測</option>
+          {#each detectedEditors as editor (editor.id)}
+            <option value={editor.command}>{editor.name}</option>
+          {/each}
+          <option value={CUSTOM_VALUE}>自訂指令…</option>
+        </select>
+      </div>
+      {#if editorSelectValue === CUSTOM_VALUE}
+        <div class="custom-editor-row">
+          <input
+            type="text"
+            class="remote-input"
+            placeholder="e.g. notepad++, vim, emacs"
+            bind:value={customEditorCommand}
+            onkeydown={(e) => e.key === 'Enter' && handleCustomEditorSave()}
+          />
+          <button
+            class="remote-action-btn primary"
+            onclick={handleCustomEditorSave}
+            disabled={!customEditorCommand.trim()}
+          >儲存</button>
+        </div>
+      {/if}
     </div>
 
     <div class="section">
@@ -466,4 +565,25 @@
     font-family: var(--font-ui);
   }
   .add-remote-btn:hover { border-color: var(--accent); background: var(--bg-hover); }
+
+  /* Editor Settings */
+  .editor-select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    padding: 6px 12px;
+    cursor: pointer;
+    outline: none;
+  }
+  .editor-select:focus { border-color: var(--accent); }
+  .editor-select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .custom-editor-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+  }
 </style>

@@ -3,6 +3,7 @@ import { load, type Store } from '@tauri-apps/plugin-store';
 const STORE_FILE = 'app-settings.json';
 const RECENT_REPOS_KEY = 'recentRepos';
 const PINNED_REPOS_KEY = 'pinnedRepos';
+const PREFERRED_EDITOR_KEY = 'preferredEditor';
 const MAX_RECENT_REPOS = 10;
 
 let storeInstance: Store | null = null;
@@ -20,6 +21,7 @@ async function getStore(): Promise<Store> {
 export interface PersistableState {
   recentRepos: string[];
   pinnedRepos: string[];
+  preferredEditor: string | null;
 }
 
 // ── Recent Repos ──────────────────────────────────────
@@ -27,15 +29,19 @@ export interface PersistableState {
 export async function loadRecentRepos(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
-    const [savedRecent, savedPinned] = await Promise.all([
+    const [savedRecent, savedPinned, savedEditor] = await Promise.all([
       store.get<string[]>(RECENT_REPOS_KEY),
       store.get<string[]>(PINNED_REPOS_KEY),
+      store.get<string | null>(PREFERRED_EDITOR_KEY),
     ]);
     if (Array.isArray(savedRecent)) {
       state.recentRepos = savedRecent.slice(0, MAX_RECENT_REPOS);
     }
     if (Array.isArray(savedPinned)) {
       state.pinnedRepos = savedPinned;
+    }
+    if (typeof savedEditor === 'string') {
+      state.preferredEditor = savedEditor;
     }
   } catch {
     // 首次啟動 store 檔案不存在，忽略
@@ -90,6 +96,16 @@ async function savePinnedRepos(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
     await store.set(PINNED_REPOS_KEY, state.pinnedRepos);
+  } catch {}
+}
+
+// ── Preferred Editor ─────────────────────────────────
+
+export async function savePreferredEditor(state: PersistableState, editor: string | null): Promise<void> {
+  state.preferredEditor = editor;
+  try {
+    const store = await getStore();
+    await store.set(PREFERRED_EDITOR_KEY, editor);
   } catch {}
 }
 
