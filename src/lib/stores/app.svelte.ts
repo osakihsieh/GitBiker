@@ -76,11 +76,44 @@ class AppState {
     }
   }
 
-  theme = $state<'dark' | 'light'>('dark');
+  theme = $state<'system' | 'dark' | 'light'>(
+    (typeof localStorage !== 'undefined'
+      ? (localStorage.getItem('gitbiker-theme') as 'system' | 'dark' | 'light')
+      : null) || 'system'
+  );
 
-  toggleTheme() {
-    this.theme = this.theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', this.theme);
+  systemPrefersDark = $state(
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : true
+  );
+
+  get resolvedTheme(): 'dark' | 'light' {
+    if (this.theme === 'system') {
+      return this.systemPrefersDark ? 'dark' : 'light';
+    }
+    return this.theme;
+  }
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      mq.addEventListener('change', (e) => {
+        this.systemPrefersDark = e.matches;
+        if (this.theme === 'system') this.applyTheme();
+      });
+      this.applyTheme();
+    }
+  }
+
+  setTheme(value: 'system' | 'dark' | 'light') {
+    this.theme = value;
+    try { localStorage.setItem('gitbiker-theme', value); } catch {}
+    this.applyTheme();
+  }
+
+  private applyTheme() {
+    document.documentElement.setAttribute('data-theme', this.resolvedTheme);
   }
 }
 

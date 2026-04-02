@@ -36,15 +36,33 @@
       <div class="setting-row">
         <div class="setting-info">
           <span class="setting-label">Theme</span>
-          <span class="setting-desc">切換深色 / 淺色主題</span>
+          <span class="setting-desc">
+            {#if app.theme === 'system'}
+              跟隨系統主題（目前：{app.resolvedTheme === 'dark' ? '深色' : '淺色'}）
+            {:else if app.theme === 'dark'}
+              手動深色主題
+            {:else}
+              手動淺色主題
+            {/if}
+          </span>
         </div>
-        <button class="theme-toggle" onclick={() => app.toggleTheme()}>
-          {#if app.theme === 'dark'}
-            ☽ Dark
-          {:else}
-            ☀ Light
-          {/if}
-        </button>
+        <div class="theme-segmented" role="radiogroup" aria-label="Theme">
+          {#each [
+            { value: 'system' as const, label: '⚙ System' },
+            { value: 'dark' as const, label: '☽ Dark' },
+            { value: 'light' as const, label: '☀ Light' },
+          ] as option}
+            <button
+              class="theme-option"
+              class:active={app.theme === option.value}
+              role="radio"
+              aria-checked={app.theme === option.value}
+              onclick={() => app.setTheme(option.value)}
+            >
+              {option.label}
+            </button>
+          {/each}
+        </div>
       </div>
     </div>
 
@@ -143,18 +161,36 @@
   }
   .setting-label { font-size: var(--font-size-md); }
   .setting-desc { font-size: 11px; color: var(--text-muted); }
-  .theme-toggle {
+  .theme-segmented {
+    display: flex;
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    color: var(--text-primary);
-    padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-sm);
-    cursor: pointer;
+    overflow: hidden;
+  }
+  .theme-option {
+    flex: 1;
+    padding: 6px 12px;
     font-family: var(--font-ui);
     font-size: var(--font-size-sm);
-    min-width: 100px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
   }
-  .theme-toggle:hover { border-color: var(--accent); }
+  .theme-option:hover:not(.active) {
+    background: var(--bg-hover);
+  }
+  .theme-option.active {
+    background: var(--accent);
+    color: var(--bg-primary);
+    font-weight: 600;
+  }
+  .theme-option:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
   .shortcuts-list {
     display: flex;
     flex-direction: column;

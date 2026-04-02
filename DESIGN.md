@@ -9,7 +9,16 @@ Sublime Text 風格。最少的 chrome，最大的內容空間。無裝飾元素
 
 ## Design Tokens (CSS Custom Properties)
 
-### 色彩 — Dark Theme (預設)
+### 主題模式
+
+支援三種模式：`system`（預設）、`dark`、`light`。
+
+- **System**：跟隨 OS 的 `prefers-color-scheme`，即時切換
+- **Dark / Light**：手動固定
+
+用戶偏好存於 `localStorage('gitbiker-theme')`。`app.html` 的 inline script 在 DOM render 前讀取偏好並設定 `data-theme`，確保零閃爍。
+
+### 色彩 — Dark Theme
 
 ```css
 :root {
