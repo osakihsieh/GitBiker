@@ -14,10 +14,12 @@
   import CloneDialog from '$lib/components/CloneDialog.svelte';
   import RepoPopover from '$lib/components/RepoPopover.svelte';
   import Settings from '$lib/components/Settings.svelte';
+  import CommandPalette from '$lib/components/CommandPalette.svelte';
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
   let showPopover = $state(false);
+  let showCommandPalette = $state(false);
 
   // 啟動時從 Tauri Store 載入最近開啟的 repos
   app.loadRecentRepos();
@@ -45,6 +47,13 @@
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
+    // Ctrl+Shift+P: command palette
+    if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+      e.preventDefault();
+      showCommandPalette = !showCommandPalette;
+      return;
+    }
+
     // Ctrl+Tab / Ctrl+Shift+Tab: switch tabs
     if (e.ctrlKey && e.key === 'Tab') {
       e.preventDefault();
@@ -174,6 +183,12 @@
       onCloned={handleCloned}
     />
   {/if}
+
+  <CommandPalette
+    open={showCommandPalette}
+    onClose={() => (showCommandPalette = false)}
+    onOpenSettings={() => { showCommandPalette = false; showSettings = true; }}
+  />
 
   <Toast />
 </div>
