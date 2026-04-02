@@ -1,156 +1,147 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api/core";
+  import '../app.css';
+  import { app } from '$lib/stores/app.svelte';
+  import { gitStatus, gitLog, gitBranches, gitDiff } from '$lib/git/commands';
+  import Toolbar from '$lib/components/Toolbar.svelte';
+  import FileTree from '$lib/components/FileTree.svelte';
+  import DiffViewer from '$lib/components/DiffViewer.svelte';
+  import CommitLog from '$lib/components/CommitLog.svelte';
+  import Welcome from '$lib/components/Welcome.svelte';
+  import Toast from '$lib/components/Toast.svelte';
 
-  let name = $state("");
-  let greetMsg = $state("");
+  async function openRepo(path: string) {
+    app.loading = true;
+    try {
+      const [status, commits, branches] = await Promise.all([
+        gitStatus(path),
+        gitLog(path),
+        gitBranches(path),
+      ]);
 
-  async function greet(event: Event) {
-    event.preventDefault();
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    greetMsg = await invoke("greet", { name });
+      app.repoPath = path;
+      app.stagedFiles = status.filter((f) => f.staging === 'Staged');
+      app.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
+      app.commits = commits;
+      app.branches = branches;
+      app.currentBranch = branches.find((b) => b.is_current)?.name || 'main';
+      app.selectedFile = null;
+      app.currentDiff = null;
+
+      // Add to recent repos
+      if (!app.recentRepos.includes(path)) {
+        app.recentRepos = [path, ...app.recentRepos].slice(0, 10);
+      }
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    } finally {
+      app.loading = false;
+    }
+  }
+
+  // Watch selectedFile to load diff
+  $effect(() => {
+    const file = app.selectedFile;
+    const repoPath = app.repoPath;
+    if (file && repoPath) {
+      gitDiff(repoPath, file)
+        .then((diff) => { app.currentDiff = diff; })
+        .catch((e) => { app.addToast(String(e), 'error'); });
+    }
+  });
+
+  function handleClone() {
+    // TODO: Clone dialog
+    app.addToast('Clone dialog coming soon', 'info');
   }
 </script>
 
-<main class="container">
-  <h1>Welcome to Tauri + Svelte</h1>
-
-  <div class="row">
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo vite" alt="Vite Logo" />
-    </a>
-    <a href="https://tauri.app" target="_blank">
-      <img src="/tauri.svg" class="logo tauri" alt="Tauri Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank">
-      <img src="/svelte.svg" class="logo svelte-kit" alt="SvelteKit Logo" />
-    </a>
-  </div>
-  <p>Click on the Tauri, Vite, and SvelteKit logos to learn more.</p>
-
-  <form class="row" onsubmit={greet}>
-    <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
-    <button type="submit">Greet</button>
-  </form>
-  <p>{greetMsg}</p>
-</main>
+<div class="app-root">
+  {#if app.hasRepo}
+    <!-- Main workspace -->
+    <Toolbar />
+    <div class="main">
+      <div class="sidebar">
+        <FileTree />
+      </div>
+      <div class="resize-handle"></div>
+      <div class="center">
+        <DiffViewer />
+      </div>
+      <div class="resize-handle"></div>
+      <div class="right">
+        <CommitLog />
+      </div>
+    </div>
+  {:else}
+    <!-- Welcome page -->
+    <div class="welcome-toolbar">
+      <span class="app-name">gitbiker</span>
+    </div>
+    <Welcome onOpenRepo={openRepo} onClone={handleClone} />
+  {/if}
+  <Toast />
+</div>
 
 <style>
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.svelte-kit:hover {
-  filter: drop-shadow(0 0 2em #ff3e00);
-}
-
-:root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-}
-
-.container {
-  margin: 0;
-  padding-top: 10vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
-
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
-}
-
-h1 {
-  text-align: center;
-}
-
-input,
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
-  cursor: pointer;
-}
-
-button:hover {
-  border-color: #396cd8;
-}
-button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
-}
-
-input,
-button {
-  outline: none;
-}
-
-#greet-input {
-  margin-right: 5px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
+  .app-root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
   }
-
-  a:hover {
-    color: #24c8db;
+  .welcome-toolbar {
+    display: flex;
+    align-items: center;
+    padding: var(--space-xs) var(--space-md);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    height: 40px;
+    flex-shrink: 0;
   }
-
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
+  .app-name {
+    font-weight: 600;
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
   }
-  button:active {
-    background-color: #0f0f0f69;
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
   }
-}
-
+  .sidebar {
+    width: 240px;
+    min-width: 180px;
+    max-width: 400px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 300px;
+  }
+  .right {
+    width: 320px;
+    min-width: 180px;
+    max-width: 400px;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .resize-handle {
+    width: 3px;
+    cursor: col-resize;
+    background: transparent;
+    flex-shrink: 0;
+  }
+  .resize-handle:hover { background: var(--accent); }
 </style>
