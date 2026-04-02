@@ -1,5 +1,19 @@
 import type { FileStatus, Commit, DiffResult, Branch } from '$lib/git/types';
 import { gitStatus, gitLog, gitBranches } from '$lib/git/commands';
+import { load, type Store } from '@tauri-apps/plugin-store';
+
+const STORE_FILE = 'app-settings.json';
+const RECENT_REPOS_KEY = 'recentRepos';
+const MAX_RECENT_REPOS = 10;
+
+let storeInstance: Store | null = null;
+
+async function getStore(): Promise<Store> {
+  if (!storeInstance) {
+    storeInstance = await load(STORE_FILE);
+  }
+  return storeInstance;
+}
 
 export interface Toast {
   id: number;
@@ -25,6 +39,29 @@ class AppState {
 
   get hasRepo(): boolean {
     return this.repoPath !== null;
+  }
+
+  async loadRecentRepos(): Promise<void> {
+    try {
+      const store = await getStore();
+      const saved = await store.get<string[]>(RECENT_REPOS_KEY);
+      if (Array.isArray(saved)) {
+        this.recentRepos = saved.slice(0, MAX_RECENT_REPOS);
+      }
+    } catch {
+      // 首次啟動 store 檔案不存在，忽略
+    }
+  }
+
+  async addRecentRepo(path: string): Promise<void> {
+    const filtered = this.recentRepos.filter((r) => r !== path);
+    this.recentRepos = [path, ...filtered].slice(0, MAX_RECENT_REPOS);
+    try {
+      const store = await getStore();
+      await store.set(RECENT_REPOS_KEY, this.recentRepos);
+    } catch {
+      // 寫入失敗不影響功能
+    }
   }
 
   get repoName(): string {

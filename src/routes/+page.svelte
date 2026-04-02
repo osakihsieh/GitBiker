@@ -14,6 +14,9 @@
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
 
+  // 啟動時從 Tauri Store 載入最近開啟的 repos
+  app.loadRecentRepos();
+
   async function openRepo(path: string) {
     app.loading = true;
     try {
@@ -32,9 +35,7 @@
       app.selectedFile = null;
       app.currentDiff = null;
 
-      if (!app.recentRepos.includes(path)) {
-        app.recentRepos = [path, ...app.recentRepos].slice(0, 10);
-      }
+      await app.addRecentRepo(path);
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
     } finally {
