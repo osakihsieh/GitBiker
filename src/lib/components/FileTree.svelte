@@ -30,6 +30,7 @@
       } else {
         await gitStage(app.repoPath, [file.path]);
       }
+      await app.refreshStatus();
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
     }
@@ -41,6 +42,7 @@
     if (paths.length === 0) return;
     try {
       await gitStage(app.repoPath, paths);
+      await app.refreshStatus();
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
     }
@@ -52,6 +54,7 @@
     if (paths.length === 0) return;
     try {
       await gitUnstage(app.repoPath, paths);
+      await app.refreshStatus();
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
     }
@@ -64,6 +67,7 @@
       const hash = await gitCommit(app.repoPath, commitMessage);
       app.addToast(`Committed ${hash.substring(0, 7)}`, 'success');
       commitMessage = '';
+      await app.refreshAll();
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
     } finally {

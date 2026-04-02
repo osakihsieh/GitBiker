@@ -34,6 +34,8 @@ pub fn run() {
             commands::git_switch_branch,
             commands::git_create_branch,
             commands::git_delete_branch,
+            commands::git_clone,
+            commands::check_git_version,
         ])
         .run(tauri::generate_context!())
         .expect("啟動 gitbiker 失敗");

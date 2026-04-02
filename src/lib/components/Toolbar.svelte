@@ -17,6 +17,7 @@
       } else {
         app.addToast(result.message, 'error', false);
       }
+      await app.refreshAll();
     } catch (e: unknown) {
       app.addToast(String(e), 'error', false);
     } finally {
@@ -34,6 +35,7 @@
       } else {
         app.addToast(result.message, 'error', false);
       }
+      await app.refreshAll();
     } catch (e: unknown) {
       app.addToast(String(e), 'error', false);
     } finally {
@@ -48,6 +50,7 @@
       app.currentBranch = name;
       branchDropdownOpen = false;
       app.addToast(`已切換到 ${name}`, 'success');
+      await app.refreshAll();
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
     }

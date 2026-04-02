@@ -8,6 +8,11 @@
   import CommitLog from '$lib/components/CommitLog.svelte';
   import Welcome from '$lib/components/Welcome.svelte';
   import Toast from '$lib/components/Toast.svelte';
+  import CloneDialog from '$lib/components/CloneDialog.svelte';
+  import Settings from '$lib/components/Settings.svelte';
+
+  let showCloneDialog = $state(false);
+  let showSettings = $state(false);
 
   async function openRepo(path: string) {
     app.loading = true;
@@ -27,7 +32,6 @@
       app.selectedFile = null;
       app.currentDiff = null;
 
-      // Add to recent repos
       if (!app.recentRepos.includes(path)) {
         app.recentRepos = [path, ...app.recentRepos].slice(0, 10);
       }
@@ -38,7 +42,6 @@
     }
   }
 
-  // Watch selectedFile to load diff
   $effect(() => {
     const file = app.selectedFile;
     const repoPath = app.repoPath;
@@ -50,35 +53,69 @@
   });
 
   function handleClone() {
-    // TODO: Clone dialog
-    app.addToast('Clone dialog coming soon', 'info');
+    showCloneDialog = true;
+  }
+
+  function handleCloned(path: string) {
+    showCloneDialog = false;
+    openRepo(path);
+  }
+
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    // Ctrl+1/2/3: focus panels
+    if (e.ctrlKey && !e.shiftKey) {
+      if (e.key === '1') {
+        e.preventDefault();
+        const el = document.querySelector('.sidebar') as HTMLElement | null;
+        el?.querySelector('button, input, textarea')?.dispatchEvent(new Event('focus'));
+      } else if (e.key === '2') {
+        e.preventDefault();
+        const el = document.querySelector('.center') as HTMLElement | null;
+        el?.focus();
+      } else if (e.key === '3') {
+        e.preventDefault();
+        const el = document.querySelector('.right') as HTMLElement | null;
+        el?.focus();
+      }
+    }
   }
 </script>
 
+<svelte:window onkeydown={handleGlobalKeydown} />
+
 <div class="app-root">
-  {#if app.hasRepo}
-    <!-- Main workspace -->
-    <Toolbar />
+  {#if showSettings}
+    <Settings onClose={() => showSettings = false} />
+  {:else if app.hasRepo}
+    <Toolbar onOpenSettings={() => showSettings = true} />
     <div class="main">
       <div class="sidebar">
         <FileTree />
       </div>
       <div class="resize-handle"></div>
-      <div class="center">
+      <div class="center" tabindex="-1">
         <DiffViewer />
       </div>
       <div class="resize-handle"></div>
-      <div class="right">
+      <div class="right" tabindex="-1">
         <CommitLog />
       </div>
     </div>
   {:else}
-    <!-- Welcome page -->
     <div class="welcome-toolbar">
       <span class="app-name">gitbiker</span>
+      <button class="settings-btn" onclick={() => showSettings = true}>⚙</button>
     </div>
     <Welcome onOpenRepo={openRepo} onClone={handleClone} />
   {/if}
+
+  {#if showCloneDialog}
+    <CloneDialog
+      onClose={() => showCloneDialog = false}
+      onCloned={handleCloned}
+    />
+  {/if}
+
   <Toast />
 </div>
 
@@ -103,6 +140,16 @@
     font-size: var(--font-size-lg);
     color: var(--text-secondary);
   }
+  .settings-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: var(--space-xs);
+  }
+  .settings-btn:hover { color: var(--text-primary); }
   .main {
     display: flex;
     flex: 1;
@@ -125,6 +172,7 @@
     flex-direction: column;
     overflow: hidden;
     min-width: 300px;
+    outline: none;
   }
   .right {
     width: 320px;
@@ -136,6 +184,7 @@
     flex-direction: column;
     overflow: hidden;
     flex-shrink: 0;
+    outline: none;
   }
   .resize-handle {
     width: 3px;

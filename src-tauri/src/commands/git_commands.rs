@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::process::Command;
 
 use tauri::State;
 
@@ -121,4 +122,30 @@ pub fn git_delete_branch(
     name: String,
 ) -> Result<(), GitError> {
     state.git.delete_branch(&PathBuf::from(&path), &name)
+}
+
+#[tauri::command]
+pub fn git_clone(url: String, dest: String) -> Result<(), GitError> {
+    let output = Command::new("git")
+        .args(["clone", &url, &dest])
+        .output()
+        .map_err(|e| GitError::OperationFailed(format!("無法執行 git clone: {e}")))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        Err(GitError::OperationFailed(stderr))
+    }
+}
+
+#[tauri::command]
+pub fn check_git_version() -> Result<String, GitError> {
+    let output = Command::new("git")
+        .args(["--version"])
+        .output()
+        .map_err(|e| GitError::OperationFailed(format!("找不到 git: {e}")))?;
+
+    let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    Ok(version)
 }
