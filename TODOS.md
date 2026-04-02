@@ -24,6 +24,14 @@
 **Effort:** M (CC+gstack ~30min)
 **Depends on:** File context menu (Batch 2) 完成後
 
+## Inline Terminal
+
+**What:** 在 app 內嵌入終端機面板（類似 VS Code 底部終端機）
+**Why:** 用戶不需切換到外部終端機即可執行 git 指令或其他 CLI 操作，提升工作流連貫性。
+**Priority:** P2
+**Effort:** L (需要 xterm.js + Tauri shell plugin 整合)
+**Depends on:** 基礎 UI 架構穩定後
+
 ## Command Palette
 
 **What:** VS Code 風格 command palette (Ctrl+Shift+P)

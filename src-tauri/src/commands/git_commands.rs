@@ -632,16 +632,16 @@ pub fn open_in_editor(path: String, editor: Option<String>) -> Result<(), String
         return Err(format!("路徑不存在: {path}"));
     }
 
-    // 1. Check environment variables first (highest priority)
-    if let Ok(env_editor) = std::env::var("VISUAL").or_else(|_| std::env::var("EDITOR")) {
-        if Command::new(&env_editor).arg(&path).spawn().is_ok() {
+    // 1. User's preferred editor (from Settings UI — highest priority)
+    if let Some(ref preferred) = editor {
+        if !preferred.is_empty() && Command::new(preferred).arg(&path).spawn().is_ok() {
             return Ok(());
         }
     }
 
-    // 2. Try user's preferred editor
-    if let Some(ref preferred) = editor {
-        if !preferred.is_empty() && Command::new(preferred).arg(&path).spawn().is_ok() {
+    // 2. VISUAL / EDITOR environment variables
+    if let Ok(env_editor) = std::env::var("VISUAL").or_else(|_| std::env::var("EDITOR")) {
+        if !env_editor.is_empty() && Command::new(&env_editor).arg(&path).spawn().is_ok() {
             return Ok(());
         }
     }
