@@ -10,13 +10,13 @@
 
   async function handleOpenLocal() {
     try {
-      // Use Tauri dialog to pick a folder
-      const { invoke } = await import('@tauri-apps/api/core');
-      // For now, prompt user for path via a simple approach
-      // TODO: Replace with tauri-plugin-dialog folder picker
-      const path = prompt('Enter repo path:');
-      if (path) {
-        onOpenRepo(path);
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        directory: true,
+        title: 'Select Git Repository',
+      });
+      if (selected) {
+        onOpenRepo(selected);
       }
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
