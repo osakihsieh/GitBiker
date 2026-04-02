@@ -32,6 +32,13 @@ const mockGitCommands = {
   gitLog: vi.fn().mockResolvedValue([]),
   gitBranches: vi.fn().mockResolvedValue([]),
   gitDiff: vi.fn().mockResolvedValue(null),
+  gitMergeBranch: vi.fn().mockResolvedValue({ branch: '', success: true, message: '', conflicts: [] }),
+  gitMergeAbort: vi.fn().mockResolvedValue(undefined),
+  gitStashList: vi.fn().mockResolvedValue([]),
+  gitStashPush: vi.fn().mockResolvedValue(''),
+  gitStashPop: vi.fn().mockResolvedValue(''),
+  gitStashApply: vi.fn().mockResolvedValue(''),
+  gitStashDrop: vi.fn().mockResolvedValue(''),
   startWatching: vi.fn().mockResolvedValue(undefined),
   stopWatching: vi.fn().mockResolvedValue(undefined),
 };

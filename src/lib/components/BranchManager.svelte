@@ -9,6 +9,8 @@
     gitBranchMergeStatus,
     gitSwitchBranch,
     gitPush,
+    gitMergeBranch,
+    gitMergeAbort,
   } from '$lib/git/commands';
   import { clickOutside } from '$lib/actions/clickOutside';
   import { slugifyBranchName } from '$lib/utils/slugify';
@@ -36,6 +38,8 @@
   let batchCleaning = $state(false);
   let batchProgress = $state('');
   let pushingBranch = $state<string | null>(null);
+  let mergingBranch = $state<string | null>(null);
+  let mergeConflicts = $state<string[]>([]);
 
   const STALE_DAYS = 30;
 
@@ -258,6 +262,39 @@
     await app.refreshAll();
   }
 
+  async function handleMerge(name: string) {
+    if (!app.repoPath || mergingBranch) return;
+    mergingBranch = name;
+    mergeConflicts = [];
+    try {
+      const result = await gitMergeBranch(app.repoPath, name);
+      if (result.success) {
+        app.addToast(`已將 ${name} merge 到 ${app.currentBranch}`, 'success');
+        onClose();
+      } else {
+        mergeConflicts = result.conflicts;
+        app.addToast(`Merge 衝突：${result.conflicts.length} 個檔案需要解決`, 'error', false);
+      }
+      await app.refreshAll();
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    } finally {
+      mergingBranch = null;
+    }
+  }
+
+  async function handleMergeAbort() {
+    if (!app.repoPath) return;
+    try {
+      await gitMergeAbort(app.repoPath);
+      mergeConflicts = [];
+      app.addToast('已取消 merge', 'info');
+      await app.refreshAll();
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter' && createExpanded && canCreate) {
       e.preventDefault();
@@ -268,7 +305,26 @@
 
 {#if open}
   <div class="branch-manager" use:clickOutside={onClose} role="dialog" aria-label="Branch manager">
-    {#if confirmDelete}
+    {#if mergeConflicts.length > 0}
+      <!-- Merge conflict overlay -->
+      <div class="confirm-overlay">
+        <div class="confirm-dialog">
+          <p class="confirm-text"><strong>Merge 衝突</strong></p>
+          <div class="conflict-list">
+            {#each mergeConflicts as conflict}
+              <div class="conflict-item">{conflict}</div>
+            {/each}
+          </div>
+          <p class="confirm-text" style="margin-top: var(--space-sm); font-size: 11px; color: var(--text-muted);">
+            請在編輯器中解決衝突後 stage 並 commit，或取消 merge。
+          </p>
+          <div class="confirm-actions">
+            <button class="btn-danger" onclick={handleMergeAbort}>取消 Merge</button>
+            <button class="btn-cancel" onclick={() => { mergeConflicts = []; onClose(); }}>關閉</button>
+          </div>
+        </div>
+      </div>
+    {:else if confirmDelete}
       <!-- Confirm delete overlay -->
       <div class="confirm-overlay">
         <div class="confirm-dialog">
@@ -376,6 +432,14 @@
                   {/if}
                   <div class="action-group">
                     {#if !branch.is_current}
+                      <button
+                        class="action-btn merge-btn"
+                        title="Merge into {app.currentBranch}"
+                        disabled={mergingBranch === branch.name}
+                        onclick={() => handleMerge(branch.name)}
+                      >
+                        {#if mergingBranch === branch.name}<span class="spinner-sm"></span>{:else}⤵{/if}
+                      </button>
                       <button class="action-btn" title="重命名" onclick={() => startRename(branch.name)}>✎</button>
                       <button class="action-btn delete-btn" title="刪除" onclick={() => handleDelete(branch.name)}>×</button>
                     {/if}
@@ -654,6 +718,20 @@
   .checkout-btn:hover { color: var(--accent); }
   .push-btn { opacity: 1; }
   .push-btn:hover { color: var(--accent); }
+  .merge-btn:hover { color: var(--success, #4ec9b0); }
+
+  .conflict-list {
+    max-height: 120px;
+    overflow-y: auto;
+    margin: var(--space-sm) 0;
+  }
+  .conflict-item {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--error);
+    padding: 2px 0;
+    word-break: break-all;
+  }
 
   .rename-input {
     flex: 1;

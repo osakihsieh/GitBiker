@@ -411,14 +411,14 @@ describe('AppState', () => {
     });
 
     it('selectCommit 切換到 commit-detail', () => {
-      const commit = { id: 'abc123', message: 'test', author: 'A', email: '', timestamp: 0, parents: [] };
+      const commit = { id: 'abc123', message: 'test', author: 'A', email: '', timestamp: 0, parents: [], refs: [] };
       app.selectCommit(commit);
       expect(app.viewMode).toBe('commit-detail');
       expect(app.selectedCommit).toEqual(commit);
     });
 
     it('backToWorktree 回到 worktree', () => {
-      app.selectCommit({ id: 'abc', message: '', author: '', email: '', timestamp: 0, parents: [] });
+      app.selectCommit({ id: 'abc', message: '', author: '', email: '', timestamp: 0, parents: [], refs: [] });
       app.backToWorktree();
       expect(app.viewMode).toBe('worktree');
       expect(app.selectedCommit).toBeNull();
@@ -429,7 +429,7 @@ describe('AppState', () => {
         { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
       ];
       app.activeTabId = 'a';
-      app.selectCommit({ id: 'x', message: '', author: '', email: '', timestamp: 0, parents: [] });
+      app.selectCommit({ id: 'x', message: '', author: '', email: '', timestamp: 0, parents: [], refs: [] });
 
       app.closeAllTabs();
       expect(app.viewMode).toBe('worktree');
@@ -501,7 +501,7 @@ describe('AppState', () => {
         { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null } },
       ];
       app.activeTabId = 'a';
-      app.selectCommit({ id: 'x', message: '', author: '', email: '', timestamp: 0, parents: [] });
+      app.selectCommit({ id: 'x', message: '', author: '', email: '', timestamp: 0, parents: [], refs: [] });
 
       mockGitCommands.gitStatus.mockResolvedValue([]);
 

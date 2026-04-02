@@ -111,6 +111,80 @@ impl LocalGit {
         Ok(local_name)
     }
 
+    pub fn merge_branch(&self, path: &Path, branch_name: &str) -> Result<MergeResult, GitError> {
+        Self::check_index_lock(path)?;
+        match Self::run_git(path, &["merge", "--no-edit", branch_name]) {
+            Ok(output) => Ok(MergeResult {
+                branch: branch_name.to_string(),
+                success: true,
+                message: output,
+                conflicts: Vec::new(),
+            }),
+            Err(GitError::OperationFailed(stderr)) => {
+                // Check if this is a merge conflict
+                if stderr.contains("CONFLICT") || stderr.contains("Automatic merge failed") {
+                    let conflicts: Vec<String> = stderr
+                        .lines()
+                        .filter(|l| l.contains("CONFLICT"))
+                        .map(|l| l.to_string())
+                        .collect();
+                    Ok(MergeResult {
+                        branch: branch_name.to_string(),
+                        success: false,
+                        message: stderr,
+                        conflicts,
+                    })
+                } else {
+                    Err(GitError::OperationFailed(stderr))
+                }
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn merge_abort(&self, path: &Path) -> Result<(), GitError> {
+        Self::run_git(path, &["merge", "--abort"])?;
+        Ok(())
+    }
+
+    pub fn stash_list(&self, path: &Path) -> Result<Vec<StashEntry>, GitError> {
+        let output = Self::run_git(path, &["stash", "list", "--format=%gs"])?;
+        let entries: Vec<StashEntry> = output
+            .lines()
+            .enumerate()
+            .filter(|(_, l)| !l.is_empty())
+            .map(|(i, l)| StashEntry {
+                index: i,
+                message: l.to_string(),
+            })
+            .collect();
+        Ok(entries)
+    }
+
+    pub fn stash_push(&self, path: &Path, message: Option<&str>) -> Result<String, GitError> {
+        let mut args = vec!["stash", "push"];
+        if let Some(msg) = message {
+            args.push("-m");
+            args.push(msg);
+        }
+        Self::run_git(path, &args)
+    }
+
+    pub fn stash_pop(&self, path: &Path, index: usize) -> Result<String, GitError> {
+        let stash_ref = format!("stash@{{{index}}}");
+        Self::run_git(path, &["stash", "pop", &stash_ref])
+    }
+
+    pub fn stash_apply(&self, path: &Path, index: usize) -> Result<String, GitError> {
+        let stash_ref = format!("stash@{{{index}}}");
+        Self::run_git(path, &["stash", "apply", &stash_ref])
+    }
+
+    pub fn stash_drop(&self, path: &Path, index: usize) -> Result<String, GitError> {
+        let stash_ref = format!("stash@{{{index}}}");
+        Self::run_git(path, &["stash", "drop", &stash_ref])
+    }
+
     pub fn branch_merge_status(&self, path: &Path, branch_name: &str, base: &str) -> Result<BranchMergeStatus, GitError> {
         let range = format!("{base}..{branch_name}");
         let output = Self::run_git(path, &["rev-list", "--count", &range])?;

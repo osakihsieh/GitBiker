@@ -8,6 +8,8 @@ import type {
   PullResult,
   RemoteInfo,
   BranchMergeStatus,
+  MergeResult,
+  StashEntry,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
@@ -76,6 +78,38 @@ export async function gitCheckoutRemoteBranch(path: string, remoteBranch: string
 
 export async function gitBranchMergeStatus(path: string, branchName: string, base?: string): Promise<BranchMergeStatus> {
   return invoke('git_branch_merge_status', { path, branchName, base });
+}
+
+// ── Merge ────────────────────────────────────────────
+
+export async function gitMergeBranch(path: string, branchName: string): Promise<MergeResult> {
+  return invoke('git_merge_branch', { path, branchName });
+}
+
+export async function gitMergeAbort(path: string): Promise<void> {
+  return invoke('git_merge_abort', { path });
+}
+
+// ── Stash ────────────────────────────────────────────
+
+export async function gitStashList(path: string): Promise<StashEntry[]> {
+  return invoke('git_stash_list', { path });
+}
+
+export async function gitStashPush(path: string, message?: string): Promise<string> {
+  return invoke('git_stash_push', { path, message });
+}
+
+export async function gitStashPop(path: string, index?: number): Promise<string> {
+  return invoke('git_stash_pop', { path, index });
+}
+
+export async function gitStashApply(path: string, index?: number): Promise<string> {
+  return invoke('git_stash_apply', { path, index });
+}
+
+export async function gitStashDrop(path: string, index: number): Promise<string> {
+  return invoke('git_stash_drop', { path, index });
 }
 
 export async function startWatching(path: string): Promise<void> {

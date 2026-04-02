@@ -82,6 +82,18 @@ export interface BranchMergeStatus {
   unmerged_count: number;
 }
 
+export interface MergeResult {
+  branch: string;
+  success: boolean;
+  message: string;
+  conflicts: string[];
+}
+
+export interface StashEntry {
+  index: number;
+  message: string;
+}
+
 export interface PushResult {
   remote: string;
   branch: string;

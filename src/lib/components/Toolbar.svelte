@@ -2,9 +2,11 @@
   import { app } from '$lib/stores/app.svelte';
   import { gitPush, gitPull, gitFetch, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
   import BranchManager from './BranchManager.svelte';
+  import StashManager from './StashManager.svelte';
 
   let branchDropdownOpen = $state(false);
   let branchManagerOpen = $state(false);
+  let stashOpen = $state(false);
   let pushing = $state(false);
   let pulling = $state(false);
   let fetching = $state(false);
@@ -193,6 +195,14 @@
   <div class="drag-spacer" data-tauri-drag-region></div>
 
   <div class="actions">
+    <div class="stash-wrapper">
+      <button class="btn" onclick={() => (stashOpen = !stashOpen)}>
+        📦 Stash
+      </button>
+      {#if stashOpen}
+        <StashManager open={stashOpen} onClose={() => (stashOpen = false)} />
+      {/if}
+    </div>
     <button class="btn" onclick={handlePull} disabled={pulling}>
       {#if pulling}<span class="spinner"></span>{:else}↓{/if} Pull
     </button>
@@ -352,6 +362,7 @@
   }
   .btn:hover { background: var(--bg-hover); color: var(--text-primary); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .stash-wrapper { position: relative; }
   .settings-btn {
     background: none;
     border: none;

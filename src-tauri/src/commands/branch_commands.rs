@@ -73,3 +73,64 @@ pub fn git_branch_merge_status(
     let base_branch = base.unwrap_or_else(|| "HEAD".to_string());
     state.git.branch_merge_status(&PathBuf::from(&path), &branch_name, &base_branch)
 }
+
+#[tauri::command]
+pub fn git_merge_branch(
+    state: State<GitState>,
+    path: String,
+    branch_name: String,
+) -> Result<MergeResult, GitError> {
+    state.git.merge_branch(&PathBuf::from(&path), &branch_name)
+}
+
+#[tauri::command]
+pub fn git_merge_abort(
+    state: State<GitState>,
+    path: String,
+) -> Result<(), GitError> {
+    state.git.merge_abort(&PathBuf::from(&path))
+}
+
+#[tauri::command]
+pub fn git_stash_list(
+    state: State<GitState>,
+    path: String,
+) -> Result<Vec<StashEntry>, GitError> {
+    state.git.stash_list(&PathBuf::from(&path))
+}
+
+#[tauri::command]
+pub fn git_stash_push(
+    state: State<GitState>,
+    path: String,
+    message: Option<String>,
+) -> Result<String, GitError> {
+    state.git.stash_push(&PathBuf::from(&path), message.as_deref())
+}
+
+#[tauri::command]
+pub fn git_stash_pop(
+    state: State<GitState>,
+    path: String,
+    index: Option<usize>,
+) -> Result<String, GitError> {
+    state.git.stash_pop(&PathBuf::from(&path), index.unwrap_or(0))
+}
+
+#[tauri::command]
+pub fn git_stash_apply(
+    state: State<GitState>,
+    path: String,
+    index: Option<usize>,
+) -> Result<String, GitError> {
+    state.git.stash_apply(&PathBuf::from(&path), index.unwrap_or(0))
+}
+
+#[tauri::command]
+pub fn git_stash_drop(
+    state: State<GitState>,
+    path: String,
+    index: usize,
+) -> Result<String, GitError> {
+    state.git.stash_drop(&PathBuf::from(&path), index)
+}

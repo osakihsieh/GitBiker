@@ -121,6 +121,20 @@ pub struct PushResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MergeResult {
+    pub branch: String,
+    pub success: bool,
+    pub message: String,
+    pub conflicts: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StashEntry {
+    pub index: usize,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PullResult {
     pub remote: String,
     pub branch: String,
