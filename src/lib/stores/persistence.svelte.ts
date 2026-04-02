@@ -92,6 +92,11 @@ export async function togglePin(state: PersistableState, path: string): Promise<
   }
 }
 
+export async function reorderPinnedRepos(state: PersistableState, newOrder: string[]): Promise<void> {
+  state.pinnedRepos = newOrder;
+  await savePinnedRepos(state);
+}
+
 async function savePinnedRepos(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();

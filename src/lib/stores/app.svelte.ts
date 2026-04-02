@@ -8,6 +8,7 @@ import {
   unpinRepo as _unpinRepo,
   togglePin as _togglePin,
   savePreferredEditor as _savePreferredEditor,
+  reorderPinnedRepos as _reorderPinnedRepos,
 } from './persistence.svelte';
 import {
   refreshStatus as _refreshStatus,
@@ -338,6 +339,7 @@ class AppState {
   async unpinRepo(path: string) { return _unpinRepo(this, path); }
   async togglePin(path: string) { return _togglePin(this, path); }
   async savePreferredEditor(editor: string | null) { return _savePreferredEditor(this, editor); }
+  async reorderPinnedRepos(newOrder: string[]) { return _reorderPinnedRepos(this, newOrder); }
 
   // ── Git action wrappers (maintain existing API) ──
 

@@ -170,6 +170,50 @@
     e.stopPropagation();
     app.togglePin(path);
   }
+
+  // ── Drag-to-reorder pinned repos ──
+  let dragIndex = $state<number | null>(null);
+  let dragOverIndex = $state<number | null>(null);
+
+  function handleDragStart(e: DragEvent, index: number) {
+    dragIndex = index;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(index));
+    }
+  }
+
+  function handleDragOver(e: DragEvent, index: number) {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    dragOverIndex = index;
+  }
+
+  function handleDragLeave() {
+    dragOverIndex = null;
+  }
+
+  function handleDrop(e: DragEvent, targetIndex: number) {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === targetIndex) {
+      dragIndex = null;
+      dragOverIndex = null;
+      return;
+    }
+
+    const pinned = [...app.pinnedRepos];
+    const [moved] = pinned.splice(dragIndex, 1);
+    pinned.splice(targetIndex, 0, moved);
+    app.reorderPinnedRepos(pinned);
+
+    dragIndex = null;
+    dragOverIndex = null;
+  }
+
+  function handleDragEnd() {
+    dragIndex = null;
+    dragOverIndex = null;
+  }
 </script>
 
 {#if open}
@@ -209,6 +253,14 @@
             <button
               class="popover-repo"
               class:selected={selectedIndex === globalIdx}
+              class:drag-over={dragOverIndex === i && dragIndex !== i}
+              class:dragging={dragIndex === i}
+              draggable="true"
+              ondragstart={(e) => handleDragStart(e, i)}
+              ondragover={(e) => handleDragOver(e, i)}
+              ondragleave={handleDragLeave}
+              ondrop={(e) => handleDrop(e, i)}
+              ondragend={handleDragEnd}
               onclick={() => handleRepoClick(path)}
               onauxclick={(e) => handleMiddleClick(e, path)}
             >
@@ -390,6 +442,11 @@
   }
   .popover-repo:hover,
   .popover-repo.selected { background: var(--bg-hover); }
+  .popover-repo.dragging { opacity: 0.4; }
+  .popover-repo.drag-over {
+    border-top: 2px solid var(--accent);
+    margin-top: -2px;
+  }
   .pin-icon {
     font-size: 10px;
     color: var(--text-muted);
