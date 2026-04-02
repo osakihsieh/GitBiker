@@ -72,6 +72,14 @@ export interface Branch {
   is_remote: boolean;
   upstream: string | null;
   commit_id: string | null;
+  ahead: number | null;
+  behind: number | null;
+  last_commit_timestamp: number | null;
+}
+
+export interface BranchMergeStatus {
+  merged: boolean;
+  unmerged_count: number;
 }
 
 export interface PushResult {

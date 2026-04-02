@@ -7,6 +7,7 @@ import type {
   PushResult,
   PullResult,
   RemoteInfo,
+  BranchMergeStatus,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
@@ -61,8 +62,20 @@ export async function gitCreateBranch(path: string, name: string): Promise<void>
   return invoke('git_create_branch', { path, name });
 }
 
-export async function gitDeleteBranch(path: string, name: string): Promise<void> {
-  return invoke('git_delete_branch', { path, name });
+export async function gitDeleteBranch(path: string, name: string, force = false): Promise<void> {
+  return invoke('git_delete_branch', { path, name, force });
+}
+
+export async function gitRenameBranch(path: string, oldName: string, newName: string): Promise<void> {
+  return invoke('git_rename_branch', { path, oldName, newName });
+}
+
+export async function gitCheckoutRemoteBranch(path: string, remoteBranch: string): Promise<string> {
+  return invoke('git_checkout_remote_branch', { path, remoteBranch });
+}
+
+export async function gitBranchMergeStatus(path: string, branchName: string, base?: string): Promise<BranchMergeStatus> {
+  return invoke('git_branch_merge_status', { path, branchName, base });
 }
 
 export async function startWatching(path: string): Promise<void> {

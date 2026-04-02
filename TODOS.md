@@ -32,6 +32,22 @@
 **Effort:** L (需要 xterm.js + Tauri shell plugin 整合)
 **Depends on:** 基礎 UI 架構穩定後
 
+## Merge Branch Into Current
+
+**What:** 在 BranchManager 面板裡選一個 branch，點「Merge into {current}」合併。合併前顯示 ahead 計數，衝突時顯示 conflicted files。
+**Why:** Git GUI 的重要功能，完成後 branch 工作流才算完整。需要專門設計 conflict resolution UI（顯示衝突檔案清單、標記已解決、abort merge）。
+**Priority:** P2
+**Effort:** L (human) → M (CC+gstack ~30min)
+**Depends on:** Branch Management Phase 1 完成
+
+## git_commands.rs 拆分
+
+**What:** 將 git_commands.rs（~800 行）拆分為 `branch_commands.rs`、`remote_commands.rs`、`file_commands.rs` 等模組
+**Why:** 可維護性。目前所有 git 命令都在一個檔案裡，接近 800 行上限。
+**Priority:** P3
+**Effort:** S (CC+gstack ~15min)
+**Depends on:** Branch Management 完成後
+
 ## Command Palette
 
 **What:** VS Code 風格 command palette (Ctrl+Shift+P)

@@ -79,6 +79,49 @@ impl LocalGit {
     }
 }
 
+// ── Branch management (CLI-based, not on trait) ──────────
+
+impl LocalGit {
+    pub fn force_delete_branch(&self, path: &Path, name: &str) -> Result<(), GitError> {
+        Self::check_index_lock(path)?;
+        Self::run_git(path, &["branch", "-D", name])?;
+        Ok(())
+    }
+
+    pub fn rename_branch(&self, path: &Path, old_name: &str, new_name: &str) -> Result<(), GitError> {
+        Self::check_index_lock(path)?;
+        Self::run_git(path, &["branch", "-m", old_name, new_name])?;
+        Ok(())
+    }
+
+    pub fn checkout_remote_branch(&self, path: &Path, remote_branch: &str) -> Result<String, GitError> {
+        Self::check_index_lock(path)?;
+        // remote_branch is like "origin/feature-x", extract local name
+        let local_name = remote_branch
+            .split('/')
+            .skip(1)
+            .collect::<Vec<_>>()
+            .join("/");
+        if local_name.is_empty() {
+            return Err(GitError::OperationFailed(
+                format!("無效的 remote branch 名稱: {remote_branch}"),
+            ));
+        }
+        Self::run_git(path, &["checkout", "-b", &local_name, "--track", remote_branch])?;
+        Ok(local_name)
+    }
+
+    pub fn branch_merge_status(&self, path: &Path, branch_name: &str, base: &str) -> Result<BranchMergeStatus, GitError> {
+        let range = format!("{base}..{branch_name}");
+        let output = Self::run_git(path, &["rev-list", "--count", &range])?;
+        let count: usize = output.trim().parse().unwrap_or(0);
+        Ok(BranchMergeStatus {
+            merged: count == 0,
+            unmerged_count: count,
+        })
+    }
+}
+
 impl GitOperations for LocalGit {
     fn status(&self, path: &Path) -> Result<Vec<FileStatus>, GitError> {
         let repo = Self::open_repo(path)?;
@@ -379,33 +422,54 @@ impl GitOperations for LocalGit {
             let (branch, _) = branch_result?;
             let name = branch.name()?.unwrap_or("").to_string();
             let is_current = branch.is_head();
-            let upstream = branch
+
+            let upstream_name = branch
                 .upstream()
                 .ok()
                 .and_then(|u| u.name().ok().flatten().map(|s| s.to_string()));
-            let commit_id = branch
-                .get()
-                .peel_to_commit()
-                .ok()
-                .map(|c| c.id().to_string());
+
+            let local_commit = branch.get().peel_to_commit().ok();
+            let commit_id = local_commit.as_ref().map(|c| c.id().to_string());
+            let last_commit_timestamp = local_commit.as_ref().map(|c| c.time().seconds());
+
+            // Compute ahead/behind using git2 if upstream exists
+            let (ahead, behind) = if let Some(ref upstream_ref) = upstream_name {
+                if let Ok(upstream_branch) = repo.find_branch(upstream_ref, git2::BranchType::Remote) {
+                    if let (Some(local_oid), Ok(upstream_commit)) = (
+                        local_commit.as_ref().map(|c| c.id()),
+                        upstream_branch.get().peel_to_commit(),
+                    ) {
+                        repo.graph_ahead_behind(local_oid, upstream_commit.id())
+                            .map(|(a, b)| (Some(a as u32), Some(b as u32)))
+                            .unwrap_or((None, None))
+                    } else {
+                        (None, None)
+                    }
+                } else {
+                    (None, None)
+                }
+            } else {
+                (None, None)
+            };
 
             branches.push(Branch {
                 name,
                 is_current,
                 is_remote: false,
-                upstream,
+                upstream: upstream_name,
                 commit_id,
+                ahead,
+                behind,
+                last_commit_timestamp,
             });
         }
 
         for branch_result in repo.branches(Some(git2::BranchType::Remote))? {
             let (branch, _) = branch_result?;
             let name = branch.name()?.unwrap_or("").to_string();
-            let commit_id = branch
-                .get()
-                .peel_to_commit()
-                .ok()
-                .map(|c| c.id().to_string());
+            let commit = branch.get().peel_to_commit().ok();
+            let commit_id = commit.as_ref().map(|c| c.id().to_string());
+            let last_commit_timestamp = commit.as_ref().map(|c| c.time().seconds());
 
             branches.push(Branch {
                 name,
@@ -413,6 +477,9 @@ impl GitOperations for LocalGit {
                 is_remote: true,
                 upstream: None,
                 commit_id,
+                ahead: None,
+                behind: None,
+                last_commit_timestamp,
             });
         }
 

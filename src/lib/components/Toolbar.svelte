@@ -1,8 +1,10 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
   import { gitPush, gitPull, gitFetch, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
+  import BranchManager from './BranchManager.svelte';
 
   let branchDropdownOpen = $state(false);
+  let branchManagerOpen = $state(false);
   let pushing = $state(false);
   let pulling = $state(false);
   let fetching = $state(false);
@@ -110,6 +112,20 @@
     branchDropdownOpen = false;
   }
 
+  function openBranchManager() {
+    branchDropdownOpen = false;
+    branchManagerOpen = true;
+    if (app.repoPath) {
+      gitBranches(app.repoPath).then((b) => {
+        app.branches = b;
+      });
+    }
+  }
+
+  function closeBranchManager() {
+    branchManagerOpen = false;
+  }
+
   function handleBranchKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape' && branchDropdownOpen) {
       e.stopPropagation();
@@ -151,7 +167,14 @@
             {#if branch.is_current}<span class="current-marker">●</span>{/if}
           </button>
         {/each}
+        <div class="dropdown-divider"></div>
+        <button class="manage-link" onclick={openBranchManager}>
+          管理分支...
+        </button>
       </div>
+    {/if}
+    {#if branchManagerOpen}
+      <BranchManager open={branchManagerOpen} onClose={closeBranchManager} />
     {/if}
   </div>
 
@@ -266,6 +289,24 @@
   .branch-item:hover { background: var(--bg-hover); }
   .branch-item.active { color: var(--accent); }
   .current-marker { color: var(--accent); font-size: 8px; }
+  .dropdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: var(--space-xs) 0;
+  }
+  .manage-link {
+    display: block;
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-ui);
+    cursor: pointer;
+    text-align: left;
+  }
+  .manage-link:hover { background: var(--bg-hover); }
   .external-tools {
     display: flex;
     gap: 2px;

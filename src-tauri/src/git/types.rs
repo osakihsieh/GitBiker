@@ -101,6 +101,15 @@ pub struct Branch {
     pub is_remote: bool,
     pub upstream: Option<String>,
     pub commit_id: Option<String>,
+    pub ahead: Option<u32>,
+    pub behind: Option<u32>,
+    pub last_commit_timestamp: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BranchMergeStatus {
+    pub merged: bool,
+    pub unmerged_count: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
