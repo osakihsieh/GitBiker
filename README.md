@@ -1,4 +1,4 @@
-# gitbiker
+# GitBiker
 
 Fast, minimal, open-source Git GUI client built with Rust + Tauri + Svelte.
 
@@ -10,7 +10,7 @@ Existing Git GUIs all have trade-offs:
 - **Fork / Sublime Merge**: Not open-source
 - **GitButler**: Fair Source license, focused on virtual branches
 
-gitbiker aims to be a **fast, cross-platform, open-source** Git GUI with first-class WSL2 support.
+GitBiker aims to be a **fast, cross-platform, open-source** Git GUI with first-class WSL2 support.
 
 ## Features (planned)
 

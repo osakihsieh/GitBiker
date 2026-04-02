@@ -1,4 +1,4 @@
-# gitbiker Design System
+# GitBiker Design System
 
 ## 視覺方向：極簡主義
 

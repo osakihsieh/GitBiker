@@ -36,7 +36,7 @@
       <circle cx="36" cy="12" r="2" fill="var(--text-primary)" opacity="0.4"/>
       <circle cx="46" cy="12" r="2" fill="var(--text-primary)" opacity="0.4"/>
     </svg>
-    <div class="logo-text">gitbiker</div>
+    <div class="logo-text">GitBiker</div>
     <div class="logo-sub">fast. minimal. yours.</div>
   </div>
 

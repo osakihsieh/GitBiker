@@ -1,7 +1,7 @@
 {
   "name": "gitbiker",
   "version": "0.1.0",
-  "description": "Fast, minimal, open-source Git GUI client",
+  "description": "GitBiker — Fast, minimal, open-source Git GUI client",
   "type": "module",
   "scripts": {
     "dev": "vite dev",

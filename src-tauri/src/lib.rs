@@ -13,7 +13,7 @@ pub fn run() {
         )
         .init();
 
-    tracing::info!("gitbiker 啟動中...");
+    tracing::info!("GitBiker 啟動中...");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -38,5 +38,5 @@ pub fn run() {
             commands::check_git_version,
         ])
         .run(tauri::generate_context!())
-        .expect("啟動 gitbiker 失敗");
+        .expect("啟動 GitBiker 失敗");
 }

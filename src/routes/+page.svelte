@@ -103,7 +103,7 @@
     </div>
   {:else}
     <div class="welcome-toolbar">
-      <span class="app-name">gitbiker</span>
+      <span class="app-name">GitBiker</span>
       <button class="settings-btn" onclick={() => showSettings = true}>⚙</button>
     </div>
     <Welcome onOpenRepo={openRepo} onClone={handleClone} />
