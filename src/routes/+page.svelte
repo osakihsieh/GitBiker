@@ -15,11 +15,13 @@
   import RepoPopover from '$lib/components/RepoPopover.svelte';
   import Settings from '$lib/components/Settings.svelte';
   import CommandPalette from '$lib/components/CommandPalette.svelte';
+  import InlineTerminal from '$lib/components/InlineTerminal.svelte';
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
   let showPopover = $state(false);
   let showCommandPalette = $state(false);
+  let showTerminal = $state(false);
 
   // 啟動時從 Tauri Store 載入最近開啟的 repos
   app.loadRecentRepos();
@@ -47,6 +49,13 @@
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
+    // Ctrl+`: toggle inline terminal
+    if (e.ctrlKey && e.key === '`') {
+      e.preventDefault();
+      showTerminal = !showTerminal;
+      return;
+    }
+
     // Ctrl+Shift+P: command palette
     if (e.ctrlKey && e.shiftKey && e.key === 'P') {
       e.preventDefault();
@@ -160,6 +169,7 @@
         <CommitLog />
       </div>
     </div>
+    <InlineTerminal visible={showTerminal} onClose={() => (showTerminal = false)} />
   {:else}
     <div class="welcome-toolbar">
       <div class="spacer"></div>

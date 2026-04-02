@@ -67,6 +67,7 @@ pub fn run() {
             commands::open_in_editor,
             commands::open_in_terminal,
             commands::detect_editors,
+            commands::run_shell_command,
         ])
         .run(tauri::generate_context!())
         .expect("啟動 GitBiker 失敗");
