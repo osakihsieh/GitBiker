@@ -278,4 +278,36 @@ describe('AppState', () => {
       expect(app.recentRepos[0]).toBe('/repo/new');
     });
   });
+
+  describe('viewMode', () => {
+    it('預設為 worktree', () => {
+      expect(app.viewMode).toBe('worktree');
+    });
+
+    it('selectCommit 切換到 commit-detail', () => {
+      const commit = { id: 'abc123', message: 'test', author: 'A', email: '', timestamp: 0, parents: [] };
+      app.selectCommit(commit);
+      expect(app.viewMode).toBe('commit-detail');
+      expect(app.selectedCommit).toEqual(commit);
+    });
+
+    it('backToWorktree 回到 worktree', () => {
+      app.selectCommit({ id: 'abc', message: '', author: '', email: '', timestamp: 0, parents: [] });
+      app.backToWorktree();
+      expect(app.viewMode).toBe('worktree');
+      expect(app.selectedCommit).toBeNull();
+    });
+
+    it('closeAllTabs 重置 viewMode', () => {
+      app.tabs = [
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
+      ];
+      app.activeTabId = 'a';
+      app.selectCommit({ id: 'x', message: '', author: '', email: '', timestamp: 0, parents: [] });
+
+      app.closeAllTabs();
+      expect(app.viewMode).toBe('worktree');
+      expect(app.selectedCommit).toBeNull();
+    });
+  });
 });

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
   interface Props {
     onOpenPopover?: () => void;
@@ -11,6 +12,14 @@
   let scrollContainer: HTMLDivElement | undefined = $state();
   let showLeftArrow = $state(false);
   let showRightArrow = $state(false);
+
+  const contextMenuItems: MenuItem[] = [
+    { id: 'close', label: 'Close', shortcut: 'Ctrl+W' },
+    { id: 'closeOthers', label: 'Close Others' },
+    { id: 'closeAll', label: 'Close All' },
+    { id: '_sep', label: '', separator: true },
+    { id: 'copyPath', label: 'Copy Path' },
+  ];
 
   function handleClick(tabId: string) {
     app.switchTab(tabId);
@@ -37,10 +46,10 @@
     contextMenu = null;
   }
 
-  function handleContextAction(action: string) {
+  function handleContextSelect(actionId: string) {
     if (!contextMenu) return;
     const { tabId } = contextMenu;
-    switch (action) {
+    switch (actionId) {
       case 'close':
         app.closeTab(tabId);
         break;
@@ -56,7 +65,6 @@
         break;
       }
     }
-    closeContextMenu();
   }
 
   function checkOverflow() {
@@ -142,20 +150,14 @@
   </div>
 {/if}
 
-<!-- Context Menu -->
 {#if contextMenu}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="context-overlay" onclick={closeContextMenu} oncontextmenu={(e) => { e.preventDefault(); closeContextMenu(); }}></div>
-  <div class="context-menu" style="left:{contextMenu.x}px;top:{contextMenu.y}px">
-    <button class="context-item" onclick={() => handleContextAction('close')}>
-      <span>Close</span>
-      <span class="shortcut">Ctrl+W</span>
-    </button>
-    <button class="context-item" onclick={() => handleContextAction('closeOthers')}>Close Others</button>
-    <button class="context-item" onclick={() => handleContextAction('closeAll')}>Close All</button>
-    <div class="context-divider"></div>
-    <button class="context-item" onclick={() => handleContextAction('copyPath')}>Copy Path</button>
-  </div>
+  <ContextMenu
+    x={contextMenu.x}
+    y={contextMenu.y}
+    items={contextMenuItems}
+    onSelect={handleContextSelect}
+    onClose={closeContextMenu}
+  />
 {/if}
 
 <style>
@@ -262,46 +264,4 @@
     border: none;
   }
   .tab-add:hover { background: var(--bg-hover); color: var(--text-primary); }
-
-  /* Context Menu */
-  .context-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 99;
-  }
-  .context-menu {
-    position: fixed;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    min-width: 180px;
-    z-index: 100;
-    padding: var(--space-xs) 0;
-  }
-  .context-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 6px var(--space-md);
-    font-size: 12px;
-    font-family: var(--font-ui);
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    text-align: left;
-  }
-  .context-item:hover { background: var(--bg-hover); }
-  .shortcut {
-    color: var(--text-muted);
-    font-size: 11px;
-    font-family: var(--font-mono);
-  }
-  .context-divider {
-    height: 1px;
-    background: var(--border);
-    margin: var(--space-xs) 0;
-  }
 </style>

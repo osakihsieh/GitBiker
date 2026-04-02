@@ -1,22 +1,21 @@
 import type { FileStatus, Commit, DiffResult, Branch } from '$lib/git/types';
-import { gitStatus, gitLog, gitBranches, gitDiff, startWatching, stopWatching } from '$lib/git/commands';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { load, type Store } from '@tauri-apps/plugin-store';
-
-const STORE_FILE = 'app-settings.json';
-const RECENT_REPOS_KEY = 'recentRepos';
-const PINNED_REPOS_KEY = 'pinnedRepos';
-const MAX_RECENT_REPOS = 10;
-const MAX_COMMITS_PER_TAB = 200;
-
-let storeInstance: Store | null = null;
-
-async function getStore(): Promise<Store> {
-  if (!storeInstance) {
-    storeInstance = await load(STORE_FILE);
-  }
-  return storeInstance;
-}
+import {
+  loadRecentRepos as _loadRecentRepos,
+  addRecentRepo as _addRecentRepo,
+  removeRecentRepo as _removeRecentRepo,
+  isPinned as _isPinned,
+  pinRepo as _pinRepo,
+  unpinRepo as _unpinRepo,
+  togglePin as _togglePin,
+} from './persistence.svelte';
+import {
+  refreshStatus as _refreshStatus,
+  refreshAll as _refreshAll,
+  loadDiff as _loadDiff,
+  loadRepoData,
+  setupWatcher,
+  teardownWatcher,
+} from './git-actions.svelte';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -46,12 +45,12 @@ export interface RepoTab {
 
 // ── Helpers ────────────────────────────────────────────
 
-function repoNameFromPath(path: string): string {
+export function repoNameFromPath(path: string): string {
   const parts = path.replace(/\\/g, '/').split('/');
   return parts[parts.length - 1] || '';
 }
 
-function createEmptyState(): RepoState {
+export function createEmptyState(): RepoState {
   return {
     stagedFiles: [],
     unstagedFiles: [],
@@ -74,11 +73,15 @@ function createEmptyState(): RepoState {
 //    │
 //    └── each tab holds its own RepoState
 //
+//  Sidebar modes:
+//    viewMode = 'worktree'       ← staged/unstaged + commit form
+//    viewMode = 'commit-detail'  ← selected commit's file list
+//
 //  On tab switch:
-//    1. Save current state into tab
-//    2. Restore target tab state into activeTab
-//    3. Restart fs watcher for new repo
-//    4. Background refresh gitStatus
+//    1. Restore target tab state
+//    2. Restart fs watcher for new repo
+//    3. Background refresh gitStatus
+//    4. Reset viewMode to 'worktree'
 //    5. currentDiff is NOT saved (memory optimization)
 //
 
@@ -92,6 +95,10 @@ class AppState {
   // ── currentDiff lives outside tabs (not persisted across tab switches) ──
   currentDiff = $state<DiffResult | null>(null);
 
+  // ── View mode ──
+  viewMode = $state<'worktree' | 'commit-detail'>('worktree');
+  selectedCommit = $state<Commit | null>(null);
+
   // ── Repo lists ──
   recentRepos = $state<string[]>([]);
   pinnedRepos = $state<string[]>([]);
@@ -100,8 +107,7 @@ class AppState {
   loading = $state(false);
   toasts = $state<Toast[]>([]);
 
-  // ── Watcher ──
-  private unlistenGitChanged: UnlistenFn | null = null;
+  // ── Switch guard ──
   private switchGuard = false;
 
   // ── Computed ──
@@ -179,6 +185,18 @@ class AppState {
     if (tab) tab.state.branches = value;
   }
 
+  // ── View Mode ──
+
+  selectCommit(commit: Commit): void {
+    this.selectedCommit = commit;
+    this.viewMode = 'commit-detail';
+  }
+
+  backToWorktree(): void {
+    this.selectedCommit = null;
+    this.viewMode = 'worktree';
+  }
+
   // ── Tab CRUD ──
 
   async openRepo(path: string, background = false): Promise<void> {
@@ -202,27 +220,14 @@ class AppState {
     if (!background) {
       this.activeTabId = tabId;
       this.currentDiff = null;
+      this.viewMode = 'worktree';
+      this.selectedCommit = null;
       this.loading = true;
 
       try {
-        const [status, commits, branches] = await Promise.all([
-          gitStatus(path),
-          gitLog(path, MAX_COMMITS_PER_TAB),
-          gitBranches(path),
-        ]);
-
-        // Use reactive proxy from this.tabs, not the original local variable
-        const reactiveTab = this.tabs.find((t) => t.id === tabId);
-        if (reactiveTab) {
-          reactiveTab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
-          reactiveTab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
-          reactiveTab.state.commits = commits;
-          reactiveTab.state.branches = branches;
-          reactiveTab.state.currentBranch = branches.find((b) => b.is_current)?.name || 'main';
-        }
-
-        await this.addRecentRepo(path);
-        await this.setupWatcher(path);
+        await loadRepoData(this, tabId, path);
+        await _addRecentRepo(this, path);
+        await setupWatcher(this, path);
       } catch (e: unknown) {
         // Remove the tab if loading failed
         this.tabs = this.tabs.filter((t) => t.id !== tabId);
@@ -246,11 +251,13 @@ class AppState {
     try {
       this.activeTabId = id;
       this.currentDiff = null;
+      this.viewMode = 'worktree';
+      this.selectedCommit = null;
 
-      await this.setupWatcher(target.path);
+      await setupWatcher(this, target.path);
 
       // Background refresh
-      this.refreshStatus().catch(() => {});
+      _refreshStatus(this).catch(() => {});
     } finally {
       this.switchGuard = false;
     }
@@ -267,7 +274,9 @@ class AppState {
       if (this.tabs.length === 0) {
         this.activeTabId = null;
         this.currentDiff = null;
-        this.teardownWatcher();
+        this.viewMode = 'worktree';
+        this.selectedCommit = null;
+        teardownWatcher();
       } else {
         // Activate adjacent tab
         const newIdx = Math.min(idx, this.tabs.length - 1);
@@ -287,7 +296,9 @@ class AppState {
     this.tabs = [];
     this.activeTabId = null;
     this.currentDiff = null;
-    this.teardownWatcher();
+    this.viewMode = 'worktree';
+    this.selectedCommit = null;
+    teardownWatcher();
   }
 
   // ── Tab info helpers ──
@@ -313,151 +324,21 @@ class AppState {
     return parent ? `${parent}/${tab.name}` : tab.name;
   }
 
-  // ── Pin management ──
+  // ── Persistence wrappers (maintain existing API) ──
 
-  isPinned(path: string): boolean {
-    return this.pinnedRepos.includes(path);
-  }
+  async loadRecentRepos() { return _loadRecentRepos(this); }
+  async addRecentRepo(path: string) { return _addRecentRepo(this, path); }
+  async removeRecentRepo(path: string) { return _removeRecentRepo(this, path); }
+  isPinned(path: string) { return _isPinned(this, path); }
+  async pinRepo(path: string) { return _pinRepo(this, path); }
+  async unpinRepo(path: string) { return _unpinRepo(this, path); }
+  async togglePin(path: string) { return _togglePin(this, path); }
 
-  async pinRepo(path: string): Promise<void> {
-    if (this.isPinned(path)) return;
-    this.pinnedRepos = [...this.pinnedRepos, path];
-    await this.savePinnedRepos();
-  }
+  // ── Git action wrappers (maintain existing API) ──
 
-  async unpinRepo(path: string): Promise<void> {
-    this.pinnedRepos = this.pinnedRepos.filter((r) => r !== path);
-    await this.savePinnedRepos();
-  }
-
-  async togglePin(path: string): Promise<void> {
-    if (this.isPinned(path)) {
-      await this.unpinRepo(path);
-    } else {
-      await this.pinRepo(path);
-    }
-  }
-
-  // ── Persistence ──
-
-  async loadRecentRepos(): Promise<void> {
-    try {
-      const store = await getStore();
-      const [savedRecent, savedPinned] = await Promise.all([
-        store.get<string[]>(RECENT_REPOS_KEY),
-        store.get<string[]>(PINNED_REPOS_KEY),
-      ]);
-      if (Array.isArray(savedRecent)) {
-        this.recentRepos = savedRecent.slice(0, MAX_RECENT_REPOS);
-      }
-      if (Array.isArray(savedPinned)) {
-        this.pinnedRepos = savedPinned;
-      }
-    } catch {
-      // 首次啟動 store 檔案不存在，忽略
-    }
-  }
-
-  async addRecentRepo(path: string): Promise<void> {
-    const filtered = this.recentRepos.filter((r) => r !== path);
-    this.recentRepos = [path, ...filtered].slice(0, MAX_RECENT_REPOS);
-    try {
-      const store = await getStore();
-      await store.set(RECENT_REPOS_KEY, this.recentRepos);
-    } catch {
-      // 寫入失敗不影響功能
-    }
-  }
-
-  async removeRecentRepo(path: string): Promise<void> {
-    this.recentRepos = this.recentRepos.filter((r) => r !== path);
-    try {
-      const store = await getStore();
-      await store.set(RECENT_REPOS_KEY, this.recentRepos);
-    } catch {}
-  }
-
-  private async savePinnedRepos(): Promise<void> {
-    try {
-      const store = await getStore();
-      await store.set(PINNED_REPOS_KEY, this.pinnedRepos);
-    } catch {}
-  }
-
-  // ── Refresh ──
-
-  async refreshStatus(): Promise<void> {
-    const tab = this.activeTab;
-    if (!tab) return;
-    try {
-      const status = await gitStatus(tab.path);
-      tab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
-      tab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
-    } catch (e: unknown) {
-      this.addToast(String(e), 'error');
-    }
-  }
-
-  async refreshAll(): Promise<void> {
-    const tab = this.activeTab;
-    if (!tab) return;
-    try {
-      const [status, commits, branches] = await Promise.all([
-        gitStatus(tab.path),
-        gitLog(tab.path, MAX_COMMITS_PER_TAB),
-        gitBranches(tab.path),
-      ]);
-      tab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
-      tab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
-      tab.state.commits = commits;
-      tab.state.branches = branches;
-      tab.state.currentBranch = branches.find((b) => b.is_current)?.name || tab.state.currentBranch;
-    } catch (e: unknown) {
-      this.addToast(String(e), 'error');
-    }
-  }
-
-  // ── Diff ──
-
-  async loadDiff(filePath: string): Promise<void> {
-    const tab = this.activeTab;
-    if (!tab) return;
-    try {
-      this.currentDiff = await gitDiff(tab.path, filePath);
-    } catch (e: unknown) {
-      this.addToast(String(e), 'error');
-    }
-  }
-
-  // ── Watcher ──
-
-  private async setupWatcher(path: string): Promise<void> {
-    this.teardownWatcher();
-
-    try {
-      await startWatching(path);
-      this.unlistenGitChanged = await listen<string>('git-changed', (event) => {
-        // Only process events for the active tab's repo
-        if (this.repoPath !== path) return;
-
-        if (event.payload === 'index') {
-          this.refreshStatus();
-        } else {
-          this.refreshAll();
-        }
-      });
-    } catch (e: unknown) {
-      console.warn('fs watcher 啟動失敗:', e);
-    }
-  }
-
-  private teardownWatcher(): void {
-    if (this.unlistenGitChanged) {
-      this.unlistenGitChanged();
-      this.unlistenGitChanged = null;
-    }
-    stopWatching().catch(() => {});
-  }
+  async refreshStatus() { return _refreshStatus(this); }
+  async refreshAll() { return _refreshAll(this); }
+  async loadDiff(filePath: string) { return _loadDiff(this, filePath); }
 
   // ── Toast ──
 
