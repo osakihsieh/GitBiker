@@ -1,7 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { app } from '$lib/stores/app.svelte';
-  import { gitDiff } from '$lib/git/commands';
+  import { gitDiff, openInEditor, openInFolder, openInTerminal } from '$lib/git/commands';
   import TitleBar from '$lib/components/TitleBar.svelte';
   import Toolbar from '$lib/components/Toolbar.svelte';
   import TabBar from '$lib/components/TabBar.svelte';
@@ -70,6 +70,36 @@
     if (e.ctrlKey && e.key === 't') {
       e.preventDefault();
       showPopover = true;
+      return;
+    }
+
+    // Alt+E: open in editor (GitKraken style)
+    if (e.altKey && e.key === 'e') {
+      e.preventDefault();
+      if (app.repoPath) {
+        openInEditor(app.repoPath, app.preferredEditor ?? undefined)
+          .catch((err: unknown) => app.addToast(String(err), 'error'));
+      }
+      return;
+    }
+
+    // Alt+O: open in folder (GitKraken style)
+    if (e.altKey && e.key === 'o') {
+      e.preventDefault();
+      if (app.repoPath) {
+        openInFolder(app.repoPath)
+          .catch((err: unknown) => app.addToast(String(err), 'error'));
+      }
+      return;
+    }
+
+    // Alt+T: open in terminal (GitKraken style)
+    if (e.altKey && e.key === 't') {
+      e.preventDefault();
+      if (app.repoPath) {
+        openInTerminal(app.repoPath)
+          .catch((err: unknown) => app.addToast(String(err), 'error'));
+      }
       return;
     }
 

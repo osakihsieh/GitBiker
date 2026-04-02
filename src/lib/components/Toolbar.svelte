@@ -126,13 +126,13 @@
   </div>
 
   <div class="external-tools">
-    <button class="tool-btn" onclick={handleOpenFolder} title="在檔案總管開啟" aria-label="Open in file explorer">
+    <button class="tool-btn" onclick={handleOpenFolder} title="在檔案總管開啟 (Alt+O)" aria-label="Open in file explorer">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     </button>
-    <button class="tool-btn" onclick={handleOpenEditor} title="在編輯器開啟" aria-label="Open in editor">
+    <button class="tool-btn" onclick={handleOpenEditor} title="在編輯器開啟 (Alt+E)" aria-label="Open in editor">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
     </button>
-    <button class="tool-btn" onclick={handleOpenTerminal} title="開啟終端機" aria-label="Open terminal">
+    <button class="tool-btn" onclick={handleOpenTerminal} title="開啟終端機 (Alt+T)" aria-label="Open terminal">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
     </button>
   </div>

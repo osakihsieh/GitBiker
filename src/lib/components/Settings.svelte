@@ -134,6 +134,9 @@
     { keys: 'Ctrl+1', action: '聚焦 File Tree' },
     { keys: 'Ctrl+2', action: '聚焦 Diff Viewer' },
     { keys: 'Ctrl+3', action: '聚焦 Commit History' },
+    { keys: 'Alt+E', action: '在編輯器開啟' },
+    { keys: 'Alt+O', action: '在資料夾開啟' },
+    { keys: 'Alt+T', action: '在終端機開啟' },
     { keys: 'Escape', action: '關閉 Dialog / Settings' },
   ];
 
