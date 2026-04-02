@@ -15,37 +15,166 @@ const { app } = await import('./app.svelte');
 describe('AppState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset tabs state
+    app.closeAllTabs();
   });
 
   describe('hasRepo', () => {
-    it('repoPath 為 null 時回傳 false', () => {
-      app.repoPath = null;
+    it('無 tabs 時回傳 false', () => {
       expect(app.hasRepo).toBe(false);
     });
 
-    it('repoPath 有值時回傳 true', () => {
-      app.repoPath = '/some/repo';
+    it('有 active tab 時回傳 true', () => {
+      // Directly add a tab for testing
+      app.tabs = [{
+        id: 'test-1',
+        path: '/some/repo',
+        name: 'repo',
+        state: {
+          stagedFiles: [],
+          unstagedFiles: [],
+          commits: [],
+          branches: [],
+          currentBranch: 'main',
+          selectedFile: null,
+        },
+      }];
+      app.activeTabId = 'test-1';
       expect(app.hasRepo).toBe(true);
-      app.repoPath = null;
     });
   });
 
   describe('repoName', () => {
-    it('repoPath 為 null 時回傳空字串', () => {
-      app.repoPath = null;
+    it('無 active tab 時回傳空字串', () => {
       expect(app.repoName).toBe('');
     });
 
-    it('提取 Unix 路徑最後一段', () => {
-      app.repoPath = '/home/user/my-repo';
+    it('回傳 active tab 的 name', () => {
+      app.tabs = [{
+        id: 'test-1',
+        path: '/home/user/my-repo',
+        name: 'my-repo',
+        state: {
+          stagedFiles: [],
+          unstagedFiles: [],
+          commits: [],
+          branches: [],
+          currentBranch: 'main',
+          selectedFile: null,
+        },
+      }];
+      app.activeTabId = 'test-1';
       expect(app.repoName).toBe('my-repo');
-      app.repoPath = null;
+    });
+  });
+
+  describe('tab management', () => {
+    it('closeTab 移除 tab', () => {
+      app.tabs = [
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
+        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null } },
+      ];
+      app.activeTabId = 'a';
+
+      app.closeTab('a');
+      expect(app.tabs.length).toBe(1);
+      expect(app.tabs[0].id).toBe('b');
     });
 
-    it('提取 Windows 路徑最後一段', () => {
-      app.repoPath = 'C:\\Users\\user\\my-repo';
-      expect(app.repoName).toBe('my-repo');
-      app.repoPath = null;
+    it('closeTab 最後一個 tab 回到 Welcome', () => {
+      app.tabs = [
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
+      ];
+      app.activeTabId = 'a';
+
+      app.closeTab('a');
+      expect(app.tabs.length).toBe(0);
+      expect(app.activeTabId).toBe(null);
+      expect(app.hasRepo).toBe(false);
+    });
+
+    it('closeOtherTabs 只保留指定 tab', () => {
+      app.tabs = [
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
+        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null } },
+        { id: 'c', path: '/c', name: 'c', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'feat', selectedFile: null } },
+      ];
+      app.activeTabId = 'a';
+
+      app.closeOtherTabs('b');
+      expect(app.tabs.length).toBe(1);
+      expect(app.tabs[0].id).toBe('b');
+    });
+
+    it('closeAllTabs 清空所有 tabs', () => {
+      app.tabs = [
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
+      ];
+      app.activeTabId = 'a';
+
+      app.closeAllTabs();
+      expect(app.tabs.length).toBe(0);
+      expect(app.activeTabId).toBe(null);
+    });
+
+    it('dirtyCount 計算 staged + unstaged', () => {
+      app.tabs = [{
+        id: 'a', path: '/a', name: 'a',
+        state: {
+          stagedFiles: [{ path: 'f1', kind: 'Modified', staging: 'Staged' }],
+          unstagedFiles: [{ path: 'f2', kind: 'Modified', staging: 'Unstaged' }, { path: 'f3', kind: 'Added', staging: 'Unstaged' }],
+          commits: [], branches: [], currentBranch: 'main', selectedFile: null,
+        },
+      }];
+      expect(app.dirtyCount('a')).toBe(3);
+    });
+
+    it('displayName 處理同名 tabs', () => {
+      app.tabs = [
+        { id: 'a', path: '/projects/alpha/main', name: 'main', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null } },
+        { id: 'b', path: '/projects/beta/main', name: 'main', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null } },
+      ];
+
+      expect(app.displayName(app.tabs[0])).toBe('alpha/main');
+      expect(app.displayName(app.tabs[1])).toBe('beta/main');
+    });
+
+    it('displayName 無重複時只顯示名稱', () => {
+      app.tabs = [
+        { id: 'a', path: '/projects/alpha', name: 'alpha', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null } },
+        { id: 'b', path: '/projects/beta', name: 'beta', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null } },
+      ];
+
+      expect(app.displayName(app.tabs[0])).toBe('alpha');
+    });
+  });
+
+  describe('pin management', () => {
+    it('pinRepo 新增到 pinnedRepos', async () => {
+      app.pinnedRepos = [];
+      mockStore.set.mockResolvedValueOnce(undefined);
+
+      await app.pinRepo('/repo/a');
+      expect(app.pinnedRepos).toContain('/repo/a');
+    });
+
+    it('unpinRepo 從 pinnedRepos 移除', async () => {
+      app.pinnedRepos = ['/repo/a', '/repo/b'];
+      mockStore.set.mockResolvedValueOnce(undefined);
+
+      await app.unpinRepo('/repo/a');
+      expect(app.pinnedRepos).not.toContain('/repo/a');
+    });
+
+    it('togglePin 切換 pin 狀態', async () => {
+      app.pinnedRepos = [];
+      mockStore.set.mockResolvedValue(undefined);
+
+      await app.togglePin('/repo/a');
+      expect(app.isPinned('/repo/a')).toBe(true);
+
+      await app.togglePin('/repo/a');
+      expect(app.isPinned('/repo/a')).toBe(false);
     });
   });
 
@@ -70,7 +199,6 @@ describe('AppState', () => {
 
   describe('theme', () => {
     it('預設主題為 system', () => {
-      // localStorage 為空時預設 system
       expect(['system', 'dark', 'light']).toContain(app.theme);
     });
 
@@ -83,7 +211,6 @@ describe('AppState', () => {
       expect(app.theme).toBe('light');
       expect(localStorage.getItem('gitbiker-theme')).toBe('light');
 
-      // 還原
       app.setTheme('system');
     });
 
@@ -108,6 +235,7 @@ describe('AppState', () => {
     it('loadRecentRepos 從 store 載入', async () => {
       const repos = ['/repo/a', '/repo/b'];
       mockStore.get.mockResolvedValueOnce(repos);
+      mockStore.get.mockResolvedValueOnce(null); // pinnedRepos
 
       await app.loadRecentRepos();
       expect(mockStore.get).toHaveBeenCalledWith('recentRepos');
@@ -115,6 +243,7 @@ describe('AppState', () => {
     });
 
     it('loadRecentRepos 在 store 為空時保持空陣列', async () => {
+      mockStore.get.mockResolvedValueOnce(null);
       mockStore.get.mockResolvedValueOnce(null);
       app.recentRepos = [];
 

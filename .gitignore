@@ -15,3 +15,7 @@ Thumbs.db
 # Env
 .env
 .env.*
+
+# Claude Code
+.claude/settings.local.json
+.gstack/

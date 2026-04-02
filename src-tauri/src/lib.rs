@@ -1,8 +1,10 @@
 mod commands;
 mod git;
+mod watcher;
 
 use commands::git_commands::GitState;
 use git::LocalGit;
+use watcher::WatcherState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -22,6 +24,7 @@ pub fn run() {
         .manage(GitState {
             git: LocalGit::new(),
         })
+        .manage(WatcherState::new())
         .invoke_handler(tauri::generate_handler![
             commands::git_status,
             commands::git_log,
@@ -37,6 +40,8 @@ pub fn run() {
             commands::git_delete_branch,
             commands::git_clone,
             commands::check_git_version,
+            commands::start_watching,
+            commands::stop_watching,
         ])
         .run(tauri::generate_context!())
         .expect("啟動 GitBiker 失敗");

@@ -1,55 +1,31 @@
 <script lang="ts">
   import '../app.css';
   import { app } from '$lib/stores/app.svelte';
-  import { gitStatus, gitLog, gitBranches, gitDiff } from '$lib/git/commands';
+  import { gitDiff } from '$lib/git/commands';
   import Toolbar from '$lib/components/Toolbar.svelte';
+  import TabBar from '$lib/components/TabBar.svelte';
   import FileTree from '$lib/components/FileTree.svelte';
   import DiffViewer from '$lib/components/DiffViewer.svelte';
   import CommitLog from '$lib/components/CommitLog.svelte';
   import Welcome from '$lib/components/Welcome.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import CloneDialog from '$lib/components/CloneDialog.svelte';
+  import RepoPopover from '$lib/components/RepoPopover.svelte';
   import Settings from '$lib/components/Settings.svelte';
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
+  let showPopover = $state(false);
 
   // 啟動時從 Tauri Store 載入最近開啟的 repos
   app.loadRecentRepos();
 
-  async function openRepo(path: string) {
-    app.loading = true;
-    try {
-      const [status, commits, branches] = await Promise.all([
-        gitStatus(path),
-        gitLog(path),
-        gitBranches(path),
-      ]);
-
-      app.repoPath = path;
-      app.stagedFiles = status.filter((f) => f.staging === 'Staged');
-      app.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
-      app.commits = commits;
-      app.branches = branches;
-      app.currentBranch = branches.find((b) => b.is_current)?.name || 'main';
-      app.selectedFile = null;
-      app.currentDiff = null;
-
-      await app.addRecentRepo(path);
-    } catch (e: unknown) {
-      app.addToast(String(e), 'error');
-    } finally {
-      app.loading = false;
-    }
-  }
-
+  // Load diff when selected file changes
   $effect(() => {
     const file = app.selectedFile;
     const repoPath = app.repoPath;
     if (file && repoPath) {
-      gitDiff(repoPath, file)
-        .then((diff) => { app.currentDiff = diff; })
-        .catch((e) => { app.addToast(String(e), 'error'); });
+      app.loadDiff(file);
     }
   });
 
@@ -59,10 +35,42 @@
 
   function handleCloned(path: string) {
     showCloneDialog = false;
-    openRepo(path);
+    app.openRepo(path);
+  }
+
+  function togglePopover() {
+    showPopover = !showPopover;
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
+    // Ctrl+Tab / Ctrl+Shift+Tab: switch tabs
+    if (e.ctrlKey && e.key === 'Tab') {
+      e.preventDefault();
+      const tabs = app.tabs;
+      if (tabs.length <= 1) return;
+      const currentIdx = tabs.findIndex((t) => t.id === app.activeTabId);
+      if (currentIdx === -1) return;
+      const nextIdx = e.shiftKey
+        ? (currentIdx - 1 + tabs.length) % tabs.length
+        : (currentIdx + 1) % tabs.length;
+      app.switchTab(tabs[nextIdx].id);
+      return;
+    }
+
+    // Ctrl+W: close current tab
+    if (e.ctrlKey && e.key === 'w') {
+      e.preventDefault();
+      if (app.activeTabId) app.closeTab(app.activeTabId);
+      return;
+    }
+
+    // Ctrl+T: open popover
+    if (e.ctrlKey && e.key === 't') {
+      e.preventDefault();
+      showPopover = true;
+      return;
+    }
+
     // Ctrl+1/2/3: focus panels
     if (e.ctrlKey && !e.shiftKey) {
       if (e.key === '1') {
@@ -88,7 +96,11 @@
   {#if showSettings}
     <Settings onClose={() => showSettings = false} />
   {:else if app.hasRepo}
-    <Toolbar onOpenSettings={() => showSettings = true} />
+    <Toolbar
+      onOpenSettings={() => showSettings = true}
+      onOpenPopover={togglePopover}
+    />
+    <TabBar onOpenPopover={togglePopover} />
     <div class="main">
       <div class="sidebar">
         <FileTree />
@@ -107,8 +119,17 @@
       <span class="app-name">GitBiker</span>
       <button class="settings-btn" onclick={() => showSettings = true}>⚙</button>
     </div>
-    <Welcome onOpenRepo={openRepo} onClone={handleClone} />
+    <Welcome
+      onOpenRepo={(path) => app.openRepo(path)}
+      onClone={handleClone}
+    />
   {/if}
+
+  <RepoPopover
+    open={showPopover}
+    onClose={() => showPopover = false}
+    onClone={handleClone}
+  />
 
   {#if showCloneDialog}
     <CloneDialog

@@ -63,3 +63,11 @@ export async function gitCreateBranch(path: string, name: string): Promise<void>
 export async function gitDeleteBranch(path: string, name: string): Promise<void> {
   return invoke('git_delete_branch', { path, name });
 }
+
+export async function startWatching(path: string): Promise<void> {
+  return invoke('start_watching', { path });
+}
+
+export async function stopWatching(): Promise<void> {
+  return invoke('stop_watching');
+}

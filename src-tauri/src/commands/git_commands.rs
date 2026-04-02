@@ -1,10 +1,11 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::git::types::*;
 use crate::git::{GitError, GitOperations, LocalGit};
+use crate::watcher::WatcherState;
 
 pub struct GitState {
     pub git: LocalGit,
@@ -137,6 +138,20 @@ pub fn git_clone(url: String, dest: String) -> Result<(), GitError> {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         Err(GitError::OperationFailed(stderr))
     }
+}
+
+#[tauri::command]
+pub fn start_watching(
+    path: String,
+    watcher: State<WatcherState>,
+    app_handle: AppHandle,
+) -> Result<(), GitError> {
+    watcher.start(&path, app_handle)
+}
+
+#[tauri::command]
+pub fn stop_watching(watcher: State<WatcherState>) -> Result<(), GitError> {
+    watcher.stop()
 }
 
 #[tauri::command]

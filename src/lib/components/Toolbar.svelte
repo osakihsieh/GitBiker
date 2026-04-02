@@ -5,7 +5,6 @@
   let branchDropdownOpen = $state(false);
   let pushing = $state(false);
   let pulling = $state(false);
-  let fetching = $state(false);
 
   async function handlePush() {
     if (!app.repoPath || pushing) return;
@@ -67,12 +66,15 @@
 
   interface Props {
     onOpenSettings?: () => void;
+    onOpenPopover?: () => void;
   }
-  let { onOpenSettings }: Props = $props();
+  let { onOpenSettings, onOpenPopover }: Props = $props();
 </script>
 
 <div class="toolbar">
-  <span class="repo-name">{app.repoName}</span>
+  <button class="folder-btn" onclick={onOpenPopover} aria-label="Open repo switcher">
+    <span class="folder-icon">📁</span><span class="chevron">▾</span>
+  </button>
 
   <div class="branch-wrapper">
     <button class="branch-selector" onclick={toggleBranchDropdown}>
@@ -120,11 +122,20 @@
     flex-shrink: 0;
     user-select: none;
   }
-  .repo-name {
-    font-weight: 600;
-    font-size: var(--font-size-lg);
-    margin-right: var(--space-sm);
+  .folder-btn {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs) var(--space-sm);
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 14px;
   }
+  .folder-btn:hover { border-color: var(--accent); }
+  .folder-icon { font-size: 14px; }
   .branch-wrapper { position: relative; }
   .branch-selector {
     display: flex;
