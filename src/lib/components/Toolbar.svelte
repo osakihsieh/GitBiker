@@ -106,12 +106,25 @@
     }
   }
 
+  function closeBranchDropdown() {
+    branchDropdownOpen = false;
+  }
+
+  function handleBranchKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && branchDropdownOpen) {
+      e.stopPropagation();
+      closeBranchDropdown();
+    }
+  }
+
   interface Props {
     onOpenSettings?: () => void;
     onOpenPopover?: () => void;
   }
   let { onOpenSettings, onOpenPopover }: Props = $props();
 </script>
+
+<svelte:window onkeydown={handleBranchKeydown} />
 
 <div class="toolbar">
   <button class="folder-btn" onclick={onOpenPopover} aria-label="Open repo switcher">
@@ -125,6 +138,8 @@
       <span class="chevron">▾</span>
     </button>
     {#if branchDropdownOpen}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div class="dropdown-overlay" onclick={closeBranchDropdown}></div>
       <div class="branch-dropdown">
         {#each app.branches.filter(b => !b.is_remote) as branch}
           <button
@@ -212,6 +227,14 @@
   .branch-selector:hover { border-color: var(--accent); }
   .branch-icon { font-size: var(--font-size-lg); }
   .chevron { color: var(--text-muted); font-size: 10px; }
+  .dropdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 49;
+  }
   .branch-dropdown {
     position: absolute;
     top: 100%;
