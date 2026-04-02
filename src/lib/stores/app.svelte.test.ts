@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mockStore } from '../../tests/mocks/tauri';
+import { mockStore, mockGitCommands } from '../../tests/mocks/tauri';
 
 // 必須在 import app 之前設定 mock
 import '../../tests/mocks/tauri';
@@ -12,9 +12,16 @@ Object.defineProperty(document.documentElement, 'setAttribute', {
 
 const { app } = await import('./app.svelte');
 
+// Mock crypto.randomUUID
+let uuidCounter = 0;
+vi.stubGlobal('crypto', {
+  randomUUID: () => `uuid-${++uuidCounter}`,
+});
+
 describe('AppState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    uuidCounter = 0;
     // Reset tabs state
     app.closeAllTabs();
   });
@@ -279,6 +286,125 @@ describe('AppState', () => {
     });
   });
 
+  describe('computed property setters', () => {
+    const makeTab = () => ({
+      id: 'tab-1',
+      path: '/test/repo',
+      name: 'repo',
+      state: {
+        stagedFiles: [] as any[],
+        unstagedFiles: [] as any[],
+        commits: [] as any[],
+        branches: [] as any[],
+        currentBranch: 'main',
+        selectedFile: null as string | null,
+      },
+    });
+
+    it('set currentBranch 寫入 activeTab', () => {
+      app.tabs = [makeTab()];
+      app.activeTabId = 'tab-1';
+      app.currentBranch = 'develop';
+      expect(app.activeTab!.state.currentBranch).toBe('develop');
+    });
+
+    it('set selectedFile 寫入 activeTab', () => {
+      app.tabs = [makeTab()];
+      app.activeTabId = 'tab-1';
+      app.selectedFile = 'readme.md';
+      expect(app.activeTab!.state.selectedFile).toBe('readme.md');
+    });
+
+    it('set stagedFiles 寫入 activeTab', () => {
+      app.tabs = [makeTab()];
+      app.activeTabId = 'tab-1';
+      const files = [{ path: 'a.ts', kind: 'Modified', staging: 'Staged' }];
+      app.stagedFiles = files as any;
+      expect(app.activeTab!.state.stagedFiles).toEqual(files);
+    });
+
+    it('set unstagedFiles 寫入 activeTab', () => {
+      app.tabs = [makeTab()];
+      app.activeTabId = 'tab-1';
+      const files = [{ path: 'b.ts', kind: 'Added', staging: 'Unstaged' }];
+      app.unstagedFiles = files as any;
+      expect(app.activeTab!.state.unstagedFiles).toEqual(files);
+    });
+
+    it('set commits 寫入 activeTab', () => {
+      app.tabs = [makeTab()];
+      app.activeTabId = 'tab-1';
+      const commits = [{ id: 'abc', message: 'test', author: 'A', email: '', timestamp: 0, parents: [] }];
+      app.commits = commits as any;
+      expect(app.activeTab!.state.commits).toEqual(commits);
+    });
+
+    it('set branches 寫入 activeTab', () => {
+      app.tabs = [makeTab()];
+      app.activeTabId = 'tab-1';
+      const branches = [{ name: 'main', is_current: true, is_remote: false, upstream: null, commit_id: '123' }];
+      app.branches = branches as any;
+      expect(app.activeTab!.state.branches).toEqual(branches);
+    });
+
+    it('無 activeTab 時 setter 不拋錯', () => {
+      app.tabs = [];
+      app.activeTabId = null;
+      expect(() => { app.currentBranch = 'x'; }).not.toThrow();
+      expect(() => { app.selectedFile = 'x'; }).not.toThrow();
+      expect(() => { app.stagedFiles = []; }).not.toThrow();
+      expect(() => { app.unstagedFiles = []; }).not.toThrow();
+      expect(() => { app.commits = []; }).not.toThrow();
+      expect(() => { app.branches = []; }).not.toThrow();
+    });
+  });
+
+  describe('computed getters', () => {
+    it('repoPath 回傳 activeTab 的 path', () => {
+      app.tabs = [{
+        id: 'a', path: '/my/repo', name: 'repo',
+        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null },
+      }];
+      app.activeTabId = 'a';
+      expect(app.repoPath).toBe('/my/repo');
+    });
+
+    it('repoPath 無 activeTab 時回傳 null', () => {
+      expect(app.repoPath).toBeNull();
+    });
+
+    it('stagedFiles/unstagedFiles/commits/branches/currentBranch/selectedFile 無 activeTab 時回傳預設值', () => {
+      app.tabs = [];
+      app.activeTabId = null;
+      expect(app.stagedFiles).toEqual([]);
+      expect(app.unstagedFiles).toEqual([]);
+      expect(app.commits).toEqual([]);
+      expect(app.branches).toEqual([]);
+      expect(app.currentBranch).toBe('');
+      expect(app.selectedFile).toBeNull();
+    });
+  });
+
+  describe('tabBranch', () => {
+    it('回傳指定 tab 的 currentBranch', () => {
+      app.tabs = [{
+        id: 'a', path: '/a', name: 'a',
+        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'feature-x', selectedFile: null },
+      }];
+      expect(app.tabBranch('a')).toBe('feature-x');
+    });
+
+    it('找不到 tab 時回傳空字串', () => {
+      expect(app.tabBranch('nonexistent')).toBe('');
+    });
+  });
+
+  describe('dirtyCount edge cases', () => {
+    it('找不到 tab 時回傳 0', () => {
+      expect(app.dirtyCount('nonexistent')).toBe(0);
+    });
+  });
+
   describe('viewMode', () => {
     it('預設為 worktree', () => {
       expect(app.viewMode).toBe('worktree');
@@ -308,6 +434,115 @@ describe('AppState', () => {
       app.closeAllTabs();
       expect(app.viewMode).toBe('worktree');
       expect(app.selectedCommit).toBeNull();
+    });
+  });
+
+  describe('openRepo', () => {
+    it('開啟新 repo 建立 tab 並設為 active', async () => {
+      mockGitCommands.gitStatus.mockResolvedValueOnce([]);
+      mockGitCommands.gitLog.mockResolvedValueOnce([]);
+      mockGitCommands.gitBranches.mockResolvedValueOnce([{ name: 'main', is_current: true, is_remote: false, upstream: null, commit_id: '123' }]);
+      mockStore.set.mockResolvedValue(undefined);
+      mockStore.get.mockResolvedValue(null);
+
+      await app.openRepo('/new/repo');
+
+      expect(app.tabs).toHaveLength(1);
+      expect(app.activeTabId).toBe('uuid-1');
+      expect(app.tabs[0].path).toBe('/new/repo');
+      expect(app.tabs[0].name).toBe('repo');
+    });
+
+    it('已開啟的 repo 切換到該 tab', async () => {
+      // Manually add a tab
+      app.tabs = [{
+        id: 'existing', path: '/existing/repo', name: 'repo',
+        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null },
+      }];
+      app.activeTabId = 'existing';
+
+      mockGitCommands.gitStatus.mockResolvedValue([]);
+
+      await app.openRepo('/existing/repo');
+
+      // Should not create a new tab
+      expect(app.tabs).toHaveLength(1);
+      expect(app.activeTabId).toBe('existing');
+    });
+
+    it('background 模式不切換 activeTab', async () => {
+      app.tabs = [{
+        id: 'current', path: '/current', name: 'current',
+        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null },
+      }];
+      app.activeTabId = 'current';
+
+      await app.openRepo('/background/repo', true);
+
+      expect(app.tabs).toHaveLength(2);
+      expect(app.activeTabId).toBe('current'); // didn't switch
+    });
+
+    it('載入失敗時移除 tab 並顯示 toast', async () => {
+      mockGitCommands.gitStatus.mockRejectedValueOnce(new Error('repo 不存在'));
+
+      await app.openRepo('/bad/repo');
+
+      expect(app.tabs).toHaveLength(0);
+      expect(app.toasts.some((t) => t.type === 'error')).toBe(true);
+      expect(app.loading).toBe(false);
+    });
+  });
+
+  describe('switchTab', () => {
+    it('切換到目標 tab 並重設 viewMode', async () => {
+      app.tabs = [
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
+        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null } },
+      ];
+      app.activeTabId = 'a';
+      app.selectCommit({ id: 'x', message: '', author: '', email: '', timestamp: 0, parents: [] });
+
+      mockGitCommands.gitStatus.mockResolvedValue([]);
+
+      await app.switchTab('b');
+
+      expect(app.activeTabId).toBe('b');
+      expect(app.viewMode).toBe('worktree');
+      expect(app.selectedCommit).toBeNull();
+      expect(app.currentDiff).toBeNull();
+    });
+
+    it('切換到同一 tab 時不執行', async () => {
+      app.tabs = [
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
+      ];
+      app.activeTabId = 'a';
+
+      await app.switchTab('a');
+      expect(mockGitCommands.startWatching).not.toHaveBeenCalled();
+    });
+
+    it('目標 tab 不存在時不執行', async () => {
+      app.tabs = [
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null } },
+      ];
+      app.activeTabId = 'a';
+
+      await app.switchTab('nonexistent');
+      expect(app.activeTabId).toBe('a');
+    });
+  });
+
+  describe('repoNameFromPath', () => {
+    it('從 Unix 路徑提取名稱', async () => {
+      const { repoNameFromPath } = await import('./app.svelte');
+      expect(repoNameFromPath('/home/user/my-repo')).toBe('my-repo');
+    });
+
+    it('從 Windows 路徑提取名稱', async () => {
+      const { repoNameFromPath } = await import('./app.svelte');
+      expect(repoNameFromPath('C:\\Users\\user\\my-repo')).toBe('my-repo');
     });
   });
 });

@@ -88,6 +88,27 @@ describe('git-actions', () => {
       await refreshAll(state);
       expect(mockGitCommands.gitStatus).not.toHaveBeenCalled();
     });
+
+    it('無 is_current branch 時保留原 currentBranch', async () => {
+      const state = createMockState();
+      state.activeTab!.state.currentBranch = 'old-branch';
+      mockGitCommands.gitStatus.mockResolvedValueOnce([]);
+      mockGitCommands.gitLog.mockResolvedValueOnce([]);
+      mockGitCommands.gitBranches.mockResolvedValueOnce([
+        { name: 'feat', is_current: false, is_remote: false, upstream: null, commit_id: '123' },
+      ]);
+
+      await refreshAll(state);
+      expect(state.activeTab!.state.currentBranch).toBe('old-branch');
+    });
+
+    it('拋錯時觸發 toast', async () => {
+      const state = createMockState();
+      mockGitCommands.gitStatus.mockRejectedValueOnce(new Error('fetch error'));
+
+      await refreshAll(state);
+      expect(state.addToast).toHaveBeenCalledWith('Error: fetch error', 'error');
+    });
   });
 
   describe('loadDiff', () => {
@@ -104,6 +125,15 @@ describe('git-actions', () => {
       const state = createMockState({ activeTab: null });
       await loadDiff(state, 'a.ts');
       expect(mockGitCommands.gitDiff).not.toHaveBeenCalled();
+    });
+
+    it('拋錯時觸發 toast', async () => {
+      const state = createMockState();
+      mockGitCommands.gitDiff.mockRejectedValueOnce(new Error('diff failed'));
+
+      await loadDiff(state, 'a.ts');
+      expect(state.addToast).toHaveBeenCalledWith('Error: diff failed', 'error');
+      expect(state.currentDiff).toBeNull();
     });
   });
 
