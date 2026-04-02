@@ -1,11 +1,81 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename } from '$lib/git/commands';
+  import type { RemoteInfo } from '$lib/git/types';
 
   interface Props {
     onClose: () => void;
   }
 
   let { onClose }: Props = $props();
+
+  // Remote management state
+  let remotes = $state<RemoteInfo[]>([]);
+  let loadingRemotes = $state(false);
+  let showAddForm = $state(false);
+  let newRemoteName = $state('');
+  let newRemoteUrl = $state('');
+  let renamingRemote = $state<string | null>(null);
+  let renameValue = $state('');
+
+  async function loadRemotes() {
+    if (!app.repoPath) return;
+    loadingRemotes = true;
+    try {
+      remotes = await gitRemoteList(app.repoPath);
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    } finally {
+      loadingRemotes = false;
+    }
+  }
+
+  async function handleAddRemote() {
+    if (!app.repoPath || !newRemoteName.trim() || !newRemoteUrl.trim()) return;
+    try {
+      await gitRemoteAdd(app.repoPath, newRemoteName.trim(), newRemoteUrl.trim());
+      app.addToast(`已新增 remote: ${newRemoteName.trim()}`, 'success');
+      newRemoteName = '';
+      newRemoteUrl = '';
+      showAddForm = false;
+      await loadRemotes();
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
+  async function handleRemoveRemote(name: string) {
+    if (!app.repoPath) return;
+    try {
+      await gitRemoteRemove(app.repoPath, name);
+      app.addToast(`已移除 remote: ${name}`, 'success');
+      await loadRemotes();
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
+  function startRename(name: string) {
+    renamingRemote = name;
+    renameValue = name;
+  }
+
+  async function handleRenameRemote() {
+    if (!app.repoPath || !renamingRemote || !renameValue.trim()) return;
+    try {
+      await gitRemoteRename(app.repoPath, renamingRemote, renameValue.trim());
+      app.addToast(`已重新命名 remote: ${renamingRemote} → ${renameValue.trim()}`, 'success');
+      renamingRemote = null;
+      await loadRemotes();
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
+  // Load remotes when settings opens and repo is available
+  $effect(() => {
+    if (app.repoPath) loadRemotes();
+  });
 
   const shortcuts = [
     { keys: 'Ctrl+Enter', action: 'Commit' },
@@ -77,6 +147,58 @@
         {/each}
       </div>
     </div>
+
+    {#if app.hasRepo}
+    <div class="section">
+      <div class="section-title">Repository — Remotes</div>
+      {#if loadingRemotes}
+        <div class="remote-loading">Loading...</div>
+      {:else}
+        <div class="remote-list">
+          {#each remotes as remote (remote.name)}
+            <div class="remote-item">
+              {#if renamingRemote === remote.name}
+                <div class="remote-rename-form">
+                  <input
+                    type="text"
+                    class="remote-input"
+                    bind:value={renameValue}
+                    onkeydown={(e) => e.key === 'Enter' && handleRenameRemote()}
+                  />
+                  <button class="remote-action-btn" onclick={handleRenameRemote}>Save</button>
+                  <button class="remote-action-btn" onclick={() => renamingRemote = null}>Cancel</button>
+                </div>
+              {:else}
+                <div class="remote-info">
+                  <span class="remote-name">{remote.name}</span>
+                  <span class="remote-url">{remote.url}</span>
+                </div>
+                <div class="remote-actions">
+                  <button class="remote-action-btn" onclick={() => startRename(remote.name)}>Rename</button>
+                  <button class="remote-action-btn danger" onclick={() => handleRemoveRemote(remote.name)}>Remove</button>
+                </div>
+              {/if}
+            </div>
+          {:else}
+            <div class="remote-empty">No remotes configured. Add one to push and pull.</div>
+          {/each}
+        </div>
+
+        {#if showAddForm}
+          <div class="add-remote-form">
+            <input type="text" class="remote-input" placeholder="Name (e.g. origin)" bind:value={newRemoteName} />
+            <input type="text" class="remote-input" placeholder="URL (https:// or git@...)" bind:value={newRemoteUrl} />
+            <div class="add-remote-actions">
+              <button class="remote-action-btn" onclick={() => { showAddForm = false; newRemoteName = ''; newRemoteUrl = ''; }}>Cancel</button>
+              <button class="remote-action-btn primary" onclick={handleAddRemote} disabled={!newRemoteName.trim() || !newRemoteUrl.trim()}>Add</button>
+            </div>
+          </div>
+        {:else}
+          <button class="add-remote-btn" onclick={() => showAddForm = true}>+ Add Remote</button>
+        {/if}
+      {/if}
+    </div>
+    {/if}
 
     <div class="section">
       <div class="section-title">About</div>
@@ -227,4 +349,121 @@
   }
   .about-label { color: var(--text-secondary); }
   .about-value { color: var(--text-primary); font-family: var(--font-mono); }
+
+  /* Remote Management */
+  .remote-loading {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    padding: var(--space-sm) 0;
+  }
+  .remote-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+  .remote-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .remote-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+  }
+  .remote-name {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .remote-url {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .remote-actions {
+    display: flex;
+    gap: var(--space-xs);
+    flex-shrink: 0;
+  }
+  .remote-action-btn {
+    font-size: 11px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+  }
+  .remote-action-btn:hover { background: var(--bg-hover); }
+  .remote-action-btn.danger { color: var(--error); }
+  .remote-action-btn.danger:hover { background: rgba(255, 107, 107, 0.1); }
+  .remote-action-btn.primary {
+    background: var(--accent);
+    color: var(--bg-primary);
+  }
+  .remote-action-btn.primary:hover { filter: brightness(1.1); }
+  .remote-action-btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .remote-rename-form {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    width: 100%;
+  }
+  .remote-input {
+    flex: 1;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    padding: var(--space-xs) var(--space-sm);
+    outline: none;
+  }
+  .remote-input:focus { border-color: var(--accent); }
+  .remote-input::placeholder { color: var(--text-muted); }
+  .remote-empty {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    padding: var(--space-md) 0;
+    text-align: center;
+  }
+  .add-remote-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .add-remote-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-xs);
+  }
+  .add-remote-btn {
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs) var(--space-sm);
+    cursor: pointer;
+    font-family: var(--font-ui);
+  }
+  .add-remote-btn:hover { border-color: var(--accent); background: var(--bg-hover); }
 </style>

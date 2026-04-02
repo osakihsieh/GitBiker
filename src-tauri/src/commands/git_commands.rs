@@ -238,6 +238,258 @@ pub fn git_checkout_file(
     Ok(())
 }
 
+// ── Commit Detail + Search ─────────────────────────────
+
+/// 顯示特定 commit 中某個檔案的 diff（相對於其 parent）
+#[tauri::command]
+pub fn git_show_file_diff(
+    path: String,
+    commit_id: String,
+    file: String,
+) -> Result<DiffResult, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let output = LocalGit::run_git(
+        &repo_path,
+        &["show", "--format=", "--no-color", &commit_id, "--", &file],
+    )?;
+
+    // Parse unified diff output into DiffResult
+    let mut hunks: Vec<DiffHunk> = Vec::new();
+    let mut additions: usize = 0;
+    let mut deletions: usize = 0;
+    let mut is_binary = output.contains("Binary files");
+
+    if !is_binary {
+        let mut old_line: u32 = 0;
+        let mut new_line: u32 = 0;
+
+        for raw_line in output.lines() {
+            if raw_line.starts_with("@@") {
+                // Parse hunk header like @@ -1,3 +1,4 @@
+                let header = raw_line.to_string();
+                // Extract line numbers
+                if let Some(plus) = raw_line.find('+') {
+                    let after_plus = &raw_line[plus + 1..];
+                    if let Some(comma_or_space) = after_plus.find(|c: char| c == ',' || c == ' ') {
+                        new_line = after_plus[..comma_or_space].parse().unwrap_or(1);
+                    }
+                }
+                if let Some(minus) = raw_line.find('-') {
+                    let after_minus = &raw_line[minus + 1..];
+                    if let Some(comma_or_space) = after_minus.find(|c: char| c == ',' || c == ' ') {
+                        old_line = after_minus[..comma_or_space].parse().unwrap_or(1);
+                    }
+                }
+                hunks.push(DiffHunk { header, lines: Vec::new() });
+            } else if let Some(last_hunk) = hunks.last_mut() {
+                let (kind, old_lineno, new_lineno) = if let Some(content) = raw_line.strip_prefix('+') {
+                    additions += 1;
+                    let ln = new_line;
+                    new_line += 1;
+                    (DiffLineKind::Addition, None, Some(ln))
+                } else if let Some(content) = raw_line.strip_prefix('-') {
+                    deletions += 1;
+                    let ln = old_line;
+                    old_line += 1;
+                    (DiffLineKind::Deletion, Some(ln), None)
+                } else if raw_line.starts_with(' ') || raw_line.is_empty() {
+                    let oln = old_line;
+                    let nln = new_line;
+                    old_line += 1;
+                    new_line += 1;
+                    (DiffLineKind::Context, Some(oln), Some(nln))
+                } else {
+                    continue;
+                };
+
+                let content = if raw_line.len() > 1 { raw_line[1..].to_string() } else { String::new() };
+                last_hunk.lines.push(DiffLine { kind, content, old_lineno, new_lineno });
+            }
+        }
+    }
+
+    Ok(DiffResult {
+        file_path: PathBuf::from(&file),
+        hunks,
+        stats: DiffStats { additions, deletions },
+        is_binary,
+        is_truncated: false,
+    })
+}
+
+/// 取得特定 commit 的檔案列表
+#[tauri::command]
+pub fn git_show_files(path: String, commit_id: String) -> Result<Vec<FileStatus>, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let output = LocalGit::run_git(
+        &repo_path,
+        &["diff-tree", "--no-commit-id", "-r", "--name-status", &commit_id],
+    )?;
+
+    let mut files = Vec::new();
+    for line in output.lines() {
+        let parts: Vec<&str> = line.splitn(2, '\t').collect();
+        if parts.len() != 2 { continue; }
+        let (status_char, file_path) = (parts[0], parts[1]);
+        let kind = match status_char {
+            "M" => FileStatusKind::Modified,
+            "A" => FileStatusKind::Added,
+            "D" => FileStatusKind::Deleted,
+            "R" => FileStatusKind::Renamed,
+            "C" => FileStatusKind::Copied,
+            _ => FileStatusKind::Unknown,
+        };
+        files.push(FileStatus {
+            path: PathBuf::from(file_path),
+            kind,
+            staging: StagingState::Staged, // commit 裡的檔案都算 "staged"
+        });
+    }
+
+    Ok(files)
+}
+
+/// 搜尋 commit 歷史
+#[tauri::command]
+pub fn git_log_search(
+    state: State<GitState>,
+    path: String,
+    query: String,
+    search_type: String,
+    limit: Option<usize>,
+) -> Result<Vec<Commit>, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let limit_str = (limit.unwrap_or(200)).to_string();
+
+    let mut args = vec!["log", "--format=%H%n%an%n%ae%n%at%n%P%n%s%n---END---", "-n", &limit_str];
+
+    match search_type.as_str() {
+        "message" => {
+            args.push("--grep");
+            args.push(&query);
+            args.push("--fixed-strings");
+        }
+        "author" => {
+            args.push("--author");
+            args.push(&query);
+        }
+        _ => {
+            args.push("--grep");
+            args.push(&query);
+            args.push("--fixed-strings");
+        }
+    }
+
+    let output = LocalGit::run_git(&repo_path, &args)?;
+
+    let mut commits = Vec::new();
+    let mut lines = output.lines().peekable();
+
+    while lines.peek().is_some() {
+        let id = match lines.next() {
+            Some(l) if !l.is_empty() => l.to_string(),
+            _ => break,
+        };
+        let author = lines.next().unwrap_or("").to_string();
+        let email = lines.next().unwrap_or("").to_string();
+        let timestamp: i64 = lines.next().unwrap_or("0").parse().unwrap_or(0);
+        let parents: Vec<String> = lines.next().unwrap_or("").split_whitespace().map(String::from).collect();
+        let message = lines.next().unwrap_or("").to_string();
+        // Skip ---END--- marker
+        let _ = lines.next();
+
+        commits.push(Commit {
+            id,
+            message,
+            author,
+            email,
+            timestamp,
+            parents,
+            refs: Vec::new(), // search results don't need refs
+        });
+    }
+
+    Ok(commits)
+}
+
+// ── Remote Management ──────────────────────────────────
+
+#[tauri::command]
+pub fn git_remote_list(path: String) -> Result<Vec<RemoteInfo>, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let output = LocalGit::run_git(&repo_path, &["remote", "-v"])?;
+
+    let mut remotes: Vec<RemoteInfo> = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    for line in output.lines() {
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() >= 2 {
+            let name = parts[0].to_string();
+            if seen.insert(name.clone()) {
+                remotes.push(RemoteInfo { name, url: parts[1].to_string() });
+            }
+        }
+    }
+
+    Ok(remotes)
+}
+
+#[tauri::command]
+pub fn git_remote_add(path: String, name: String, url: String) -> Result<(), GitError> {
+    // Validate URL format
+    if !url.starts_with("https://") && !url.starts_with("http://") && !url.starts_with("git@") && !url.starts_with("ssh://") {
+        return Err(GitError::OperationFailed("Remote URL 格式不正確，請使用 https:// 或 git@ 格式。".to_string()));
+    }
+    let repo_path = PathBuf::from(&path);
+    LocalGit::run_git(&repo_path, &["remote", "add", "--", &name, &url])?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn git_remote_remove(path: String, name: String) -> Result<(), GitError> {
+    let repo_path = PathBuf::from(&path);
+    LocalGit::run_git(&repo_path, &["remote", "remove", "--", &name])?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn git_remote_rename(path: String, old_name: String, new_name: String) -> Result<(), GitError> {
+    let repo_path = PathBuf::from(&path);
+    LocalGit::run_git(&repo_path, &["remote", "rename", "--", &old_name, &new_name])?;
+    Ok(())
+}
+
+// ── Tag ────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn git_tag_create(path: String, name: String, commit_id: Option<String>) -> Result<(), GitError> {
+    let repo_path = PathBuf::from(&path);
+    let mut args = vec!["tag", "--", &name];
+    let cid;
+    if let Some(ref id) = commit_id {
+        cid = id.clone();
+        args.push(&cid);
+    }
+    LocalGit::run_git(&repo_path, &args)?;
+    Ok(())
+}
+
+// ── Fetch ──────────────────────────────────────────────
+
+#[tauri::command]
+pub fn git_fetch(path: String, remote: Option<String>) -> Result<String, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let mut args = vec!["fetch"];
+    let r;
+    if let Some(ref remote_name) = remote {
+        r = remote_name.clone();
+        args.push(&r);
+    }
+    let output = LocalGit::run_git(&repo_path, &args)?;
+    Ok(output)
+}
+
 // ── External Tools ─────────────────────────────────────
 
 #[tauri::command]

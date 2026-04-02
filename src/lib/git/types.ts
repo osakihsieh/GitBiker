@@ -17,6 +17,13 @@ export interface FileStatus {
   staging: StagingState;
 }
 
+export type RefKind = 'Local' | 'Remote' | 'Tag';
+
+export interface CommitRef {
+  name: string;
+  kind: RefKind;
+}
+
 export interface Commit {
   id: string;
   message: string;
@@ -24,6 +31,12 @@ export interface Commit {
   email: string;
   timestamp: number;
   parents: string[];
+  refs: CommitRef[];
+}
+
+export interface RemoteInfo {
+  name: string;
+  url: string;
 }
 
 export type DiffLineKind = 'Context' | 'Addition' | 'Deletion' | 'Header';

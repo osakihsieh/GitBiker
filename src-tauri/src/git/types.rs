@@ -28,6 +28,19 @@ pub struct FileStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommitRef {
+    pub name: String,
+    pub kind: RefKind,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum RefKind {
+    Local,
+    Remote,
+    Tag,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Commit {
     pub id: String,
     pub message: String,
@@ -35,6 +48,13 @@ pub struct Commit {
     pub email: String,
     pub timestamp: i64,
     pub parents: Vec<String>,
+    pub refs: Vec<CommitRef>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteInfo {
+    pub name: String,
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

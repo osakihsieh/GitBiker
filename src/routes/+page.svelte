@@ -8,6 +8,7 @@
   import FileTree from '$lib/components/FileTree.svelte';
   import DiffViewer from '$lib/components/DiffViewer.svelte';
   import CommitLog from '$lib/components/CommitLog.svelte';
+  import CommitFileList from '$lib/components/CommitFileList.svelte';
   import Welcome from '$lib/components/Welcome.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import CloneDialog from '$lib/components/CloneDialog.svelte';
@@ -105,7 +106,11 @@
     <TabBar onOpenPopover={togglePopover} />
     <div class="main">
       <div class="sidebar">
-        <FileTree />
+        {#if app.viewMode === 'commit-detail'}
+          <CommitFileList />
+        {:else}
+          <FileTree />
+        {/if}
       </div>
       <div class="resize-handle"></div>
       <div class="center" tabindex="-1">

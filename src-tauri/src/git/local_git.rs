@@ -143,6 +143,54 @@ impl GitOperations for LocalGit {
 
     fn log(&self, path: &Path, limit: usize) -> Result<Vec<Commit>, GitError> {
         let repo = Self::open_repo(path)?;
+
+        // Build commit_id → refs map from all references
+        let mut refs_map: std::collections::HashMap<String, Vec<CommitRef>> =
+            std::collections::HashMap::new();
+
+        if let Ok(refs) = repo.references() {
+            for ref_result in refs {
+                if let Ok(reference) = ref_result {
+                    let name = match reference.shorthand() {
+                        Some(n) => n.to_string(),
+                        None => continue,
+                    };
+                    let target_oid = match reference.resolve() {
+                        Ok(resolved) => match resolved.target() {
+                            Some(oid) => oid,
+                            None => continue,
+                        },
+                        Err(_) => continue,
+                    };
+
+                    let kind = if reference.is_tag()
+                        || name.starts_with("tags/")
+                        || reference
+                            .name()
+                            .map_or(false, |n| n.starts_with("refs/tags/"))
+                    {
+                        RefKind::Tag
+                    } else if reference.is_remote()
+                        || reference
+                            .name()
+                            .map_or(false, |n| n.starts_with("refs/remotes/"))
+                    {
+                        RefKind::Remote
+                    } else {
+                        RefKind::Local
+                    };
+
+                    refs_map
+                        .entry(target_oid.to_string())
+                        .or_default()
+                        .push(CommitRef {
+                            name,
+                            kind,
+                        });
+                }
+            }
+        }
+
         let mut revwalk = repo.revwalk()?;
         revwalk.push_head()?;
         revwalk.set_sorting(git2::Sort::TIME)?;
@@ -151,6 +199,7 @@ impl GitOperations for LocalGit {
         for oid in revwalk.take(limit) {
             let oid = oid?;
             let commit = repo.find_commit(oid)?;
+            let commit_refs = refs_map.remove(&oid.to_string()).unwrap_or_default();
             commits.push(Commit {
                 id: oid.to_string(),
                 message: commit.message().unwrap_or("").to_string(),
@@ -158,6 +207,7 @@ impl GitOperations for LocalGit {
                 email: commit.author().email().unwrap_or("").to_string(),
                 timestamp: commit.time().seconds(),
                 parents: commit.parent_ids().map(|id| id.to_string()).collect(),
+                refs: commit_refs,
             });
         }
 

@@ -5,7 +5,8 @@ import type {
   DiffResult,
   Branch,
   PushResult,
-  PullResult
+  PullResult,
+  RemoteInfo,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
@@ -70,6 +71,53 @@ export async function startWatching(path: string): Promise<void> {
 
 export async function stopWatching(): Promise<void> {
   return invoke('stop_watching');
+}
+
+// ── Commit Detail + Search ────────────────────────────
+
+export async function gitShowFileDiff(path: string, commitId: string, file: string): Promise<DiffResult> {
+  return invoke('git_show_file_diff', { path, commitId, file });
+}
+
+export async function gitShowFiles(path: string, commitId: string): Promise<FileStatus[]> {
+  return invoke('git_show_files', { path, commitId });
+}
+
+export async function gitLogSearch(
+  path: string,
+  query: string,
+  searchType: string,
+  limit?: number,
+): Promise<Commit[]> {
+  return invoke('git_log_search', { path, query, searchType, limit });
+}
+
+// ── Remote Management ────────────────────────────────
+
+export async function gitRemoteList(path: string): Promise<RemoteInfo[]> {
+  return invoke('git_remote_list', { path });
+}
+
+export async function gitRemoteAdd(path: string, name: string, url: string): Promise<void> {
+  return invoke('git_remote_add', { path, name, url });
+}
+
+export async function gitRemoteRemove(path: string, name: string): Promise<void> {
+  return invoke('git_remote_remove', { path, name });
+}
+
+export async function gitRemoteRename(path: string, oldName: string, newName: string): Promise<void> {
+  return invoke('git_remote_rename', { path, oldName, newName });
+}
+
+// ── Tag + Fetch ──────────────────────────────────────
+
+export async function gitTagCreate(path: string, name: string, commitId?: string): Promise<void> {
+  return invoke('git_tag_create', { path, name, commitId });
+}
+
+export async function gitFetch(path: string, remote?: string): Promise<string> {
+  return invoke('git_fetch', { path, remote });
 }
 
 // ── File Operations ───────────────────────────────────
