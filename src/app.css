@@ -1,3 +1,8 @@
+/* Tauri drag region (Windows touch/pen support) */
+[data-tauri-drag-region] {
+  app-region: drag;
+}
+
 /* gitbiker Design Tokens */
 :root {
   /* 背景 */
