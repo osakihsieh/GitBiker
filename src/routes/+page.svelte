@@ -2,6 +2,7 @@
   import '../app.css';
   import { app } from '$lib/stores/app.svelte';
   import { gitDiff } from '$lib/git/commands';
+  import TitleBar from '$lib/components/TitleBar.svelte';
   import Toolbar from '$lib/components/Toolbar.svelte';
   import TabBar from '$lib/components/TabBar.svelte';
   import FileTree from '$lib/components/FileTree.svelte';
@@ -93,6 +94,7 @@
 <svelte:window onkeydown={handleGlobalKeydown} />
 
 <div class="app-root">
+  <TitleBar />
   {#if showSettings}
     <Settings onClose={() => showSettings = false} />
   {:else if app.hasRepo}
@@ -116,7 +118,7 @@
     </div>
   {:else}
     <div class="welcome-toolbar">
-      <span class="app-name">GitBiker</span>
+      <div class="spacer"></div>
       <button class="settings-btn" onclick={() => showSettings = true}>⚙</button>
     </div>
     <Welcome
@@ -157,10 +159,8 @@
     height: 40px;
     flex-shrink: 0;
   }
-  .app-name {
-    font-weight: 600;
-    font-size: var(--font-size-lg);
-    color: var(--text-secondary);
+  .spacer {
+    flex: 1;
   }
   .settings-btn {
     margin-left: auto;

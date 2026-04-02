@@ -1,10 +1,37 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitPush, gitPull, gitBranches, gitSwitchBranch } from '$lib/git/commands';
+  import { gitPush, gitPull, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
 
   let branchDropdownOpen = $state(false);
   let pushing = $state(false);
   let pulling = $state(false);
+
+  async function handleOpenFolder() {
+    if (!app.repoPath) return;
+    try {
+      await openInFolder(app.repoPath);
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
+  async function handleOpenEditor() {
+    if (!app.repoPath) return;
+    try {
+      await openInEditor(app.repoPath);
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
+  async function handleOpenTerminal() {
+    if (!app.repoPath) return;
+    try {
+      await openInTerminal(app.repoPath);
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
 
   async function handlePush() {
     if (!app.repoPath || pushing) return;
@@ -98,6 +125,18 @@
     {/if}
   </div>
 
+  <div class="external-tools">
+    <button class="tool-btn" onclick={handleOpenFolder} title="在檔案總管開啟" aria-label="Open in file explorer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    </button>
+    <button class="tool-btn" onclick={handleOpenEditor} title="在編輯器開啟" aria-label="Open in editor">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    </button>
+    <button class="tool-btn" onclick={handleOpenTerminal} title="開啟終端機" aria-label="Open terminal">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+    </button>
+  </div>
+
   <div class="actions">
     <button class="btn" onclick={handlePull} disabled={pulling}>
       {#if pulling}<span class="spinner"></span>{:else}↓{/if} Pull
@@ -184,6 +223,27 @@
   .branch-item:hover { background: var(--bg-hover); }
   .branch-item.active { color: var(--accent); }
   .current-marker { color: var(--accent); font-size: 8px; }
+  .external-tools {
+    display: flex;
+    gap: 2px;
+    margin-left: var(--space-sm);
+  }
+  .tool-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .tool-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
   .actions {
     display: flex;
     gap: var(--space-xs);

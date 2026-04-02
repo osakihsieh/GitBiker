@@ -71,3 +71,17 @@ export async function startWatching(path: string): Promise<void> {
 export async function stopWatching(): Promise<void> {
   return invoke('stop_watching');
 }
+
+// ── External Tools ────────────────────────────────────
+
+export async function openInFolder(path: string): Promise<void> {
+  return invoke('open_in_folder', { path });
+}
+
+export async function openInEditor(path: string): Promise<void> {
+  return invoke('open_in_editor', { path });
+}
+
+export async function openInTerminal(path: string): Promise<void> {
+  return invoke('open_in_terminal', { path });
+}
