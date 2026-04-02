@@ -1,10 +1,11 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitPush, gitPull, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
+  import { gitPush, gitPull, gitFetch, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
 
   let branchDropdownOpen = $state(false);
   let pushing = $state(false);
   let pulling = $state(false);
+  let fetching = $state(false);
 
   async function handleOpenFolder() {
     if (!app.repoPath) return;
@@ -66,6 +67,20 @@
       app.addToast(String(e), 'error', false);
     } finally {
       pulling = false;
+    }
+  }
+
+  async function handleFetch() {
+    if (!app.repoPath || fetching) return;
+    fetching = true;
+    try {
+      await gitFetch(app.repoPath);
+      await app.refreshAll();
+      app.addToast('Fetch 完成', 'success');
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    } finally {
+      fetching = false;
     }
   }
 
@@ -145,6 +160,9 @@
     </button>
     <button class="btn" onclick={handlePush} disabled={pushing}>
       {#if pushing}<span class="spinner"></span>{:else}↑{/if} Push
+    </button>
+    <button class="btn" onclick={handleFetch} disabled={fetching}>
+      {#if fetching}<span class="spinner"></span>{:else}↻{/if} Fetch
     </button>
   </div>
 

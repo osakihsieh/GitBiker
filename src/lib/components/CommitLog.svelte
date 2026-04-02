@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitLogSearch, gitTagCreate, gitFetch } from '$lib/git/commands';
+  import { gitLogSearch, gitTagCreate } from '$lib/git/commands';
   import type { Commit } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
@@ -8,7 +8,6 @@
   let searchType = $state<'message' | 'author'>('message');
   let searchResults = $state<Commit[] | null>(null);
   let searching = $state(false);
-  let fetching = $state(false);
   let contextMenu = $state<{ commit: Commit; x: number; y: number } | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -56,20 +55,6 @@
   function clearSearch() {
     searchQuery = '';
     searchResults = null;
-  }
-
-  async function handleFetch() {
-    if (!app.repoPath || fetching) return;
-    fetching = true;
-    try {
-      await gitFetch(app.repoPath);
-      await app.refreshAll();
-      app.addToast('Fetch 完成', 'success');
-    } catch (e: unknown) {
-      app.addToast(String(e), 'error');
-    } finally {
-      fetching = false;
-    }
   }
 
   function handleCommitClick(commit: Commit) {
@@ -146,17 +131,8 @@
     {/if}
   </div>
 
-  <!-- Header with Fetch -->
   <div class="history-header">
     <span>Commit History</span>
-    <button
-      class="fetch-btn"
-      onclick={handleFetch}
-      disabled={fetching}
-      title="Fetch remote refs"
-    >
-      {#if fetching}<span class="fetch-spinner"></span>{:else}↻{/if} Fetch
-    </button>
   </div>
 
   <!-- Commit List -->
@@ -285,28 +261,6 @@
     color: var(--text-secondary);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-  }
-  .fetch-btn {
-    font-size: 10px;
-    color: var(--accent);
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-family: var(--font-ui);
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-  .fetch-btn:hover { text-decoration: underline; }
-  .fetch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .fetch-spinner {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border: 1.5px solid var(--text-muted);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
   }
 
   /* List */
