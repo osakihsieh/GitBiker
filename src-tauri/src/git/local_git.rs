@@ -23,7 +23,7 @@ impl LocalGit {
         Repository::open(path).map_err(|_| GitError::NotARepo(path.display().to_string()))
     }
 
-    fn check_index_lock(path: &Path) -> Result<(), GitError> {
+    pub(crate) fn check_index_lock(path: &Path) -> Result<(), GitError> {
         let lock_path = path.join(".git/index.lock");
         if lock_path.exists() {
             return Err(GitError::IndexLocked);
@@ -31,7 +31,7 @@ impl LocalGit {
         Ok(())
     }
 
-    fn run_git(path: &Path, args: &[&str]) -> Result<String, GitError> {
+    pub(crate) fn run_git(path: &Path, args: &[&str]) -> Result<String, GitError> {
         let output = Command::new("git")
             .args(args)
             .current_dir(path)

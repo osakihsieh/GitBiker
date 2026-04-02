@@ -72,6 +72,21 @@ export async function stopWatching(): Promise<void> {
   return invoke('stop_watching');
 }
 
+// ── File Operations ───────────────────────────────────
+
+export async function gitIgnore(path: string, pattern: string): Promise<void> {
+  return invoke('git_ignore', { path, pattern });
+}
+
+export async function gitCheckoutFile(
+  path: string,
+  file: string,
+  staging: string,
+  kind: string,
+): Promise<void> {
+  return invoke('git_checkout_file', { path, file, staging, kind });
+}
+
 // ── External Tools ────────────────────────────────────
 
 export async function openInFolder(path: string): Promise<void> {

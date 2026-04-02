@@ -42,6 +42,8 @@ pub fn run() {
             commands::check_git_version,
             commands::start_watching,
             commands::stop_watching,
+            commands::git_ignore,
+            commands::git_checkout_file,
             commands::open_in_folder,
             commands::open_in_editor,
             commands::open_in_terminal,

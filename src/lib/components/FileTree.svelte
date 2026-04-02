@@ -1,10 +1,12 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitStage, gitUnstage, gitCommit } from '$lib/git/commands';
+  import { gitStage, gitUnstage, gitCommit, gitIgnore, gitCheckoutFile, openInEditor } from '$lib/git/commands';
   import type { FileStatus } from '$lib/git/types';
+  import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
   let commitMessage = $state('');
   let committing = $state(false);
+  let contextMenu = $state<{ file: FileStatus; x: number; y: number } | null>(null);
 
   function statusLabel(kind: FileStatus['kind']): string {
     const map: Record<string, string> = {
@@ -89,6 +91,103 @@
   function fileName(path: string): string {
     return path.replace(/\\/g, '/').split('/').pop() || path;
   }
+
+  function fileExtension(path: string): string | null {
+    const name = fileName(path);
+    const dot = name.lastIndexOf('.');
+    return dot > 0 ? name.substring(dot) : null;
+  }
+
+  function parentFolder(path: string): string | null {
+    const normalized = path.replace(/\\/g, '/');
+    const slash = normalized.lastIndexOf('/');
+    return slash > 0 ? normalized.substring(0, slash) + '/' : null;
+  }
+
+  function handleFileContextMenu(e: MouseEvent, file: FileStatus) {
+    e.preventDefault();
+    contextMenu = { file, x: e.clientX, y: e.clientY };
+  }
+
+  function buildContextMenuItems(file: FileStatus): MenuItem[] {
+    const items: MenuItem[] = [];
+    const ext = fileExtension(file.path);
+    const folder = parentFolder(file.path);
+
+    // Revert / Unstage
+    if (file.staging === 'Unstaged' && file.kind !== 'Untracked') {
+      items.push({ id: 'revert', label: '還原變更' });
+    } else if (file.staging === 'Staged') {
+      items.push({
+        id: 'revert',
+        label: file.kind === 'Added' ? '取消追蹤' : '取消暫存',
+      });
+    }
+
+    items.push({ id: '_sep1', label: '', separator: true });
+
+    // Ignore options
+    items.push({ id: 'ignore-file', label: `Ignore ${fileName(file.path)}` });
+    if (ext) {
+      items.push({ id: 'ignore-ext', label: `Ignore *${ext}` });
+    }
+    if (folder) {
+      items.push({ id: 'ignore-folder', label: `Ignore ${folder}` });
+    }
+
+    items.push({ id: '_sep2', label: '', separator: true });
+
+    // Utilities
+    items.push({ id: 'copy-path', label: '複製路徑' });
+    items.push({ id: 'open-editor', label: '在編輯器開啟' });
+
+    return items;
+  }
+
+  async function handleContextSelect(actionId: string) {
+    if (!contextMenu || !app.repoPath) return;
+    const { file } = contextMenu;
+
+    try {
+      switch (actionId) {
+        case 'revert':
+          await gitCheckoutFile(app.repoPath, file.path, file.staging, file.kind);
+          await app.refreshStatus();
+          break;
+        case 'ignore-file':
+          await gitIgnore(app.repoPath, file.path);
+          await app.refreshStatus();
+          break;
+        case 'ignore-ext': {
+          const ext = fileExtension(file.path);
+          if (ext) {
+            await gitIgnore(app.repoPath, `*${ext}`);
+            await app.refreshStatus();
+          }
+          break;
+        }
+        case 'ignore-folder': {
+          const folder = parentFolder(file.path);
+          if (folder) {
+            await gitIgnore(app.repoPath, folder);
+            await app.refreshStatus();
+          }
+          break;
+        }
+        case 'copy-path':
+          await navigator.clipboard.writeText(file.path);
+          app.addToast('已複製路徑', 'success');
+          break;
+        case 'open-editor':
+          if (app.repoPath) {
+            await openInEditor(app.repoPath + '/' + file.path);
+          }
+          break;
+      }
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
 </script>
 
 <div class="file-tree">
@@ -105,6 +204,7 @@
         class="file-item"
         class:active={app.selectedFile === file.path}
         onclick={() => selectFile(file.path)}
+        oncontextmenu={(e) => handleFileContextMenu(e, file)}
       >
         <span
           class="checkbox checked"
@@ -135,6 +235,7 @@
         class="file-item"
         class:active={app.selectedFile === file.path}
         onclick={() => selectFile(file.path)}
+        oncontextmenu={(e) => handleFileContextMenu(e, file)}
       >
         <span
           class="checkbox"
@@ -174,6 +275,16 @@
     <div class="shortcut-hint">Ctrl+Enter</div>
   </div>
 </div>
+
+{#if contextMenu}
+  <ContextMenu
+    x={contextMenu.x}
+    y={contextMenu.y}
+    items={buildContextMenuItems(contextMenu.file)}
+    onSelect={handleContextSelect}
+    onClose={() => contextMenu = null}
+  />
+{/if}
 
 <style>
   .file-tree {
