@@ -16,6 +16,9 @@ Thumbs.db
 .env
 .env.*
 
+# Test coverage
+coverage/
+
 # Claude Code
 .claude/settings.local.json
 .gstack/
