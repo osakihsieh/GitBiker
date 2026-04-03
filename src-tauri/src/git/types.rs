@@ -1,6 +1,67 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+// ── Conflict Resolution Types ─────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum ConflictType {
+    Content,
+    DeleteModify,
+    AddAdd,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConflictFile {
+    pub path: String,
+    pub conflict_type: ConflictType,
+    pub is_binary: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConflictHunk {
+    pub index: usize,
+    pub ours: String,
+    pub theirs: String,
+    pub base: Option<String>,
+    pub start_line: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value")]
+pub enum ConflictSegment {
+    Context(String),
+    Hunk(ConflictHunk),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConflictContent {
+    pub path: String,
+    pub segments: Vec<ConflictSegment>,
+    pub hunk_count: usize,
+    pub content_hash: String,
+    pub parse_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MergeDryRunResult {
+    pub has_conflicts: bool,
+    pub conflict_files: Vec<String>,
+    pub method: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MergeCompleteResult {
+    pub commit_hash: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum ResolveChoice {
+    Ours,
+    Theirs,
+}
+
+// ── Existing Types ────────────────────────────────────
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum FileStatusKind {
     Modified,

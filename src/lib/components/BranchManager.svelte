@@ -11,6 +11,7 @@
     gitPush,
     gitMergeBranch,
     gitMergeAbort,
+    gitMergeDryRun,
   } from '$lib/git/commands';
   import { clickOutside } from '$lib/actions/clickOutside';
   import { slugifyBranchName } from '$lib/utils/slugify';
@@ -40,6 +41,7 @@
   let pushingBranch = $state<string | null>(null);
   let mergingBranch = $state<string | null>(null);
   let mergeConflicts = $state<string[]>([]);
+  let dryRunResult = $state<{ branch: string; conflicts: string[] } | null>(null);
 
   const STALE_DAYS = 30;
 
@@ -266,6 +268,30 @@
     if (!app.repoPath || mergingBranch) return;
     mergingBranch = name;
     mergeConflicts = [];
+    dryRunResult = null;
+
+    try {
+      // Step 1: Dry-run preview
+      const preview = await gitMergeDryRun(app.repoPath, name);
+      if (preview.method !== 'skipped' && preview.has_conflicts) {
+        // Show dry-run preview dialog
+        dryRunResult = { branch: name, conflicts: preview.conflict_files };
+        mergingBranch = null;
+        return;
+      }
+
+      // Step 2: Execute merge (no conflicts predicted, or dry-run skipped)
+      await executeMerge(name);
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+      mergingBranch = null;
+    }
+  }
+
+  async function executeMerge(name: string) {
+    if (!app.repoPath) return;
+    mergingBranch = name;
+    dryRunResult = null;
     try {
       const result = await gitMergeBranch(app.repoPath, name);
       if (result.success) {
@@ -274,6 +300,11 @@
       } else {
         mergeConflicts = result.conflicts;
         app.addToast(`Merge 衝突：${result.conflicts.length} 個檔案需要解決`, 'error', false);
+        await app.refreshAll();
+        // Enter conflict mode
+        onClose();
+        await app.enterConflictMode();
+        return;
       }
       await app.refreshAll();
     } catch (e: unknown) {
@@ -288,6 +319,7 @@
     try {
       await gitMergeAbort(app.repoPath);
       mergeConflicts = [];
+      dryRunResult = null;
       app.addToast('已取消 merge', 'info');
       await app.refreshAll();
     } catch (e: unknown) {
@@ -305,8 +337,29 @@
 
 {#if open}
   <div class="branch-manager" use:clickOutside={onClose} role="dialog" aria-label="Branch manager">
-    {#if mergeConflicts.length > 0}
-      <!-- Merge conflict overlay -->
+    {#if dryRunResult}
+      <!-- Dry-run preview dialog -->
+      <div class="confirm-overlay">
+        <div class="confirm-dialog">
+          <p class="confirm-text"><strong>合併 {dryRunResult.branch} 將產生 {dryRunResult.conflicts.length} 個衝突</strong></p>
+          <div class="conflict-list">
+            {#each dryRunResult.conflicts as file}
+              <div class="conflict-item">{file}</div>
+            {/each}
+          </div>
+          <p class="confirm-text" style="margin-top: var(--space-sm); font-size: 11px; color: var(--text-muted);">
+            繼續合併後可以在衝突解決面板中處理衝突。
+          </p>
+          <div class="confirm-actions">
+            <button class="btn-cancel" onclick={() => (dryRunResult = null)}>取消</button>
+            <button class="btn-danger" onclick={() => executeMerge(dryRunResult!.branch)}>
+              繼續合併
+            </button>
+          </div>
+        </div>
+      </div>
+    {:else if mergeConflicts.length > 0}
+      <!-- Merge conflict overlay (fallback for when dry-run was skipped) -->
       <div class="confirm-overlay">
         <div class="confirm-dialog">
           <p class="confirm-text"><strong>Merge 衝突</strong></p>
@@ -315,9 +368,6 @@
               <div class="conflict-item">{conflict}</div>
             {/each}
           </div>
-          <p class="confirm-text" style="margin-top: var(--space-sm); font-size: 11px; color: var(--text-muted);">
-            請在編輯器中解決衝突後 stage 並 commit，或取消 merge。
-          </p>
           <div class="confirm-actions">
             <button class="btn-danger" onclick={handleMergeAbort}>取消 Merge</button>
             <button class="btn-cancel" onclick={() => { mergeConflicts = []; onClose(); }}>關閉</button>

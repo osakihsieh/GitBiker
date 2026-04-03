@@ -11,7 +11,7 @@
   function statusLabel(kind: FileStatus['kind']): string {
     const map: Record<string, string> = {
       Modified: 'M', Added: 'A', Deleted: 'D', Renamed: 'R',
-      Copied: 'C', Untracked: 'U', Conflicted: '!', Unknown: '?'
+      Copied: 'C', Untracked: 'U', Conflicted: '⚠', Unknown: '?'
     };
     return map[kind] || '?';
   }
@@ -78,6 +78,13 @@
   }
 
   function selectFile(path: string) {
+    // Check if this is a conflicted file — enter conflict mode
+    const allFiles = [...app.stagedFiles, ...app.unstagedFiles];
+    const file = allFiles.find(f => f.path === path);
+    if (file?.kind === 'Conflicted') {
+      app.enterConflictMode().then(() => app.selectConflictFile(path));
+      return;
+    }
     app.selectedFile = path;
   }
 

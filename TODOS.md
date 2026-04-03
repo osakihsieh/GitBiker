@@ -10,13 +10,16 @@
 
 ---
 
-## Conflict Resolution UI
+## Conflict Resolution UI (CEO Plan Ready)
 
-**What:** 完整的 merge conflict 解決介面 — 顯示衝突檔案清單、inline 3-way diff、標記已解決、commit merge
+**What:** 完整的 merge conflict 解決介面 — inline accept ours/theirs/both per hunk、衝突檔案清單、進度追蹤、完成 merge commit
 **Why:** 目前 merge 衝突只顯示清單和 abort，用戶必須切到外部編輯器解決。
-**Priority:** P2
-**Effort:** L (需要 3-way diff 解析和 inline conflict marker 編輯器)
-**Depends on:** Merge Branch 完成
+**Priority:** P1 (升級 — CEO Plan 已完成)
+**Effort:** M (with CC+gstack: ~30-60 min)
+**Depends on:** Merge Branch 完成 ✅
+**CEO Plan:** `~/.gstack/projects/osakihsieh-GitBiker/ceo-plans/2026-04-03-merge-conflict-resolution.md`
+**Scope:** Approach B (VS Code style) + 5 擴展：dry-run preview、進度條+自動跳轉、Toolbar badge、Pull 衝突整合、FileTree 衝突標記
+**Key decisions:** conflict state on RepoState (per-tab)、整檔案一次寫入（非逐 hunk）、Git >= 2.38 用 merge-tree dry-run / < 2.38 跳過
 
 ## Interactive Rebase
 

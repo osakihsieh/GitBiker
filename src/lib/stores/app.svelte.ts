@@ -1,4 +1,5 @@
-import type { FileStatus, Commit, DiffResult, Branch } from '$lib/git/types';
+import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent } from '$lib/git/types';
+import { gitGetConflictFiles, gitGetConflictContent } from '$lib/git/commands';
 import {
   loadRecentRepos as _loadRecentRepos,
   addRecentRepo as _addRecentRepo,
@@ -28,6 +29,8 @@ export interface Toast {
   autoDismiss: boolean;
 }
 
+export type ViewMode = 'worktree' | 'commit-detail' | 'conflict-resolution';
+
 export interface RepoState {
   stagedFiles: FileStatus[];
   unstagedFiles: FileStatus[];
@@ -35,6 +38,12 @@ export interface RepoState {
   branches: Branch[];
   currentBranch: string;
   selectedFile: string | null;
+  viewMode: ViewMode;
+  // Conflict resolution state
+  conflictFiles: ConflictFile[];
+  activeConflictFile: string | null;
+  conflictContent: ConflictContent | null;
+  hunkChoices: Record<number, 'Ours' | 'Theirs' | 'Both'>;
   // currentDiff intentionally excluded — cleared on tab switch to save memory
 }
 
@@ -60,6 +69,11 @@ export function createEmptyState(): RepoState {
     branches: [],
     currentBranch: '',
     selectedFile: null,
+    viewMode: 'worktree',
+    conflictFiles: [],
+    activeConflictFile: null,
+    conflictContent: null,
+    hunkChoices: {},
   };
 }
 
@@ -97,9 +111,17 @@ class AppState {
   // ── currentDiff lives outside tabs (not persisted across tab switches) ──
   currentDiff = $state<DiffResult | null>(null);
 
-  // ── View mode ──
-  viewMode = $state<'worktree' | 'commit-detail'>('worktree');
+  // ── View mode (proxied to active tab's RepoState) ──
   selectedCommit = $state<Commit | null>(null);
+
+  get viewMode(): ViewMode {
+    return this.activeTab?.state.viewMode ?? 'worktree';
+  }
+
+  set viewMode(value: ViewMode) {
+    const tab = this.activeTab;
+    if (tab) tab.state.viewMode = value;
+  }
 
   // ── Repo lists ──
   recentRepos = $state<string[]>([]);
@@ -190,6 +212,36 @@ class AppState {
     if (tab) tab.state.branches = value;
   }
 
+  // ── Conflict State (proxied to active tab) ──
+
+  get conflictFiles(): ConflictFile[] {
+    return this.activeTab?.state.conflictFiles ?? [];
+  }
+
+  get activeConflictFile(): string | null {
+    return this.activeTab?.state.activeConflictFile ?? null;
+  }
+
+  get conflictContent(): ConflictContent | null {
+    return this.activeTab?.state.conflictContent ?? null;
+  }
+
+  get hunkChoices(): Record<number, 'Ours' | 'Theirs' | 'Both'> {
+    return this.activeTab?.state.hunkChoices ?? {};
+  }
+
+  get isInConflictMode(): boolean {
+    return this.viewMode === 'conflict-resolution';
+  }
+
+  get conflictResolvedCount(): number {
+    const files = this.conflictFiles;
+    const active = this.activeConflictFile;
+    // A file is "resolved" if it's no longer in the conflict list after refresh
+    // For now, count is managed via the conflict files list length vs initial
+    return 0; // Will be computed from actual state
+  }
+
   // ── View Mode ──
 
   selectCommit(commit: Commit): void {
@@ -200,6 +252,78 @@ class AppState {
   backToWorktree(): void {
     this.selectedCommit = null;
     this.viewMode = 'worktree';
+  }
+
+  // ── Conflict Resolution Methods ──
+
+  async enterConflictMode(): Promise<void> {
+    const path = this.repoPath;
+    if (!path) return;
+
+    try {
+      const files = await gitGetConflictFiles(path);
+      const tab = this.activeTab;
+      if (!tab) return;
+      tab.state.conflictFiles = files;
+      tab.state.activeConflictFile = files.length > 0 ? files[0].path : null;
+      tab.state.conflictContent = null;
+      tab.state.hunkChoices = {};
+      tab.state.viewMode = 'conflict-resolution';
+
+      if (files.length > 0) {
+        await this.selectConflictFile(files[0].path);
+      }
+    } catch (e: unknown) {
+      this.addToast(String(e), 'error');
+    }
+  }
+
+  exitConflictMode(): void {
+    const tab = this.activeTab;
+    if (!tab) return;
+    tab.state.conflictFiles = [];
+    tab.state.activeConflictFile = null;
+    tab.state.conflictContent = null;
+    tab.state.hunkChoices = {};
+    tab.state.viewMode = 'worktree';
+    this.selectedCommit = null;
+  }
+
+  async selectConflictFile(filePath: string): Promise<void> {
+    const path = this.repoPath;
+    const tab = this.activeTab;
+    if (!path || !tab) return;
+
+    tab.state.activeConflictFile = filePath;
+    tab.state.hunkChoices = {};
+
+    try {
+      const content = await gitGetConflictContent(path, filePath);
+      tab.state.conflictContent = content;
+    } catch (e: unknown) {
+      tab.state.conflictContent = null;
+      this.addToast(String(e), 'error');
+    }
+  }
+
+  setHunkChoice(hunkIndex: number, choice: 'Ours' | 'Theirs' | 'Both'): void {
+    const tab = this.activeTab;
+    if (!tab) return;
+    tab.state.hunkChoices = { ...tab.state.hunkChoices, [hunkIndex]: choice };
+  }
+
+  async refreshConflictFiles(): Promise<void> {
+    const path = this.repoPath;
+    const tab = this.activeTab;
+    if (!path || !tab) return;
+
+    try {
+      const files = await gitGetConflictFiles(path);
+      tab.state.conflictFiles = files;
+    } catch {
+      // If not in merge state anymore, exit conflict mode
+      this.exitConflictMode();
+    }
   }
 
   // ── Tab CRUD ──
@@ -225,7 +349,7 @@ class AppState {
     if (!background) {
       this.activeTabId = tabId;
       this.currentDiff = null;
-      this.viewMode = 'worktree';
+      // viewMode defaults to 'worktree' via createEmptyState()
       this.selectedCommit = null;
       this.loading = true;
 
@@ -256,7 +380,7 @@ class AppState {
     try {
       this.activeTabId = id;
       this.currentDiff = null;
-      this.viewMode = 'worktree';
+      // viewMode is now per-tab in RepoState — no reset needed
       this.selectedCommit = null;
 
       await setupWatcher(this, target.path);
@@ -279,7 +403,6 @@ class AppState {
       if (this.tabs.length === 0) {
         this.activeTabId = null;
         this.currentDiff = null;
-        this.viewMode = 'worktree';
         this.selectedCommit = null;
         teardownWatcher();
       } else {
@@ -301,7 +424,6 @@ class AppState {
     this.tabs = [];
     this.activeTabId = null;
     this.currentDiff = null;
-    this.viewMode = 'worktree';
     this.selectedCommit = null;
     teardownWatcher();
   }

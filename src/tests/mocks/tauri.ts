@@ -41,6 +41,12 @@ const mockGitCommands = {
   gitStashDrop: vi.fn().mockResolvedValue(''),
   startWatching: vi.fn().mockResolvedValue(undefined),
   stopWatching: vi.fn().mockResolvedValue(undefined),
+  gitMergeDryRun: vi.fn().mockResolvedValue({ has_conflicts: false, conflict_files: [], method: 'merge-tree' }),
+  gitGetConflictFiles: vi.fn().mockResolvedValue([]),
+  gitGetConflictContent: vi.fn().mockResolvedValue({ path: '', segments: [], hunk_count: 0, content_hash: '', parse_error: null }),
+  gitResolveConflictContent: vi.fn().mockResolvedValue(undefined),
+  gitResolveConflictChoice: vi.fn().mockResolvedValue(undefined),
+  gitCompleteMerge: vi.fn().mockResolvedValue({ commit_hash: 'abc1234' }),
 };
 
 vi.mock('$lib/git/commands', () => mockGitCommands);

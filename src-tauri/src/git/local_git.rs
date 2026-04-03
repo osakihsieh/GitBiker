@@ -2,12 +2,14 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use git2::{DiffOptions, Repository, StatusOptions};
+use sha2::{Digest, Sha256};
 
 use crate::git::error::GitError;
 use crate::git::operations::GitOperations;
 use crate::git::types::*;
 
 const MAX_DIFF_BYTES: usize = 10 * 1024 * 1024; // 10MB
+const MAX_CONFLICT_FILE_BYTES: usize = 1024 * 1024; // 1MB
 
 pub struct LocalGit;
 
@@ -193,6 +195,355 @@ impl LocalGit {
             merged: count == 0,
             unmerged_count: count,
         })
+    }
+}
+
+// ── Conflict Resolution ──────────────────────────────
+
+impl LocalGit {
+    /// Dry-run merge using `git merge-tree` (Git >= 2.38).
+    /// Falls back to skipping if Git is too old.
+    pub fn merge_dry_run(&self, path: &Path, branch_name: &str) -> Result<MergeDryRunResult, GitError> {
+        // Check git version for merge-tree --write-tree support
+        let version_output = Self::run_git(path, &["--version"])?;
+        let supports_merge_tree = Self::git_version_at_least(&version_output, 2, 38);
+
+        if !supports_merge_tree {
+            return Ok(MergeDryRunResult {
+                has_conflicts: false,
+                conflict_files: Vec::new(),
+                method: "skipped".to_string(),
+            });
+        }
+
+        // git merge-tree --write-tree HEAD branch_name
+        match Self::run_git(path, &["merge-tree", "--write-tree", "HEAD", branch_name]) {
+            Ok(_) => Ok(MergeDryRunResult {
+                has_conflicts: false,
+                conflict_files: Vec::new(),
+                method: "merge-tree".to_string(),
+            }),
+            Err(GitError::OperationFailed(stderr)) => {
+                // merge-tree outputs conflicted files on stderr/stdout
+                let conflicts: Vec<String> = stderr
+                    .lines()
+                    .filter(|l| l.contains("CONFLICT") || l.ends_with('\t'))
+                    .filter_map(|l| {
+                        // Extract file path from "CONFLICT (content): Merge conflict in <path>"
+                        if l.contains("Merge conflict in ") {
+                            l.split("Merge conflict in ").nth(1).map(|s| s.trim().to_string())
+                        } else if l.contains("CONFLICT (modify/delete)") {
+                            l.split(": ").nth(1).map(|s| s.split(" deleted").next().unwrap_or(s).trim().to_string())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                Ok(MergeDryRunResult {
+                    has_conflicts: !conflicts.is_empty(),
+                    conflict_files: conflicts,
+                    method: "merge-tree".to_string(),
+                })
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    fn git_version_at_least(version_str: &str, major: u32, minor: u32) -> bool {
+        // "git version 2.43.0.windows.1" → extract 2.43
+        let parts: Vec<&str> = version_str.trim().split_whitespace().collect();
+        if let Some(version) = parts.get(2) {
+            let nums: Vec<u32> = version.split('.').filter_map(|s| s.parse().ok()).collect();
+            if nums.len() >= 2 {
+                return nums[0] > major || (nums[0] == major && nums[1] >= minor);
+            }
+        }
+        false
+    }
+
+    /// Get list of conflicted files from git status.
+    pub fn get_conflict_files(&self, path: &Path) -> Result<Vec<ConflictFile>, GitError> {
+        // Check MERGE_HEAD exists
+        let merge_head = path.join(".git/MERGE_HEAD");
+        if !merge_head.exists() {
+            return Err(GitError::OperationFailed("不在 merge 狀態中（MERGE_HEAD 不存在）".to_string()));
+        }
+
+        let output = Self::run_git(path, &["status", "--porcelain=v2"])?;
+        let mut files = Vec::new();
+
+        for line in output.lines() {
+            if line.starts_with("u ") {
+                // Unmerged entry: u <xy> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>
+                let parts: Vec<&str> = line.splitn(11, ' ').collect();
+                if parts.len() >= 11 {
+                    let xy = parts[1];
+                    let file_path = parts[10].to_string();
+                    let conflict_type = Self::classify_conflict(xy);
+                    let is_binary = Self::is_binary_file(path, &file_path);
+                    files.push(ConflictFile {
+                        path: file_path,
+                        conflict_type,
+                        is_binary,
+                    });
+                }
+            }
+        }
+
+        Ok(files)
+    }
+
+    fn classify_conflict(xy: &str) -> ConflictType {
+        // xy codes: DD=both deleted, AU=added by us, UD=deleted by them,
+        // UA=added by them, DU=deleted by us, AA=both added, UU=both modified
+        match xy {
+            "AA" => ConflictType::AddAdd,
+            "DU" | "UD" => ConflictType::DeleteModify,
+            _ => ConflictType::Content,
+        }
+    }
+
+    fn is_binary_file(repo_path: &Path, file_path: &str) -> bool {
+        let full_path = repo_path.join(file_path);
+        if let Ok(bytes) = std::fs::read(&full_path) {
+            // Check first 8KB for null bytes (common binary detection)
+            let check_len = bytes.len().min(8192);
+            bytes[..check_len].contains(&0)
+        } else {
+            false
+        }
+    }
+
+    /// Read and parse conflict markers from a file.
+    pub fn get_conflict_content(&self, path: &Path, file_path: &str) -> Result<ConflictContent, GitError> {
+        // Validate path is within repo
+        let full_path = path.join(file_path);
+        let canonical_repo = path.canonicalize().map_err(|e| GitError::Io(e))?;
+        let canonical_file = full_path.canonicalize().map_err(|e| GitError::Io(e))?;
+        if !canonical_file.starts_with(&canonical_repo) {
+            return Err(GitError::OperationFailed("路徑超出 repo 範圍".to_string()));
+        }
+
+        let content = std::fs::read_to_string(&full_path)
+            .map_err(|e| GitError::OperationFailed(format!("無法讀取檔案 {file_path}: {e}")))?;
+
+        // Check file size
+        if content.len() > MAX_CONFLICT_FILE_BYTES {
+            let hash = Self::compute_hash(&content);
+            return Ok(ConflictContent {
+                path: file_path.to_string(),
+                segments: Vec::new(),
+                hunk_count: 0,
+                content_hash: hash,
+                parse_error: Some("檔案過大（>1MB），建議在編輯器中開啟".to_string()),
+            });
+        }
+
+        let hash = Self::compute_hash(&content);
+        Self::parse_conflict_markers(file_path, &content, hash)
+    }
+
+    fn compute_hash(content: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(content.as_bytes());
+        format!("{:x}", hasher.finalize())
+    }
+
+    /// Parse conflict markers from file content.
+    ///
+    /// Handles standard markers:
+    ///   <<<<<<< HEAD
+    ///   (ours content)
+    ///   ||||||| base    (optional, diff3 style)
+    ///   (base content)
+    ///   =======
+    ///   (theirs content)
+    ///   >>>>>>> branch
+    fn parse_conflict_markers(file_path: &str, content: &str, content_hash: String) -> Result<ConflictContent, GitError> {
+        let lines: Vec<&str> = content.lines().collect();
+        let mut segments: Vec<ConflictSegment> = Vec::new();
+        let mut hunk_count: usize = 0;
+        let mut context_buf: Vec<&str> = Vec::new();
+        let mut i = 0;
+
+        while i < lines.len() {
+            if lines[i].starts_with("<<<<<<<") {
+                // Flush context buffer
+                if !context_buf.is_empty() {
+                    segments.push(ConflictSegment::Context(context_buf.join("\n")));
+                    context_buf.clear();
+                }
+
+                let start_line = i + 1;
+                let mut ours_lines: Vec<&str> = Vec::new();
+                let mut base_lines: Vec<&str> = Vec::new();
+                let mut theirs_lines: Vec<&str> = Vec::new();
+                let mut in_base = false;
+                let mut in_theirs = false;
+                let mut found_end = false;
+
+                i += 1;
+                while i < lines.len() {
+                    if lines[i].starts_with("|||||||") {
+                        in_base = true;
+                    } else if lines[i].starts_with("=======") {
+                        in_theirs = true;
+                        in_base = false;
+                    } else if lines[i].starts_with(">>>>>>>") {
+                        found_end = true;
+                        i += 1;
+                        break;
+                    } else if in_theirs {
+                        theirs_lines.push(lines[i]);
+                    } else if in_base {
+                        base_lines.push(lines[i]);
+                    } else {
+                        ours_lines.push(lines[i]);
+                    }
+                    i += 1;
+                }
+
+                if !found_end {
+                    // Malformed: no closing marker
+                    return Ok(ConflictContent {
+                        path: file_path.to_string(),
+                        segments: Vec::new(),
+                        hunk_count: 0,
+                        content_hash,
+                        parse_error: Some("Conflict markers 格式異常（缺少 >>>>>>>）".to_string()),
+                    });
+                }
+
+                let base = if base_lines.is_empty() {
+                    None
+                } else {
+                    Some(base_lines.join("\n"))
+                };
+
+                segments.push(ConflictSegment::Hunk(ConflictHunk {
+                    index: hunk_count,
+                    ours: ours_lines.join("\n"),
+                    theirs: theirs_lines.join("\n"),
+                    base,
+                    start_line,
+                }));
+                hunk_count += 1;
+            } else {
+                context_buf.push(lines[i]);
+                i += 1;
+            }
+        }
+
+        // Flush remaining context
+        if !context_buf.is_empty() {
+            segments.push(ConflictSegment::Context(context_buf.join("\n")));
+        }
+
+        Ok(ConflictContent {
+            path: file_path.to_string(),
+            segments,
+            hunk_count,
+            content_hash,
+            parse_error: None,
+        })
+    }
+
+    /// Resolve a conflict file by writing new content (for content conflicts).
+    pub fn resolve_conflict_content(
+        &self,
+        path: &Path,
+        file_path: &str,
+        resolved_content: &str,
+        expected_hash: &str,
+    ) -> Result<(), GitError> {
+        let full_path = path.join(file_path);
+        // Validate path
+        let canonical_repo = path.canonicalize().map_err(|e| GitError::Io(e))?;
+        let canonical_file = full_path.canonicalize().map_err(|e| GitError::Io(e))?;
+        if !canonical_file.starts_with(&canonical_repo) {
+            return Err(GitError::OperationFailed("路徑超出 repo 範圍".to_string()));
+        }
+
+        // Hash check: read current file and compare hash
+        let current_content = std::fs::read_to_string(&full_path)
+            .map_err(|e| GitError::OperationFailed(format!("無法讀取檔案: {e}")))?;
+        let current_hash = Self::compute_hash(&current_content);
+        if current_hash != expected_hash {
+            return Err(GitError::OperationFailed(
+                "檔案已被外部修改，請重新載入衝突內容".to_string(),
+            ));
+        }
+
+        // Atomic write using tempfile
+        use std::io::Write;
+        let dir = full_path.parent().ok_or_else(|| {
+            GitError::OperationFailed("無法取得檔案目錄".to_string())
+        })?;
+        let mut tmp = tempfile::NamedTempFile::new_in(dir)
+            .map_err(|e| GitError::OperationFailed(format!("無法建立暫存檔: {e}")))?;
+        tmp.write_all(resolved_content.as_bytes())
+            .map_err(|e| GitError::OperationFailed(format!("寫入失敗: {e}")))?;
+        tmp.persist(&full_path)
+            .map_err(|e| GitError::OperationFailed(format!("原子寫入失敗: {e}")))?;
+
+        Ok(())
+    }
+
+    /// Resolve a conflict file by choosing ours or theirs (for binary/delete-modify).
+    pub fn resolve_conflict_choice(
+        &self,
+        path: &Path,
+        file_path: &str,
+        choice: &ResolveChoice,
+    ) -> Result<(), GitError> {
+        let flag = match choice {
+            ResolveChoice::Ours => "--ours",
+            ResolveChoice::Theirs => "--theirs",
+        };
+        Self::run_git(path, &["checkout", flag, "--", file_path])?;
+        Ok(())
+    }
+
+    /// Complete the merge by committing.
+    pub fn complete_merge(&self, path: &Path, message: &str) -> Result<MergeCompleteResult, GitError> {
+        Self::check_index_lock(path)?;
+
+        // Check no unresolved conflicts remain
+        let merge_head = path.join(".git/MERGE_HEAD");
+        if !merge_head.exists() {
+            return Err(GitError::OperationFailed("不在 merge 狀態中".to_string()));
+        }
+
+        // Check for remaining conflicts
+        let status_output = Self::run_git(path, &["status", "--porcelain=v2"])?;
+        let unresolved: Vec<&str> = status_output
+            .lines()
+            .filter(|l| l.starts_with("u "))
+            .collect();
+        if !unresolved.is_empty() {
+            return Err(GitError::OperationFailed(
+                format!("還有 {} 個未解決的衝突", unresolved.len()),
+            ));
+        }
+
+        let msg = if message.trim().is_empty() {
+            // Use default merge message
+            let merge_msg_path = path.join(".git/MERGE_MSG");
+            std::fs::read_to_string(&merge_msg_path).unwrap_or_else(|_| "Merge commit".to_string())
+        } else {
+            message.to_string()
+        };
+
+        let output = Self::run_git(path, &["commit", "-m", &msg])?;
+        let hash = output
+            .lines()
+            .next()
+            .and_then(|line| line.split_whitespace().nth(1))
+            .unwrap_or("unknown")
+            .trim_matches(|c| c == '[' || c == ']')
+            .to_string();
+
+        Ok(MergeCompleteResult { commit_hash: hash })
     }
 }
 

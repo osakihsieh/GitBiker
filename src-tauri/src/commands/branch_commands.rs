@@ -91,6 +91,71 @@ pub fn git_merge_abort(
     state.git.merge_abort(&PathBuf::from(&path))
 }
 
+// ── Conflict Resolution Commands ─────────────────────
+
+#[tauri::command]
+pub fn git_merge_dry_run(
+    state: State<GitState>,
+    path: String,
+    branch_name: String,
+) -> Result<MergeDryRunResult, GitError> {
+    state.git.merge_dry_run(&PathBuf::from(&path), &branch_name)
+}
+
+#[tauri::command]
+pub fn git_get_conflict_files(
+    state: State<GitState>,
+    path: String,
+) -> Result<Vec<ConflictFile>, GitError> {
+    state.git.get_conflict_files(&PathBuf::from(&path))
+}
+
+#[tauri::command]
+pub fn git_get_conflict_content(
+    state: State<GitState>,
+    path: String,
+    file_path: String,
+) -> Result<ConflictContent, GitError> {
+    state.git.get_conflict_content(&PathBuf::from(&path), &file_path)
+}
+
+#[tauri::command]
+pub fn git_resolve_conflict_content(
+    state: State<GitState>,
+    path: String,
+    file_path: String,
+    resolved_content: String,
+    content_hash: String,
+) -> Result<(), GitError> {
+    state.git.resolve_conflict_content(
+        &PathBuf::from(&path),
+        &file_path,
+        &resolved_content,
+        &content_hash,
+    )
+}
+
+#[tauri::command]
+pub fn git_resolve_conflict_choice(
+    state: State<GitState>,
+    path: String,
+    file_path: String,
+    choice: ResolveChoice,
+) -> Result<(), GitError> {
+    state.git.resolve_conflict_choice(&PathBuf::from(&path), &file_path, &choice)
+}
+
+#[tauri::command]
+pub fn git_complete_merge(
+    state: State<GitState>,
+    path: String,
+    message: Option<String>,
+) -> Result<MergeCompleteResult, GitError> {
+    state.git.complete_merge(&PathBuf::from(&path), &message.unwrap_or_default())
+}
+
+// ── Stash Commands ──────────────────────────────────
+
 #[tauri::command]
 pub fn git_stash_list(
     state: State<GitState>,

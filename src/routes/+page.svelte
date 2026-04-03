@@ -16,6 +16,7 @@
   import Settings from '$lib/components/Settings.svelte';
   import CommandPalette from '$lib/components/CommandPalette.svelte';
   import InlineTerminal from '$lib/components/InlineTerminal.svelte';
+  import ConflictResolver from '$lib/components/ConflictResolver.svelte';
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
@@ -60,6 +61,17 @@
     if (e.ctrlKey && e.shiftKey && e.key === 'P') {
       e.preventDefault();
       showCommandPalette = !showCommandPalette;
+      return;
+    }
+
+    // Ctrl+Shift+M: toggle conflict resolver
+    if (e.ctrlKey && e.shiftKey && e.key === 'M') {
+      e.preventDefault();
+      if (app.isInConflictMode) {
+        app.exitConflictMode();
+      } else if (app.repoPath) {
+        app.enterConflictMode();
+      }
       return;
     }
 
@@ -153,21 +165,29 @@
     />
     <TabBar onOpenPopover={togglePopover} />
     <div class="main">
-      <div class="sidebar">
-        {#if app.viewMode === 'commit-detail'}
-          <CommitFileList />
-        {:else}
-          <FileTree />
-        {/if}
-      </div>
-      <div class="resize-handle"></div>
-      <div class="center" tabindex="-1">
-        <DiffViewer />
-      </div>
-      <div class="resize-handle"></div>
-      <div class="right" tabindex="-1">
-        <CommitLog />
-      </div>
+      {#if app.viewMode === 'conflict-resolution'}
+        <ConflictResolver />
+        <div class="resize-handle"></div>
+        <div class="right" tabindex="-1">
+          <CommitLog />
+        </div>
+      {:else}
+        <div class="sidebar">
+          {#if app.viewMode === 'commit-detail'}
+            <CommitFileList />
+          {:else}
+            <FileTree />
+          {/if}
+        </div>
+        <div class="resize-handle"></div>
+        <div class="center" tabindex="-1">
+          <DiffViewer />
+        </div>
+        <div class="resize-handle"></div>
+        <div class="right" tabindex="-1">
+          <CommitLog />
+        </div>
+      {/if}
     </div>
     <InlineTerminal visible={showTerminal} onClose={() => (showTerminal = false)} />
   {:else}

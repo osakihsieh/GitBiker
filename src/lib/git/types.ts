@@ -113,3 +113,45 @@ export interface GitErrorResponse {
   code: string;
   message: string;
 }
+
+// ── Conflict Resolution Types ─────────────────────────
+
+export type ConflictType = 'Content' | 'DeleteModify' | 'AddAdd';
+
+export interface ConflictFile {
+  path: string;
+  conflict_type: ConflictType;
+  is_binary: boolean;
+}
+
+export interface ConflictHunk {
+  index: number;
+  ours: string;
+  theirs: string;
+  base: string | null;
+  start_line: number;
+}
+
+export type ConflictSegment =
+  | { type: 'Context'; value: string }
+  | { type: 'Hunk'; value: ConflictHunk };
+
+export interface ConflictContent {
+  path: string;
+  segments: ConflictSegment[];
+  hunk_count: number;
+  content_hash: string;
+  parse_error: string | null;
+}
+
+export interface MergeDryRunResult {
+  has_conflicts: boolean;
+  conflict_files: string[];
+  method: string;
+}
+
+export interface MergeCompleteResult {
+  commit_hash: string;
+}
+
+export type ResolveChoice = 'Ours' | 'Theirs';

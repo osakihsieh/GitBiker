@@ -10,6 +10,11 @@ import type {
   BranchMergeStatus,
   MergeResult,
   StashEntry,
+  ConflictFile,
+  ConflictContent,
+  MergeDryRunResult,
+  MergeCompleteResult,
+  ResolveChoice,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
@@ -88,6 +93,41 @@ export async function gitMergeBranch(path: string, branchName: string): Promise<
 
 export async function gitMergeAbort(path: string): Promise<void> {
   return invoke('git_merge_abort', { path });
+}
+
+// ── Conflict Resolution ─────────────────────────────
+
+export async function gitMergeDryRun(path: string, branchName: string): Promise<MergeDryRunResult> {
+  return invoke('git_merge_dry_run', { path, branchName });
+}
+
+export async function gitGetConflictFiles(path: string): Promise<ConflictFile[]> {
+  return invoke('git_get_conflict_files', { path });
+}
+
+export async function gitGetConflictContent(path: string, filePath: string): Promise<ConflictContent> {
+  return invoke('git_get_conflict_content', { path, filePath });
+}
+
+export async function gitResolveConflictContent(
+  path: string,
+  filePath: string,
+  resolvedContent: string,
+  contentHash: string,
+): Promise<void> {
+  return invoke('git_resolve_conflict_content', { path, filePath, resolvedContent, contentHash });
+}
+
+export async function gitResolveConflictChoice(
+  path: string,
+  filePath: string,
+  choice: ResolveChoice,
+): Promise<void> {
+  return invoke('git_resolve_conflict_choice', { path, filePath, choice });
+}
+
+export async function gitCompleteMerge(path: string, message?: string): Promise<MergeCompleteResult> {
+  return invoke('git_complete_merge', { path, message });
 }
 
 // ── Stash ────────────────────────────────────────────

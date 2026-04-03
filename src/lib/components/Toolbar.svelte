@@ -63,6 +63,11 @@
       const result = await gitPull(app.repoPath);
       if (result.success) {
         app.addToast('Pull 完成', 'success');
+      } else if (result.conflicts.length > 0) {
+        app.addToast(`Pull 衝突：${result.conflicts.length} 個檔案需要解決`, 'error', false);
+        await app.refreshAll();
+        await app.enterConflictMode();
+        return;
       } else {
         app.addToast(result.message, 'error', false);
       }
@@ -175,6 +180,12 @@
         </button>
       </div>
     {/if}
+    {#if app.conflictFiles.length > 0}
+      <button class="conflict-badge" onclick={() => app.isInConflictMode ? app.exitConflictMode() : app.enterConflictMode()} title="Ctrl+Shift+M">
+        ⚠ {app.conflictFiles.length}
+      </button>
+    {/if}
+
     {#if branchManagerOpen}
       <BranchManager open={branchManagerOpen} onClose={closeBranchManager} />
     {/if}
@@ -258,6 +269,19 @@
     font-family: var(--font-ui);
   }
   .branch-selector:hover { border-color: var(--accent); }
+
+  .conflict-badge {
+    background: none;
+    border: none;
+    color: var(--warning);
+    font-size: 11px;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    cursor: pointer;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+  }
+  .conflict-badge:hover { background: var(--bg-hover); }
   .branch-icon { font-size: var(--font-size-lg); }
   .chevron { color: var(--text-muted); font-size: 10px; }
   .dropdown-overlay {
