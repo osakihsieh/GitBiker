@@ -65,7 +65,7 @@ export interface RepoState {
   return parts[parts.length - 1] || '';
   }
 
-  export function createEmptyState(): RepoState {
+export function createEmptyState(): RepoState {
   return {
     stagedFiles: [],
     unstagedFiles: [],
@@ -81,8 +81,7 @@ export interface RepoState {
     fileHistoryTarget: null,
     logFilter: { type: 'Head' },
     branchCompareResult: null,
-    };
-    }
+  };
 }
 
 // ── AppState ───────────────────────────────────────────
