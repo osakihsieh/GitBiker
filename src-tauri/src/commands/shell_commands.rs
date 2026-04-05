@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use std::process::Command;
 
 use crate::git::GitError;
 
@@ -31,7 +30,7 @@ pub fn run_shell_command(path: String, command: String) -> Result<ShellOutput, G
         ));
     }
 
-    let output = Command::new(program)
+    let output = crate::git::LocalGit::git_command()
         .args(&parts[1..])
         .current_dir(&cwd)
         .output()

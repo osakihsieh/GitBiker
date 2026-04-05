@@ -1,8 +1,23 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
   import { gitShowFiles, gitShowFileDiff } from '$lib/git/commands';
-  import type { FileStatus } from '$lib/git/types';
+  import type { FileStatus, DiffResult } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
+
+  const CACHE_MAX = 50;
+
+  // LRU cache for commit file lists
+  const filesCache = new Map<string, FileStatus[]>();
+  // LRU cache for commit file diffs (key = commitId:filePath)
+  const diffCache = new Map<string, DiffResult>();
+
+  function cacheSet<T>(cache: Map<string, T>, key: string, value: T): void {
+    if (cache.size >= CACHE_MAX) {
+      const oldest = cache.keys().next().value!;
+      cache.delete(oldest);
+    }
+    cache.set(key, value);
+  }
 
   let files = $state<FileStatus[]>([]);
   let loading = $state(false);
@@ -17,10 +32,21 @@
       return;
     }
 
+    const cacheKey = `${repoPath}:${commit.id}`;
+    const cached = filesCache.get(cacheKey);
+    if (cached) {
+      files = cached;
+      selectedFile = null;
+      return;
+    }
+
     loading = true;
     selectedFile = null;
     gitShowFiles(repoPath, commit.id)
-      .then((result) => { files = result; })
+      .then((result) => {
+        cacheSet(filesCache, cacheKey, result);
+        files = result;
+      })
       .catch((e) => {
         app.addToast(String(e), 'error');
         files = [];
@@ -31,12 +57,22 @@
   async function handleFileClick(file: FileStatus) {
     if (!app.repoPath || !app.selectedCommit) return;
     selectedFile = file.path;
+
+    const diffKey = `${app.repoPath}:${app.selectedCommit.id}:${file.path}`;
+    const cachedDiff = diffCache.get(diffKey);
+    if (cachedDiff) {
+      app.currentDiff = cachedDiff;
+      return;
+    }
+
     try {
-      app.currentDiff = await gitShowFileDiff(
+      const diff = await gitShowFileDiff(
         app.repoPath,
         app.selectedCommit.id,
         file.path,
       );
+      cacheSet(diffCache, diffKey, diff);
+      app.currentDiff = diff;
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
     }

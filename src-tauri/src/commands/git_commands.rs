@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use std::process::Command;
 
 use tauri::{AppHandle, State};
 
@@ -95,7 +94,7 @@ pub fn git_pull(
 
 #[tauri::command]
 pub fn git_clone(url: String, dest: String) -> Result<(), GitError> {
-    let output = Command::new("git")
+    let output = LocalGit::git_command()
         .args(["clone", &url, &dest])
         .output()
         .map_err(|e| GitError::OperationFailed(format!("無法執行 git clone: {e}")))?;
@@ -234,7 +233,7 @@ pub fn git_file_log(
 
 #[tauri::command]
 pub fn check_git_version() -> Result<String, GitError> {
-    let output = Command::new("git")
+    let output = LocalGit::git_command()
         .args(["--version"])
         .output()
         .map_err(|e| GitError::OperationFailed(format!("找不到 git: {e}")))?;
