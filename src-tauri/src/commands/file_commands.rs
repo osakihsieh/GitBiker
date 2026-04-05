@@ -204,6 +204,10 @@ pub fn git_log_search(
             args.push("--author");
             args.push(&query);
         }
+        "code" => {
+            args.push("-G");
+            args.push(&query);
+        }
         _ => {
             args.push("--grep");
             args.push(&query);

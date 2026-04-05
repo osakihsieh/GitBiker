@@ -1,5 +1,5 @@
-import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent, LogFilter } from '$lib/git/types';
-import { gitGetConflictFiles, gitGetConflictContent } from '$lib/git/commands';
+import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent, LogFilter, BranchCompareResult } from '$lib/git/types';
+import { gitGetConflictFiles, gitGetConflictContent, gitBranchCompare } from '$lib/git/commands';
 import {
   loadRecentRepos as _loadRecentRepos,
   addRecentRepo as _addRecentRepo,
@@ -29,7 +29,7 @@ export interface Toast {
   autoDismiss: boolean;
 }
 
-export type ViewMode = 'worktree' | 'commit-detail' | 'conflict-resolution' | 'file-history';
+export type ViewMode = 'worktree' | 'commit-detail' | 'conflict-resolution' | 'file-history' | 'branch-compare';
 
 export interface RepoState {
   stagedFiles: FileStatus[];
@@ -48,8 +48,9 @@ export interface RepoState {
   fileHistoryTarget: string | null;
   // Log filter
   logFilter: LogFilter;
-  }
-
+  // Branch compare
+  branchCompareResult: BranchCompareResult | null;
+}
   export interface RepoTab {
   id: string;
   path: string;
@@ -79,9 +80,9 @@ export interface RepoState {
     hunkChoices: {},
     fileHistoryTarget: null,
     logFilter: { type: 'Head' },
-  };
-  }
-
+    branchCompareResult: null,
+    };
+    }
 }
 
 // ── AppState ───────────────────────────────────────────
@@ -284,6 +285,23 @@ class AppState {
 
   get fileHistoryTarget(): string | null {
     return this.activeTab?.state.fileHistoryTarget ?? null;
+  }
+
+  async compareBranches(base: string, compare: string): Promise<void> {
+    if (!this.repoPath) return;
+    this.viewMode = 'branch-compare';
+    const tab = this.activeTab;
+    if (tab) {
+      try {
+        tab.state.branchCompareResult = await gitBranchCompare(this.repoPath, base, compare);
+      } catch (e: unknown) {
+        this.addToast(String(e), 'error');
+      }
+    }
+  }
+
+  get branchCompareResult(): BranchCompareResult | null {
+    return this.activeTab?.state.branchCompareResult ?? null;
   }
 
   // ── Conflict Resolution Methods ──

@@ -18,6 +18,7 @@
   import InlineTerminal from '$lib/components/InlineTerminal.svelte';
   import ConflictResolver from '$lib/components/ConflictResolver.svelte';
   import FileHistory from '$lib/components/FileHistory.svelte';
+  import BranchCompare from '$lib/components/BranchCompare.svelte';
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
@@ -172,6 +173,8 @@
         <div class="right" tabindex="-1">
           <CommitLog />
         </div>
+      {:else if app.viewMode === 'branch-compare'}
+        <BranchCompare />
       {:else}
         <div class="sidebar">
           {#if app.viewMode === 'commit-detail'}

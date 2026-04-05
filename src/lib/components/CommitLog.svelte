@@ -5,7 +5,7 @@
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
   let searchQuery = $state('');
-  let searchType = $state<'message' | 'author'>('message');
+  let searchType = $state<'message' | 'author' | 'code'>('message');
   let searchResults = $state<Commit[] | null>(null);
   let searching = $state(false);
   let contextMenu = $state<{ commit: Commit; x: number; y: number } | null>(null);
@@ -179,13 +179,15 @@
 <div class="history-panel">
   <!-- Search Bar -->
   <div class="search-bar">
-    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
+    <select class="search-type-select" bind:value={searchType} onchange={executeSearch}>
+      <option value="message">Msg</option>
+      <option value="author">User</option>
+      <option value="code">Code</option>
+    </select>
     <input
       type="text"
       class="search-input"
-      placeholder="Search commits..."
+      placeholder="Search..."
       bind:value={searchQuery}
       oninput={handleSearchInput}
       onkeydown={handleSearchKeydown}
@@ -299,7 +301,17 @@
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
-  .search-icon { color: var(--text-muted); flex-shrink: 0; }
+  .search-type-select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 10px;
+    padding: 1px 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  .search-type-select:hover { color: var(--text-primary); border-color: var(--accent); }
   .search-input {
     flex: 1;
     background: none;

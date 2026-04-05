@@ -114,6 +114,15 @@ export interface PullResult {
   conflicts: string[];
 }
 
+export interface BranchCompareResult {
+  base: string;
+  compare: string;
+  commits: Commit[];
+  files: FileStatus[];
+  ahead: number;
+  behind: number;
+}
+
 export interface GitErrorResponse {
   code: string;
   message: string;

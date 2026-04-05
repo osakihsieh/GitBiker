@@ -16,4 +16,5 @@ pub trait GitOperations: Send + Sync {
     fn switch_branch(&self, path: &Path, name: &str) -> Result<(), GitError>;
     fn create_branch(&self, path: &Path, name: &str) -> Result<(), GitError>;
     fn delete_branch(&self, path: &Path, name: &str) -> Result<(), GitError>;
+    fn branch_compare(&self, path: &Path, base: &str, compare: &str) -> Result<BranchCompareResult, GitError>;
 }

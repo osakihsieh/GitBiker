@@ -211,3 +211,13 @@ pub struct PullResult {
     pub message: String,
     pub conflicts: Vec<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BranchCompareResult {
+    pub base: String,
+    pub compare: String,
+    pub commits: Vec<Commit>,
+    pub files: Vec<FileStatus>,
+    pub ahead: usize,
+    pub behind: usize,
+}

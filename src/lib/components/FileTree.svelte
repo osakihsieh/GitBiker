@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitStage, gitUnstage, gitCommit, gitIgnore, gitCheckoutFile, openInEditor } from '$lib/git/commands';
+  import { gitStage, gitUnstage, gitCommit, gitIgnore, gitCheckoutFile, openInEditor, gitStashPushFiles } from '$lib/git/commands';
   import type { FileStatus } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
@@ -144,6 +144,11 @@
 
     items.push({ id: '_sep2', label: '', separator: true });
 
+    // Stash options
+    items.push({ id: 'stash-file', label: 'Stash 這個檔案' });
+
+    items.push({ id: '_sep3', label: '', separator: true });
+
     // Utilities
     items.push({ id: 'copy-path', label: '複製路徑' });
     items.push({ id: 'open-editor', label: '在編輯器開啟' });
@@ -194,6 +199,13 @@
         case 'open-editor':
           if (app.repoPath) {
             await openInEditor(app.repoPath + '/' + file.path, app.preferredEditor ?? undefined);
+          }
+          break;
+        case 'stash-file':
+          if (app.repoPath) {
+            await gitStashPushFiles(app.repoPath, [file.path], `Stash file: ${file.path}`);
+            app.addToast(`已 Stash ${file.path}`, 'success');
+            await app.refreshAll();
           }
           break;
         case 'file-history':

@@ -91,6 +91,16 @@ pub fn git_merge_abort(
     state.git.merge_abort(&PathBuf::from(&path))
 }
 
+#[tauri::command]
+pub fn git_branch_compare(
+    state: State<GitState>,
+    path: String,
+    base: String,
+    compare: String,
+) -> Result<BranchCompareResult, GitError> {
+    state.git.branch_compare(&PathBuf::from(&path), &base, &compare)
+}
+
 // ── Conflict Resolution Commands ─────────────────────
 
 #[tauri::command]
@@ -198,4 +208,15 @@ pub fn git_stash_drop(
     index: usize,
 ) -> Result<String, GitError> {
     state.git.stash_drop(&PathBuf::from(&path), index)
+}
+
+#[tauri::command]
+pub fn git_stash_push_files(
+    state: State<GitState>,
+    path: String,
+    message: Option<String>,
+    files: Vec<String>,
+) -> Result<String, GitError> {
+    let file_paths: Vec<PathBuf> = files.into_iter().map(PathBuf::from).collect();
+    state.git.stash_push_files(&PathBuf::from(&path), message.as_deref(), &file_paths)
 }

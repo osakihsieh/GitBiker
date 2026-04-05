@@ -480,10 +480,15 @@
                       {#if pushingBranch === branch.name}<span class="spinner-sm"></span>{:else}↑{/if}
                     </button>
                   {/if}
-                  <div class="action-group">
-                    {#if !branch.is_current}
+                    <div class="action-group">
                       <button
-                        class="action-btn merge-btn"
+                        class="action-btn compare-btn"
+                        title="與 {app.currentBranch} 比較"
+                        onclick={() => app.compareBranches(app.currentBranch, branch.name)}
+                      >⇄</button>
+                      {#if !branch.is_current}
+                        <button
+                          class="action-btn merge-btn"
                         title="Merge into {app.currentBranch}"
                         disabled={mergingBranch === branch.name}
                         onclick={() => handleMerge(branch.name)}
@@ -506,11 +511,18 @@
           {#each remoteBranches() as branch}
             <div class="branch-item" role="option" aria-selected="false">
               <span class="branch-name remote-name">{branch.name}</span>
-              <button
-                class="action-btn checkout-btn"
-                title="Checkout as local branch"
-                onclick={() => handleCheckoutRemote(branch.name)}
-              >⬇</button>
+              <div class="action-group">
+                <button
+                  class="action-btn compare-btn"
+                  title="與 {app.currentBranch} 比較"
+                  onclick={() => app.compareBranches(app.currentBranch, branch.name)}
+                >⇄</button>
+                <button
+                  class="action-btn checkout-btn"
+                  title="Checkout as local branch"
+                  onclick={() => handleCheckoutRemote(branch.name)}
+                >⬇</button>
+              </div>
             </div>
           {/each}
         {/if}
@@ -766,6 +778,7 @@
   .delete-btn:hover { color: var(--error); }
   .checkout-btn { color: var(--text-muted); opacity: 1; }
   .checkout-btn:hover { color: var(--accent); }
+  .compare-btn:hover { color: var(--accent); }
   .push-btn { opacity: 1; }
   .push-btn:hover { color: var(--accent); }
   .merge-btn:hover { color: var(--success, #4ec9b0); }

@@ -180,13 +180,28 @@ impl LocalGit {
     }
 
     pub fn stash_push(&self, path: &Path, message: Option<&str>) -> Result<String, GitError> {
-        let mut args = vec!["stash", "push"];
+        let mut args = vec!["stash", "push", "-u"];
         if let Some(msg) = message {
             args.push("-m");
             args.push(msg);
         }
         Self::run_git(path, &args)
     }
+
+    pub fn stash_push_files(&self, path: &Path, message: Option<&str>, files: &[PathBuf]) -> Result<String, GitError> {
+        let mut args = vec!["stash", "push", "-u"];
+        if let Some(msg) = message {
+            args.push("-m");
+            args.push(msg);
+        }
+        args.push("--");
+        let file_strs: Vec<String> = files.iter().map(|f| f.display().to_string()).collect();
+        for f in &file_strs {
+            args.push(f);
+        }
+        Self::run_git(path, &args)
+    }
+
 
     pub fn stash_pop(&self, path: &Path, index: usize) -> Result<String, GitError> {
         let stash_ref = format!("stash@{{{index}}}");
@@ -682,11 +697,21 @@ impl GitOperations for LocalGit {
             }
             Some(LogFilter::Branch(ref b)) => {
                 let mut found = false;
-                // Try Local branch
-                if let Ok(branch) = repo.find_branch(b, git2::BranchType::Local) {
-                    if let Some(name) = branch.get().name() {
-                        if revwalk.push_ref(name).is_ok() {
-                            found = true;
+                
+                // Support range syntax like "base..compare"
+                if b.contains("..") {
+                    if revwalk.push_range(b).is_ok() {
+                        found = true;
+                    }
+                }
+
+                if !found {
+                    // Try Local branch
+                    if let Ok(branch) = repo.find_branch(b, git2::BranchType::Local) {
+                        if let Some(name) = branch.get().name() {
+                            if revwalk.push_ref(name).is_ok() {
+                                found = true;
+                            }
                         }
                     }
                 }
@@ -977,6 +1002,53 @@ impl GitOperations for LocalGit {
         Self::check_index_lock(path)?;
         Self::run_git(path, &["branch", "-d", name])?;
         Ok(())
+    }
+
+    fn branch_compare(&self, path: &Path, base: &str, compare: &str) -> Result<BranchCompareResult, GitError> {
+        let _repo = Self::open_repo(path)?;
+        
+        // 1. Get Ahead/Behind counts
+        let ahead_out = Self::run_git(path, &["rev-list", "--count", &format!("{}..{}", base, compare)])?;
+        let behind_out = Self::run_git(path, &["rev-list", "--count", &format!("{}..{}", compare, base)])?;
+        let ahead = ahead_out.trim().parse().unwrap_or(0);
+        let behind = behind_out.trim().parse().unwrap_or(0);
+
+        // 2. Get Commits between them
+        let commits = self.log(path, 100, Some(LogFilter::Branch(format!("{}..{}", base, compare))))?;
+
+        // 3. Get File Differences
+        // base...compare (triple dot) shows changes in compare since it diverged from base
+        let diff_out = Self::run_git(path, &["diff", "--name-status", &format!("{}...{}", base, compare)])?;
+        let mut files = Vec::new();
+        for line in diff_out.lines() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 2 {
+                let status_char = parts[0].chars().next().unwrap_or('M');
+                let file_path = parts[1].to_string();
+                
+                let kind = match status_char {
+                    'A' => FileStatusKind::Added,
+                    'D' => FileStatusKind::Deleted,
+                    'R' => FileStatusKind::Renamed,
+                    _ => FileStatusKind::Modified,
+                };
+                
+                files.push(FileStatus {
+                    path: PathBuf::from(file_path),
+                    kind,
+                    staging: StagingState::Staged, // Mark as staged to use in DiffViewer
+                });
+            }
+        }
+
+        Ok(BranchCompareResult {
+            base: base.to_string(),
+            compare: compare.to_string(),
+            commits,
+            files,
+            ahead,
+            behind,
+        })
     }
 }
 

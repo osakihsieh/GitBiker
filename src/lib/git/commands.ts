@@ -138,8 +138,13 @@ export async function gitStashList(path: string): Promise<StashEntry[]> {
 }
 
 export async function gitStashPush(path: string, message?: string): Promise<string> {
-  return invoke('git_stash_push', { path, message });
+  return invoke('git_stash_push', { path, message: message ?? null });
 }
+
+export async function gitStashPushFiles(path: string, files: string[], message?: string): Promise<string> {
+  return invoke('git_stash_push_files', { path, files, message: message ?? null });
+}
+
 
 export async function gitStashPop(path: string, index?: number): Promise<string> {
   return invoke('git_stash_pop', { path, index });
@@ -269,4 +274,8 @@ export async function openInEditor(path: string, editor?: string): Promise<void>
 
 export async function openInTerminal(path: string): Promise<void> {
   return invoke('open_in_terminal', { path });
+}
+
+export async function gitBranchCompare(path: string, base: string, compare: string): Promise<BranchCompareResult> {
+  return invoke('git_branch_compare', { path, base, compare });
 }

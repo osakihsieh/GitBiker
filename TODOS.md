@@ -30,9 +30,9 @@
 | # | User Story | 工作量 | 依賴 |
 |---|-----------|--------|------|
 | US-008 | [Commit Filter by Branch](user-stories/US-008-commit-filter-by-branch.md) | S | CommitLog ✅ ✅ |
-| US-005 | [Branch Compare](user-stories/US-005-branch-compare.md) | M | BranchManager ✅ |
-| US-006 | [Partial Stash](user-stories/US-006-partial-stash.md) | M | StashManager ✅ |
-| US-007 | [Code History Search](user-stories/US-007-code-history-search.md) | M | CommitLog ✅ |
+| US-005 | [Branch Compare](user-stories/US-005-branch-compare.md) | M | BranchManager ✅ ✅ |
+| US-006 | [Partial Stash](user-stories/US-006-partial-stash.md) | M | StashManager ✅ ✅ |
+| US-007 | [Code History Search](user-stories/US-007-code-history-search.md) | M | CommitLog ✅ ✅ |
 
 ### Sprint 3：品質提升（P3）
 
