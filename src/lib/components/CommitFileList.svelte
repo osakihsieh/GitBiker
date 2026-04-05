@@ -2,6 +2,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { gitShowFiles, gitShowFileDiff } from '$lib/git/commands';
   import type { FileStatus } from '$lib/git/types';
+  import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
   let files = $state<FileStatus[]>([]);
   let loading = $state(false);
@@ -68,6 +69,33 @@
     return id.substring(0, 7);
   }
 
+  let fileContextMenu = $state<{ file: FileStatus; x: number; y: number } | null>(null);
+
+  const fileContextMenuItems: MenuItem[] = [
+    { id: 'file-history', label: '查看檔案歷史' },
+    { id: '_sep', label: '', separator: true },
+    { id: 'copy-path', label: '複製路徑' },
+  ];
+
+  function handleFileContextMenu(e: MouseEvent, file: FileStatus) {
+    e.preventDefault();
+    fileContextMenu = { file, x: e.clientX, y: e.clientY };
+  }
+
+  async function handleFileContextSelect(actionId: string) {
+    if (!fileContextMenu) return;
+    const { file } = fileContextMenu;
+    switch (actionId) {
+      case 'file-history':
+        app.showFileHistory(file.path);
+        break;
+      case 'copy-path':
+        await navigator.clipboard.writeText(file.path);
+        app.addToast('已複製路徑', 'success');
+        break;
+    }
+  }
+
   function timeAgo(timestamp: number): string {
     const seconds = Math.floor(Date.now() / 1000 - timestamp);
     if (seconds < 60) return 'just now';
@@ -116,6 +144,7 @@
           class="file-item"
           class:active={selectedFile === file.path}
           onclick={() => handleFileClick(file)}
+          oncontextmenu={(e) => handleFileContextMenu(e, file)}
         >
           <span class="status {statusClass(file.kind)}">{statusLabel(file.kind)}</span>
           <span class="filename" title={file.path}>{fileName(file.path)}</span>
@@ -126,6 +155,16 @@
     {/if}
   </div>
 </div>
+
+{#if fileContextMenu}
+  <ContextMenu
+    x={fileContextMenu.x}
+    y={fileContextMenu.y}
+    items={fileContextMenuItems}
+    onSelect={handleFileContextSelect}
+    onClose={() => fileContextMenu = null}
+  />
+{/if}
 
 <style>
   .commit-detail {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import { gitInit } from '$lib/git/commands';
 
   interface Props {
     onOpenRepo: (path: string) => void;
@@ -16,6 +17,23 @@
         title: 'Select Git Repository',
       });
       if (selected) {
+        onOpenRepo(selected);
+      }
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
+  async function handleInitRepo() {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        directory: true,
+        title: '選擇資料夾來初始化 Git Repository',
+      });
+      if (selected) {
+        await gitInit(selected);
+        app.addToast('Git repository 初始化成功', 'success');
         onOpenRepo(selected);
       }
     } catch (e: unknown) {
@@ -50,6 +68,11 @@
       <span class="icon">📂</span>
       <span class="label">Open Local Repo</span>
       <span class="hint">from disk</span>
+    </button>
+    <button class="action-btn" onclick={handleInitRepo}>
+      <span class="icon">+</span>
+      <span class="label">Init New Repo</span>
+      <span class="hint">git init</span>
     </button>
   </div>
 

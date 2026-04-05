@@ -29,7 +29,7 @@ export interface Toast {
   autoDismiss: boolean;
 }
 
-export type ViewMode = 'worktree' | 'commit-detail' | 'conflict-resolution';
+export type ViewMode = 'worktree' | 'commit-detail' | 'conflict-resolution' | 'file-history';
 
 export interface RepoState {
   stagedFiles: FileStatus[];
@@ -44,6 +44,8 @@ export interface RepoState {
   activeConflictFile: string | null;
   conflictContent: ConflictContent | null;
   hunkChoices: Record<number, 'Ours' | 'Theirs' | 'Both'>;
+  // File history
+  fileHistoryTarget: string | null;
   // currentDiff intentionally excluded — cleared on tab switch to save memory
 }
 
@@ -74,6 +76,7 @@ export function createEmptyState(): RepoState {
     activeConflictFile: null,
     conflictContent: null,
     hunkChoices: {},
+    fileHistoryTarget: null,
   };
 }
 
@@ -252,6 +255,19 @@ class AppState {
   backToWorktree(): void {
     this.selectedCommit = null;
     this.viewMode = 'worktree';
+    const tab = this.activeTab;
+    if (tab) tab.state.fileHistoryTarget = null;
+  }
+
+  showFileHistory(filePath: string): void {
+    this.selectedCommit = null;
+    this.viewMode = 'file-history';
+    const tab = this.activeTab;
+    if (tab) tab.state.fileHistoryTarget = filePath;
+  }
+
+  get fileHistoryTarget(): string | null {
+    return this.activeTab?.state.fileHistoryTarget ?? null;
   }
 
   // ── Conflict Resolution Methods ──

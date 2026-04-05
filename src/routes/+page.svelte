@@ -17,6 +17,7 @@
   import CommandPalette from '$lib/components/CommandPalette.svelte';
   import InlineTerminal from '$lib/components/InlineTerminal.svelte';
   import ConflictResolver from '$lib/components/ConflictResolver.svelte';
+  import FileHistory from '$lib/components/FileHistory.svelte';
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
@@ -185,7 +186,11 @@
         </div>
         <div class="resize-handle"></div>
         <div class="right" tabindex="-1">
-          <CommitLog />
+          {#if app.viewMode === 'file-history'}
+            <FileHistory />
+          {:else}
+            <CommitLog />
+          {/if}
         </div>
       {/if}
     </div>

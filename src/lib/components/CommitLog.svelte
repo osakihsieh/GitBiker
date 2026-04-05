@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitLogSearch, gitTagCreate } from '$lib/git/commands';
+  import { gitLogSearch, gitTagCreate, gitRevert, gitResetSoft, gitResetHard } from '$lib/git/commands';
   import type { Commit } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
@@ -71,11 +71,34 @@
     contextMenu = { commit, x: e.clientX, y: e.clientY };
   }
 
-  const contextMenuItems: MenuItem[] = [
-    { id: 'copyHash', label: '複製 Hash' },
-    { id: '_sep', label: '', separator: true },
-    { id: 'createTag', label: '建立 Tag...' },
-  ];
+  function getContextMenuItems(commit: Commit): MenuItem[] {
+    const items: MenuItem[] = [
+      { id: 'copyHash', label: '複製 Hash' },
+      { id: '_sep1', label: '', separator: true },
+      { id: 'createTag', label: '建立 Tag...' },
+      { id: '_sep2', label: '', separator: true },
+      { id: 'revert', label: '撤回此 Commit (Revert)' },
+    ];
+
+    // 判斷是否為未推送的 commit：在 ahead 範圍內
+    const currentBranch = app.branches.find((b) => b.is_current);
+    const aheadCount = currentBranch?.ahead ?? 0;
+    const commitIndex = displayCommits.findIndex((c) => c.id === commit.id);
+    const isUnpushed = commitIndex >= 0 && commitIndex < aheadCount;
+
+    if (isUnpushed) {
+      items.push(
+        { id: 'undoSoft', label: '撤銷到此 Commit (保留變更)' },
+        { id: 'undoHard', label: '撤銷到此 Commit (丟棄變更)' },
+      );
+    }
+
+    return items;
+  }
+
+  const contextMenuItems = $derived(
+    contextMenu ? getContextMenuItems(contextMenu.commit) : [],
+  );
 
   async function handleContextSelect(actionId: string) {
     if (!contextMenu || !app.repoPath) return;
@@ -91,6 +114,32 @@
           if (tagName?.trim()) {
             await gitTagCreate(app.repoPath, tagName.trim(), commit.id);
             app.addToast(`已建立 tag: ${tagName.trim()}`, 'success');
+            await app.refreshAll();
+          }
+          break;
+        }
+        case 'revert': {
+          const isMerge = commit.parents.length > 1;
+          const label = isMerge ? '（Merge commit，將使用 -m 1）' : '';
+          if (confirm(`確定要 Revert commit ${commit.id.substring(0, 7)}？${label}\n\n${commit.message}`)) {
+            await gitRevert(app.repoPath, commit.id, isMerge);
+            app.addToast('Revert 成功', 'success');
+            await app.refreshAll();
+          }
+          break;
+        }
+        case 'undoSoft': {
+          if (confirm(`確定要撤銷到 ${commit.id.substring(0, 7)}？\n變更將保留在 staged 區域。`)) {
+            await gitResetSoft(app.repoPath, commit.id);
+            app.addToast('已撤銷 commit（變更已保留）', 'success');
+            await app.refreshAll();
+          }
+          break;
+        }
+        case 'undoHard': {
+          if (confirm(`⚠️ 確定要撤銷到 ${commit.id.substring(0, 7)}？\n\n此操作不可撤銷，所有變更將被丟棄！`)) {
+            await gitResetHard(app.repoPath, commit.id);
+            app.addToast('已撤銷 commit（變更已丟棄）', 'success');
             await app.refreshAll();
           }
           break;

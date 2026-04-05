@@ -10,7 +10,42 @@
 
 ---
 
-## Conflict Resolution UI (CEO Plan Ready)
+## (已完成) Conflict Resolution UI ✅
+
+---
+
+## GitFiend 對標 — 實作路線圖
+
+### Sprint 1：核心 Git 操作補齊（P1）
+
+| # | User Story | 工作量 | 依賴 |
+|---|-----------|--------|------|
+| US-001 | [Git Init](user-stories/US-001-git-init.md) | S | 無 |
+| US-002 | [Revert Commit](user-stories/US-002-revert-commit.md) | M | ConflictResolver ✅ |
+| US-003 | [Undo Un-pushed Commits](user-stories/US-003-undo-unpushed-commits.md) | M | CommitLog ✅ |
+| US-004 | [File History](user-stories/US-004-file-history.md) | M | CommitLog + DiffViewer ✅ |
+
+### Sprint 2：進階使用者體驗（P2）
+
+| # | User Story | 工作量 | 依賴 |
+|---|-----------|--------|------|
+| US-008 | [Commit Filter by Branch](user-stories/US-008-commit-filter-by-branch.md) | S | CommitLog ✅ |
+| US-005 | [Branch Compare](user-stories/US-005-branch-compare.md) | M | BranchManager ✅ |
+| US-006 | [Partial Stash](user-stories/US-006-partial-stash.md) | M | StashManager ✅ |
+| US-007 | [Code History Search](user-stories/US-007-code-history-search.md) | M | CommitLog ✅ |
+
+### Sprint 3：品質提升（P3）
+
+| # | User Story | 工作量 | 依賴 |
+|---|-----------|--------|------|
+| US-009 | [Auto Fetch](user-stories/US-009-auto-fetch.md) | S | Fetch + Settings ✅ |
+| US-010 | [Pre-commit Hook 支援](user-stories/US-010-pre-commit-hook-support.md) | S | Commit ✅ |
+
+---
+
+## 既有待辦
+
+## Conflict Resolution UI (CEO Plan Ready — 已完成)
 
 **What:** 完整的 merge conflict 解決介面 — inline accept ours/theirs/both per hunk、衝突檔案清單、進度追蹤、完成 merge commit
 **Why:** 目前 merge 衝突只顯示清單和 abort，用戶必須切到外部編輯器解決。

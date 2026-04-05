@@ -148,6 +148,12 @@
     items.push({ id: 'copy-path', label: '複製路徑' });
     items.push({ id: 'open-editor', label: '在編輯器開啟' });
 
+    // File history (only for tracked files)
+    if (file.kind !== 'Untracked') {
+      items.push({ id: '_sep3', label: '', separator: true });
+      items.push({ id: 'file-history', label: '查看檔案歷史' });
+    }
+
     return items;
   }
 
@@ -189,6 +195,9 @@
           if (app.repoPath) {
             await openInEditor(app.repoPath + '/' + file.path, app.preferredEditor ?? undefined);
           }
+          break;
+        case 'file-history':
+          app.showFileHistory(file.path);
           break;
       }
     } catch (e: unknown) {

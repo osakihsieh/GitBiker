@@ -222,6 +222,28 @@ export async function gitCheckoutFile(
   return invoke('git_checkout_file', { path, file, staging, kind });
 }
 
+// ── Init / Revert / Reset / File History ─────────────
+
+export async function gitInit(path: string): Promise<void> {
+  return invoke('git_init', { path });
+}
+
+export async function gitRevert(path: string, commitId: string, isMerge: boolean): Promise<string> {
+  return invoke('git_revert', { path, commitId, isMerge });
+}
+
+export async function gitResetSoft(path: string, target: string): Promise<void> {
+  return invoke('git_reset_soft', { path, target });
+}
+
+export async function gitResetHard(path: string, target: string): Promise<void> {
+  return invoke('git_reset_hard', { path, target });
+}
+
+export async function gitFileLog(path: string, file: string, limit?: number): Promise<Commit[]> {
+  return invoke('git_file_log', { path, file, limit: limit ?? 200 });
+}
+
 // ── Editor Detection ─────────────────────────────────
 
 export interface EditorInfo {

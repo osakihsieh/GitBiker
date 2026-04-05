@@ -49,6 +49,7 @@ describe('AppState', () => {
           activeConflictFile: null,
           conflictContent: null,
           hunkChoices: {},
+          fileHistoryTarget: null,
         },
       }];
       app.activeTabId = 'test-1';
@@ -78,6 +79,7 @@ describe('AppState', () => {
           activeConflictFile: null,
           conflictContent: null,
           hunkChoices: {},
+          fileHistoryTarget: null,
         },
       }];
       app.activeTabId = 'test-1';
@@ -88,8 +90,8 @@ describe('AppState', () => {
   describe('tab management', () => {
     it('closeTab 移除 tab', () => {
       app.tabs = [
-        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
-        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
+        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
       app.activeTabId = 'a';
 
@@ -100,7 +102,7 @@ describe('AppState', () => {
 
     it('closeTab 最後一個 tab 回到 Welcome', () => {
       app.tabs = [
-        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
       app.activeTabId = 'a';
 
@@ -112,9 +114,9 @@ describe('AppState', () => {
 
     it('closeOtherTabs 只保留指定 tab', () => {
       app.tabs = [
-        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
-        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
-        { id: 'c', path: '/c', name: 'c', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'feat', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
+        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
+        { id: 'c', path: '/c', name: 'c', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'feat', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
       app.activeTabId = 'a';
 
@@ -125,7 +127,7 @@ describe('AppState', () => {
 
     it('closeAllTabs 清空所有 tabs', () => {
       app.tabs = [
-        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
       app.activeTabId = 'a';
 
@@ -142,6 +144,7 @@ describe('AppState', () => {
           unstagedFiles: [{ path: 'f2', kind: 'Modified', staging: 'Unstaged' }, { path: 'f3', kind: 'Added', staging: 'Unstaged' }],
           commits: [], branches: [], currentBranch: 'main', selectedFile: null,
           viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {},
+          fileHistoryTarget: null,
         },
       }];
       expect(app.dirtyCount('a')).toBe(3);
@@ -149,8 +152,8 @@ describe('AppState', () => {
 
     it('displayName 處理同名 tabs', () => {
       app.tabs = [
-        { id: 'a', path: '/projects/alpha/main', name: 'main', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
-        { id: 'b', path: '/projects/beta/main', name: 'main', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/projects/alpha/main', name: 'main', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
+        { id: 'b', path: '/projects/beta/main', name: 'main', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
 
       expect(app.displayName(app.tabs[0])).toBe('alpha/main');
@@ -159,8 +162,8 @@ describe('AppState', () => {
 
     it('displayName 無重複時只顯示名稱', () => {
       app.tabs = [
-        { id: 'a', path: '/projects/alpha', name: 'alpha', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
-        { id: 'b', path: '/projects/beta', name: 'beta', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/projects/alpha', name: 'alpha', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
+        { id: 'b', path: '/projects/beta', name: 'beta', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
 
       expect(app.displayName(app.tabs[0])).toBe('alpha');
@@ -314,6 +317,7 @@ describe('AppState', () => {
         activeConflictFile: null,
         conflictContent: null,
         hunkChoices: {},
+        fileHistoryTarget: null,
       },
     });
 
@@ -379,7 +383,7 @@ describe('AppState', () => {
     it('repoPath 回傳 activeTab 的 path', () => {
       app.tabs = [{
         id: 'a', path: '/my/repo', name: 'repo',
-        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} },
+        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null },
       }];
       app.activeTabId = 'a';
       expect(app.repoPath).toBe('/my/repo');
@@ -405,7 +409,7 @@ describe('AppState', () => {
     it('回傳指定 tab 的 currentBranch', () => {
       app.tabs = [{
         id: 'a', path: '/a', name: 'a',
-        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'feature-x', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} },
+        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'feature-x', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null },
       }];
       expect(app.tabBranch('a')).toBe('feature-x');
     });
@@ -424,7 +428,7 @@ describe('AppState', () => {
   describe('viewMode', () => {
     beforeEach(() => {
       // viewMode is now per-tab, need an active tab
-      app.tabs = [{ id: 'vm-tab', path: '/vm', name: 'vm', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } }];
+      app.tabs = [{ id: 'vm-tab', path: '/vm', name: 'vm', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } }];
       app.activeTabId = 'vm-tab';
     });
 
@@ -448,7 +452,7 @@ describe('AppState', () => {
 
     it('closeAllTabs 重置 viewMode', () => {
       app.tabs = [
-        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
       app.activeTabId = 'a';
       app.selectCommit({ id: 'x', message: '', author: '', email: '', timestamp: 0, parents: [], refs: [] });
@@ -479,7 +483,7 @@ describe('AppState', () => {
       // Manually add a tab
       app.tabs = [{
         id: 'existing', path: '/existing/repo', name: 'repo',
-        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} },
+        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null },
       }];
       app.activeTabId = 'existing';
 
@@ -495,7 +499,7 @@ describe('AppState', () => {
     it('background 模式不切換 activeTab', async () => {
       app.tabs = [{
         id: 'current', path: '/current', name: 'current',
-        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} },
+        state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null },
       }];
       app.activeTabId = 'current';
 
@@ -519,8 +523,8 @@ describe('AppState', () => {
   describe('switchTab', () => {
     it('切換到目標 tab 並重設 viewMode', async () => {
       app.tabs = [
-        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
-        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
+        { id: 'b', path: '/b', name: 'b', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'dev', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
       app.activeTabId = 'a';
       app.selectCommit({ id: 'x', message: '', author: '', email: '', timestamp: 0, parents: [], refs: [] });
@@ -537,7 +541,7 @@ describe('AppState', () => {
 
     it('切換到同一 tab 時不執行', async () => {
       app.tabs = [
-        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
       app.activeTabId = 'a';
 
@@ -547,7 +551,7 @@ describe('AppState', () => {
 
     it('目標 tab 不存在時不執行', async () => {
       app.tabs = [
-        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {} } },
+        { id: 'a', path: '/a', name: 'a', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: 'main', selectedFile: null, viewMode: 'worktree' as const, conflictFiles: [], activeConflictFile: null, conflictContent: null, hunkChoices: {}, fileHistoryTarget: null } },
       ];
       app.activeTabId = 'a';
 
