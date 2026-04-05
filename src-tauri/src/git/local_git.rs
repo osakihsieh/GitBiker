@@ -35,13 +35,18 @@ impl LocalGit {
 
     /// 建立隱藏 console 視窗的 git Command（Windows 專用）
     pub(crate) fn git_command() -> Command {
-        let mut cmd = Command::new("git");
         #[cfg(target_os = "windows")]
         {
             use std::os::windows::process::CommandExt;
+            // 優先嘗試執行 git.exe 以避免執行 .cmd 帶來的額外視窗風險
+            let mut cmd = Command::new("git");
             cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+            cmd
         }
-        cmd
+        #[cfg(not(target_os = "windows"))]
+        {
+            Command::new("git")
+        }
     }
 
     pub(crate) fn run_git(path: &Path, args: &[&str]) -> Result<String, GitError> {

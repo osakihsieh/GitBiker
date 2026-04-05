@@ -139,15 +139,33 @@ pub fn open_in_editor(path: String, editor: Option<String>) -> Result<(), String
 
     // 1. User's preferred editor (from Settings UI — highest priority)
     if let Some(ref preferred) = editor {
-        if !preferred.is_empty() && Command::new(preferred).arg(&path).spawn().is_ok() {
-            return Ok(());
+        if !preferred.is_empty() {
+            let mut cmd = Command::new(preferred);
+            cmd.arg(&path);
+            #[cfg(target_os = "windows")]
+            {
+                use std::os::windows::process::CommandExt;
+                cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+            }
+            if cmd.spawn().is_ok() {
+                return Ok(());
+            }
         }
     }
 
     // 2. VISUAL / EDITOR environment variables
     if let Ok(env_editor) = std::env::var("VISUAL").or_else(|_| std::env::var("EDITOR")) {
-        if !env_editor.is_empty() && Command::new(&env_editor).arg(&path).spawn().is_ok() {
-            return Ok(());
+        if !env_editor.is_empty() {
+            let mut cmd = Command::new(&env_editor);
+            cmd.arg(&path);
+            #[cfg(target_os = "windows")]
+            {
+                use std::os::windows::process::CommandExt;
+                cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+            }
+            if cmd.spawn().is_ok() {
+                return Ok(());
+            }
         }
     }
 
@@ -159,7 +177,14 @@ pub fn open_in_editor(path: String, editor: Option<String>) -> Result<(), String
     };
 
     for candidate in &candidates {
-        if Command::new(candidate).arg(&path).spawn().is_ok() {
+        let mut cmd = Command::new(candidate);
+        cmd.arg(&path);
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
+        if cmd.spawn().is_ok() {
             return Ok(());
         }
     }
