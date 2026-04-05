@@ -21,9 +21,10 @@ export async function gitStatus(path: string): Promise<FileStatus[]> {
   return invoke('git_status', { path });
 }
 
-export async function gitLog(path: string, limit?: number): Promise<Commit[]> {
-  return invoke('git_log', { path, limit: limit ?? 100 });
+export async function gitLog(path: string, limit?: number, filter?: LogFilter): Promise<Commit[]> {
+  return invoke('git_log', { path, limit, filter });
 }
+
 
 export async function gitDiff(path: string, file: string): Promise<DiffResult> {
   return invoke('git_diff', { path, file });

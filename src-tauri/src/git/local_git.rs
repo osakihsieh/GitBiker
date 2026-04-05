@@ -625,7 +625,7 @@ impl GitOperations for LocalGit {
         Ok(result)
     }
 
-    fn log(&self, path: &Path, limit: usize) -> Result<Vec<Commit>, GitError> {
+    fn log(&self, path: &Path, limit: usize, filter: Option<LogFilter>) -> Result<Vec<Commit>, GitError> {
         let repo = Self::open_repo(path)?;
 
         // Build commit_id → refs map from all references
@@ -676,14 +676,54 @@ impl GitOperations for LocalGit {
         }
 
         let mut revwalk = repo.revwalk()?;
-        revwalk.push_head()?;
-        revwalk.set_sorting(git2::Sort::TIME)?;
+        match filter {
+            Some(LogFilter::All) => {
+                revwalk.push_glob("refs/*")?;
+            }
+            Some(LogFilter::Branch(ref b)) => {
+                let mut found = false;
+                // Try Local branch
+                if let Ok(branch) = repo.find_branch(b, git2::BranchType::Local) {
+                    if let Some(name) = branch.get().name() {
+                        if revwalk.push_ref(name).is_ok() {
+                            found = true;
+                        }
+                    }
+                }
+                // Try Remote branch if not found locally
+                if !found {
+                    if let Ok(branch) = repo.find_branch(b, git2::BranchType::Remote) {
+                        if let Some(name) = branch.get().name() {
+                            if revwalk.push_ref(name).is_ok() {
+                                found = true;
+                            }
+                        }
+                    }
+                }
+                // Try revparse (for tags or SHAs)
+                if !found {
+                    if let Ok(obj) = repo.revparse_single(b) {
+                        if revwalk.push(obj.id()).is_ok() {
+                            found = true;
+                        }
+                    }
+                }
+                
+                if !found {
+                    return Err(GitError::OperationFailed(format!("找不到分支或引用: {}", b)));
+                }
+            }
+            _ => {
+                revwalk.push_head()?;
+            }
+        }
+        revwalk.set_sorting(git2::Sort::TIME | git2::Sort::TOPOLOGICAL)?;
 
         let mut commits = Vec::new();
         for oid in revwalk.take(limit) {
             let oid = oid?;
             let commit = repo.find_commit(oid)?;
-            let commit_refs = refs_map.remove(&oid.to_string()).unwrap_or_default();
+            let commit_refs = refs_map.get(&oid.to_string()).cloned().unwrap_or_default();
             commits.push(Commit {
                 id: oid.to_string(),
                 message: commit.message().unwrap_or("").to_string(),
@@ -796,16 +836,10 @@ impl GitOperations for LocalGit {
                 "Commit message 不能為空".to_string(),
             ));
         }
-        let output = Self::run_git(path, &["commit", "-m", message])?;
-        // 從輸出中提取 commit hash
-        let hash = output
-            .lines()
-            .next()
-            .and_then(|line| line.split_whitespace().nth(1))
-            .unwrap_or("unknown")
-            .trim_matches(|c| c == '[' || c == ']')
-            .to_string();
-        Ok(hash)
+        Self::run_git(path, &["commit", "-m", message])?;
+        // 獲取最新 commit 的 hash
+        let hash = Self::run_git(path, &["rev-parse", "HEAD"])?;
+        Ok(hash.trim().to_string())
     }
 
     fn push(&self, path: &Path, remote: &str, branch: &str) -> Result<PushResult, GitError> {
@@ -945,3 +979,4 @@ impl GitOperations for LocalGit {
         Ok(())
     }
 }
+

@@ -5,7 +5,7 @@ use crate::git::types::*;
 
 pub trait GitOperations: Send + Sync {
     fn status(&self, path: &Path) -> Result<Vec<FileStatus>, GitError>;
-    fn log(&self, path: &Path, limit: usize) -> Result<Vec<Commit>, GitError>;
+    fn log(&self, path: &Path, limit: usize, filter: Option<LogFilter>) -> Result<Vec<Commit>, GitError>;
     fn diff(&self, path: &Path, file: &Path) -> Result<DiffResult, GitError>;
     fn stage(&self, path: &Path, files: &[PathBuf]) -> Result<(), GitError>;
     fn unstage(&self, path: &Path, files: &[PathBuf]) -> Result<(), GitError>;

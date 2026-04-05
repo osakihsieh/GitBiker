@@ -20,8 +20,9 @@ pub fn git_log(
     state: State<GitState>,
     path: String,
     limit: Option<usize>,
+    filter: Option<LogFilter>,
 ) -> Result<Vec<Commit>, GitError> {
-    state.git.log(&PathBuf::from(&path), limit.unwrap_or(100))
+    state.git.log(&PathBuf::from(&path), limit.unwrap_or(100), filter)
 }
 
 #[tauri::command]

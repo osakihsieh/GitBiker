@@ -155,6 +155,25 @@
       clearSearch();
     }
   }
+
+  function handleFilterChange(e: Event) {
+    const target = e.target as HTMLSelectElement;
+    const val = target.value;
+    if (val === 'head') {
+      app.setLogFilter({ type: 'Head' });
+    } else if (val === 'all') {
+      app.setLogFilter({ type: 'All' });
+    } else {
+      app.setLogFilter({ type: 'Branch', value: val });
+    }
+  }
+
+  const currentFilterValue = $derived.by(() => {
+    const f = app.logFilter;
+    if (f.type === 'Head') return 'head';
+    if (f.type === 'All') return 'all';
+    return f.value;
+  });
 </script>
 
 <div class="history-panel">
@@ -181,7 +200,21 @@
   </div>
 
   <div class="history-header">
-    <span>Commit History</span>
+    <span class="header-title">Commits</span>
+    <select class="filter-select" value={currentFilterValue} onchange={handleFilterChange}>
+      <option value="head">Current Branch</option>
+      <option value="all">All Branches</option>
+      <optgroup label="Local Branches">
+        {#each app.branches.filter(b => !b.is_remote) as b}
+          <option value={b.name}>{b.name}</option>
+        {/each}
+      </optgroup>
+      <optgroup label="Remote Branches">
+        {#each app.branches.filter(b => b.is_remote) as b}
+          <option value={b.name}>{b.name}</option>
+        {/each}
+      </optgroup>
+    </select>
   </div>
 
   <!-- Commit List -->
@@ -303,14 +336,30 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-xs) var(--space-md);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: var(--space-sm);
+  }
+  .header-title {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-secondary);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    white-space: nowrap;
   }
+  .filter-select {
+    flex: 1;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 11px;
+    padding: 2px 4px;
+    outline: none;
+    max-width: 150px;
+  }
+  .filter-select:hover { border-color: var(--accent); }
 
   /* List */
   .history-list {

@@ -60,6 +60,14 @@ pub enum ResolveChoice {
     Theirs,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "type", content = "value")]
+pub enum LogFilter {
+    Head,
+    All,
+    Branch(String),
+}
+
 // ── Existing Types ────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

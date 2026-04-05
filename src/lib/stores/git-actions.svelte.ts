@@ -1,4 +1,4 @@
-import type { FileStatus, Commit, DiffResult, Branch } from '$lib/git/types';
+import type { FileStatus, Commit, DiffResult, Branch, LogFilter } from '$lib/git/types';
 import { gitStatus, gitLog, gitBranches, gitDiff, startWatching, stopWatching } from '$lib/git/commands';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
@@ -14,6 +14,7 @@ export interface GitActionableState {
     commits: Commit[];
     branches: Branch[];
     currentBranch: string;
+    logFilter: LogFilter;
   } } | null;
   tabs: Array<{ id: string; state: {
     stagedFiles: FileStatus[];
@@ -21,6 +22,7 @@ export interface GitActionableState {
     commits: Commit[];
     branches: Branch[];
     currentBranch: string;
+    logFilter: LogFilter;
   } }>;
   currentDiff: DiffResult | null;
   repoPath: string | null;
@@ -80,7 +82,7 @@ export async function refreshAll(state: GitActionableState): Promise<void> {
   try {
     const [status, commits, branches] = await Promise.all([
       gitStatus(tab.path),
-      gitLog(tab.path, MAX_COMMITS_PER_TAB),
+      gitLog(tab.path, MAX_COMMITS_PER_TAB, tab.state.logFilter),
       gitBranches(tab.path),
     ]);
     tab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
@@ -112,20 +114,20 @@ export async function loadRepoData(
   tabId: string,
   path: string,
 ): Promise<void> {
+  const reactiveTab = state.tabs.find((t) => t.id === tabId);
+  if (!reactiveTab) return;
+
   const [status, commits, branches] = await Promise.all([
     gitStatus(path),
-    gitLog(path, MAX_COMMITS_PER_TAB),
+    gitLog(path, MAX_COMMITS_PER_TAB, reactiveTab.state.logFilter),
     gitBranches(path),
   ]);
 
-  const reactiveTab = state.tabs.find((t) => t.id === tabId);
-  if (reactiveTab) {
-    reactiveTab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
-    reactiveTab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
-    reactiveTab.state.commits = commits;
-    reactiveTab.state.branches = branches;
-    reactiveTab.state.currentBranch = branches.find((b) => b.is_current)?.name || 'main';
-  }
+  reactiveTab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
+  reactiveTab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
+  reactiveTab.state.commits = commits;
+  reactiveTab.state.branches = branches;
+  reactiveTab.state.currentBranch = branches.find((b) => b.is_current)?.name || 'main';
 }
 
 // ── Test Helpers ──────────────────────────────────────

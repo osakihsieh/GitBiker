@@ -1,4 +1,4 @@
-import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent } from '$lib/git/types';
+import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent, LogFilter } from '$lib/git/types';
 import { gitGetConflictFiles, gitGetConflictContent } from '$lib/git/commands';
 import {
   loadRecentRepos as _loadRecentRepos,
@@ -46,24 +46,25 @@ export interface RepoState {
   hunkChoices: Record<number, 'Ours' | 'Theirs' | 'Both'>;
   // File history
   fileHistoryTarget: string | null;
-  // currentDiff intentionally excluded — cleared on tab switch to save memory
-}
+  // Log filter
+  logFilter: LogFilter;
+  }
 
-export interface RepoTab {
+  export interface RepoTab {
   id: string;
   path: string;
   name: string;
   state: RepoState;
-}
+  }
 
-// ── Helpers ────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────
 
-export function repoNameFromPath(path: string): string {
+  export function repoNameFromPath(path: string): string {
   const parts = path.replace(/\\/g, '/').split('/');
   return parts[parts.length - 1] || '';
-}
+  }
 
-export function createEmptyState(): RepoState {
+  export function createEmptyState(): RepoState {
   return {
     stagedFiles: [],
     unstagedFiles: [],
@@ -77,7 +78,10 @@ export function createEmptyState(): RepoState {
     conflictContent: null,
     hunkChoices: {},
     fileHistoryTarget: null,
+    logFilter: { type: 'Head' },
   };
+  }
+
 }
 
 // ── AppState ───────────────────────────────────────────
@@ -264,6 +268,18 @@ class AppState {
     this.viewMode = 'file-history';
     const tab = this.activeTab;
     if (tab) tab.state.fileHistoryTarget = filePath;
+  }
+
+  setLogFilter(filter: LogFilter): void {
+    const tab = this.activeTab;
+    if (tab) {
+      tab.state.logFilter = filter;
+      _refreshAll(this);
+    }
+  }
+
+  get logFilter(): LogFilter {
+    return this.activeTab?.state.logFilter ?? { type: 'Head' };
   }
 
   get fileHistoryTarget(): string | null {
