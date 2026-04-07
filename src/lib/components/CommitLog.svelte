@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitLogSearch, gitTagCreate, gitRevert, gitResetSoft, gitResetHard } from '$lib/git/commands';
+  import { gitLogSearch, gitTagCreate, gitRevert, gitResetSoft, gitResetHard, gitCherryPick } from '$lib/git/commands';
   import type { Commit } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
@@ -78,6 +78,7 @@
       { id: 'createTag', label: '建立 Tag...' },
       { id: '_sep2', label: '', separator: true },
       { id: 'revert', label: '撤回此 Commit (Revert)' },
+      { id: 'cherryPick', label: 'Cherry-pick 此 Commit' },
     ];
 
     // 判斷是否為未推送的 commit：在 ahead 範圍內
@@ -140,6 +141,19 @@
           if (confirm(`⚠️ 確定要撤銷到 ${commit.id.substring(0, 7)}？\n\n此操作不可撤銷，所有變更將被丟棄！`)) {
             await gitResetHard(app.repoPath, commit.id);
             app.addToast('已撤銷 commit（變更已丟棄）', 'success');
+            await app.refreshAll();
+          }
+          break;
+        }
+        case 'cherryPick': {
+          if (confirm(`確定要 Cherry-pick commit ${commit.id.substring(0, 7)}？\n\n${commit.message}`)) {
+            const result = await gitCherryPick(app.repoPath, commit.id);
+            if (result.success) {
+              app.addToast('Cherry-pick 成功', 'success');
+            } else if (result.conflicts.length > 0) {
+              app.addToast(`Cherry-pick 衝突：需要解決衝突`, 'error', false);
+              await app.enterConflictMode();
+            }
             await app.refreshAll();
           }
           break;

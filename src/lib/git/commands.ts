@@ -9,6 +9,7 @@ import type {
   RemoteInfo,
   BranchMergeStatus,
   MergeResult,
+  CherryPickResult,
   StashEntry,
   ConflictFile,
   ConflictContent,
@@ -236,6 +237,20 @@ export async function gitInit(path: string): Promise<void> {
 
 export async function gitRevert(path: string, commitId: string, isMerge: boolean): Promise<string> {
   return invoke('git_revert', { path, commitId, isMerge });
+}
+
+// ── Cherry-pick ─────────────────────────────────────
+
+export async function gitCherryPick(path: string, commitId: string): Promise<CherryPickResult> {
+  return invoke('git_cherry_pick', { path, commitId });
+}
+
+export async function gitCherryPickAbort(path: string): Promise<void> {
+  return invoke('git_cherry_pick_abort', { path });
+}
+
+export async function gitCherryPickContinue(path: string): Promise<string> {
+  return invoke('git_cherry_pick_continue', { path });
 }
 
 export async function gitResetSoft(path: string, target: string): Promise<void> {

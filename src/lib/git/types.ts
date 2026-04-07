@@ -94,6 +94,13 @@ export interface MergeResult {
   conflicts: string[];
 }
 
+export interface CherryPickResult {
+  commit_id: string;
+  success: boolean;
+  message: string;
+  conflicts: string[];
+}
+
 export interface StashEntry {
   index: number;
   message: string;

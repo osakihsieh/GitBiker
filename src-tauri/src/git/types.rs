@@ -198,6 +198,14 @@ pub struct MergeResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CherryPickResult {
+    pub commit_id: String,
+    pub success: bool,
+    pub message: String,
+    pub conflicts: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StashEntry {
     pub index: usize,
     pub message: String,

@@ -158,6 +158,58 @@ pub fn git_revert(
     crate::git::LocalGit::run_git(&repo_path, &args)
 }
 
+/// Cherry-pick 指定 commit 到當前分支
+#[tauri::command]
+pub fn git_cherry_pick(
+    path: String,
+    commit_id: String,
+) -> Result<crate::git::types::CherryPickResult, GitError> {
+    let repo_path = std::path::PathBuf::from(&path);
+    crate::git::LocalGit::check_index_lock(&repo_path)?;
+    match crate::git::LocalGit::run_git(&repo_path, &["cherry-pick", "--no-edit", &commit_id]) {
+        Ok(output) => Ok(crate::git::types::CherryPickResult {
+            commit_id,
+            success: true,
+            message: output,
+            conflicts: Vec::new(),
+        }),
+        Err(GitError::OperationFailed(stderr)) => {
+            if stderr.contains("CONFLICT") || stderr.contains("could not apply") {
+                let conflicts: Vec<String> = stderr
+                    .lines()
+                    .filter(|l| l.contains("CONFLICT"))
+                    .map(|l| l.to_string())
+                    .collect();
+                Ok(crate::git::types::CherryPickResult {
+                    commit_id,
+                    success: false,
+                    message: stderr,
+                    conflicts,
+                })
+            } else {
+                Err(GitError::OperationFailed(stderr))
+            }
+        }
+        Err(e) => Err(e),
+    }
+}
+
+/// Cherry-pick 中止
+#[tauri::command]
+pub fn git_cherry_pick_abort(path: String) -> Result<(), GitError> {
+    let repo_path = std::path::PathBuf::from(&path);
+    crate::git::LocalGit::run_git(&repo_path, &["cherry-pick", "--abort"])?;
+    Ok(())
+}
+
+/// Cherry-pick 繼續（衝突解決後）
+#[tauri::command]
+pub fn git_cherry_pick_continue(path: String) -> Result<String, GitError> {
+    let repo_path = std::path::PathBuf::from(&path);
+    crate::git::LocalGit::check_index_lock(&repo_path)?;
+    crate::git::LocalGit::run_git(&repo_path, &["cherry-pick", "--continue"])
+}
+
 /// Soft reset 到指定 commit（保留變更到 staged）
 #[tauri::command]
 pub fn git_reset_soft(path: String, target: String) -> Result<(), GitError> {
