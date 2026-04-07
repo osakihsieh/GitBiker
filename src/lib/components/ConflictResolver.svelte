@@ -14,10 +14,19 @@
   let saving = $state(false);
   let completing = $state(false);
   let aborting = $state(false);
+  /** Custom edited content per hunk index */
+  let customEdits = $state<Record<number, string>>({});
 
   // ── Derived ──
   const files = $derived(app.conflictFiles);
   const activeFile = $derived(app.activeConflictFile);
+
+  // Reset custom edits when switching files
+  $effect(() => {
+    if (activeFile) {
+      customEdits = {};
+    }
+  });
   const content = $derived(app.conflictContent);
   const choices = $derived(app.hunkChoices);
 
@@ -57,12 +66,23 @@
         if (seg.type === 'Context') return seg.value;
         const hunk = seg.value as ConflictHunk;
         const choice = choices[hunk.index];
+        if (choice === 'Custom') return customEdits[hunk.index] ?? '';
         if (choice === 'Ours') return hunk.ours;
         if (choice === 'Theirs') return hunk.theirs;
         if (choice === 'Both') return hunk.ours + '\n' + hunk.theirs;
         return ''; // Should not happen if allHunksChosen
       })
       .join('\n');
+  }
+
+  function startCustomEdit(hunkIndex: number, ours: string, theirs: string) {
+    // Pre-fill with both versions for user to edit/reorder
+    customEdits = { ...customEdits, [hunkIndex]: ours + '\n' + theirs };
+    app.setHunkChoice(hunkIndex, 'Custom');
+  }
+
+  function updateCustomEdit(hunkIndex: number, value: string) {
+    customEdits = { ...customEdits, [hunkIndex]: value };
   }
 
   // ── Handlers ──
@@ -323,13 +343,18 @@
                   <pre class="code-block">{hunk.ours || '(empty)'}</pre>
                 </div>
 
-                <!-- Accept Both button -->
+                <!-- Accept Both / Custom Edit buttons -->
                 <div class="hunk-divider">
                   <button
                     class="btn-accept-both"
                     class:selected={choice === 'Both'}
                     onclick={() => app.setHunkChoice(hunk.index, 'Both')}
                   >Accept Both</button>
+                  <button
+                    class="btn-accept-both"
+                    class:selected={choice === 'Custom'}
+                    onclick={() => startCustomEdit(hunk.index, hunk.ours, hunk.theirs)}
+                  >Custom Edit</button>
                 </div>
 
                 <!-- Theirs section -->
@@ -343,6 +368,22 @@
                   </div>
                   <pre class="code-block">{hunk.theirs || '(empty)'}</pre>
                 </div>
+
+                <!-- Custom edit textarea -->
+                {#if choice === 'Custom'}
+                  <div class="custom-edit-section">
+                    <div class="section-header-row">
+                      <span class="section-tag custom-tag">CUSTOM</span>
+                      <span class="custom-hint">自由編輯、重新排列行的順序</span>
+                    </div>
+                    <textarea
+                      class="custom-textarea"
+                      value={customEdits[hunk.index] ?? ''}
+                      oninput={(e) => updateCustomEdit(hunk.index, e.currentTarget.value)}
+                      rows={Math.max(4, (customEdits[hunk.index] ?? '').split('\n').length + 1)}
+                    ></textarea>
+                  </div>
+                {/if}
 
                 <!-- diff3 base (collapsible) -->
                 {#if hunk.base !== null}
@@ -706,6 +747,36 @@
   }
   .btn-accept-both:hover { color: var(--text-primary); background: var(--bg-hover); }
   .btn-accept-both.selected { color: var(--accent); border-color: var(--accent); }
+
+  .custom-edit-section {
+    border-top: 1px solid var(--border);
+  }
+  .custom-tag {
+    color: var(--accent);
+    background: rgba(79, 193, 255, 0.15);
+  }
+  .custom-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .custom-textarea {
+    width: 100%;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: none;
+    border-top: 1px solid var(--border);
+    padding: var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    min-height: 80px;
+  }
+  .custom-textarea:focus {
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
 
   .base-section { margin: 0; }
   .base-toggle {

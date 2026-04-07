@@ -43,7 +43,7 @@ export interface RepoState {
   conflictFiles: ConflictFile[];
   activeConflictFile: string | null;
   conflictContent: ConflictContent | null;
-  hunkChoices: Record<number, 'Ours' | 'Theirs' | 'Both'>;
+  hunkChoices: Record<number, 'Ours' | 'Theirs' | 'Both' | 'Custom'>;
   // File history
   fileHistoryTarget: string | null;
   // Log filter
@@ -243,7 +243,7 @@ class AppState {
     return this.activeTab?.state.conflictContent ?? null;
   }
 
-  get hunkChoices(): Record<number, 'Ours' | 'Theirs' | 'Both'> {
+  get hunkChoices(): Record<number, 'Ours' | 'Theirs' | 'Both' | 'Custom'> {
     return this.activeTab?.state.hunkChoices ?? {};
   }
 
@@ -365,7 +365,7 @@ class AppState {
     }
   }
 
-  setHunkChoice(hunkIndex: number, choice: 'Ours' | 'Theirs' | 'Both'): void {
+  setHunkChoice(hunkIndex: number, choice: 'Ours' | 'Theirs' | 'Both' | 'Custom'): void {
     const tab = this.activeTab;
     if (!tab) return;
     tab.state.hunkChoices = { ...tab.state.hunkChoices, [hunkIndex]: choice };
