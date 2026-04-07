@@ -239,6 +239,43 @@
     </div>
 
     <div class="section">
+      <div class="section-title">Auto Fetch</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">自動 Fetch</span>
+          <span class="setting-desc">
+            {#if app.autoFetchEnabled}
+              每 {app.autoFetchInterval} 分鐘自動 fetch remote 更新
+            {:else}
+              關閉（手動 fetch）
+            {/if}
+          </span>
+        </div>
+        <div class="auto-fetch-controls">
+          <select
+            class="editor-select"
+            value={app.autoFetchEnabled ? String(app.autoFetchInterval) : 'off'}
+            onchange={(e) => {
+              const val = e.currentTarget.value;
+              if (val === 'off') {
+                app.setAutoFetch(false);
+              } else {
+                app.setAutoFetch(true, Number(val));
+              }
+            }}
+          >
+            <option value="off">關閉</option>
+            <option value="1">每 1 分鐘</option>
+            <option value="3">每 3 分鐘</option>
+            <option value="5">每 5 分鐘</option>
+            <option value="10">每 10 分鐘</option>
+            <option value="15">每 15 分鐘</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
       <div class="section-title">Keyboard Shortcuts</div>
       <div class="shortcuts-list">
         {#each shortcuts as shortcut}

@@ -137,6 +137,11 @@ class AppState {
   // ── Editor preference ──
   preferredEditor = $state<string | null>(null);
 
+  // ── Auto Fetch ──
+  autoFetchEnabled = $state(false);
+  autoFetchInterval = $state(5); // minutes
+  private autoFetchTimer: ReturnType<typeof setInterval> | null = null;
+
   // ── UI state ──
   loading = $state(false);
   toasts = $state<Toast[]>([]);
@@ -517,6 +522,64 @@ class AppState {
   async savePreferredEditor(editor: string | null) { return _savePreferredEditor(this, editor); }
   async reorderPinnedRepos(newOrder: string[]) { return _reorderPinnedRepos(this, newOrder); }
 
+  // ── Auto Fetch ──
+
+  startAutoFetch(): void {
+    this.stopAutoFetch();
+    if (!this.autoFetchEnabled) return;
+
+    const intervalMs = this.autoFetchInterval * 60 * 1000;
+    this.autoFetchTimer = setInterval(async () => {
+      const path = this.repoPath;
+      if (!path) return;
+      try {
+        const { gitFetch } = await import('$lib/git/commands');
+        await gitFetch(path);
+        // Silently refresh commits and branches
+        await _refreshAll(this);
+      } catch {
+        // Silent fail — auto fetch should not disturb the user
+      }
+    }, intervalMs);
+  }
+
+  stopAutoFetch(): void {
+    if (this.autoFetchTimer) {
+      clearInterval(this.autoFetchTimer);
+      this.autoFetchTimer = null;
+    }
+  }
+
+  setAutoFetch(enabled: boolean, interval?: number): void {
+    this.autoFetchEnabled = enabled;
+    if (interval !== undefined) this.autoFetchInterval = interval;
+    try {
+      localStorage.setItem('gitbiker-auto-fetch', JSON.stringify({
+        enabled: this.autoFetchEnabled,
+        interval: this.autoFetchInterval,
+      }));
+    } catch {}
+    if (enabled) {
+      this.startAutoFetch();
+    } else {
+      this.stopAutoFetch();
+    }
+  }
+
+  loadAutoFetchSettings(): void {
+    try {
+      const raw = localStorage.getItem('gitbiker-auto-fetch');
+      if (raw) {
+        const { enabled, interval } = JSON.parse(raw);
+        this.autoFetchEnabled = !!enabled;
+        this.autoFetchInterval = typeof interval === 'number' ? interval : 5;
+      }
+    } catch {}
+    if (this.autoFetchEnabled) {
+      this.startAutoFetch();
+    }
+  }
+
   // ── Git action wrappers (maintain existing API) ──
 
   async refreshStatus() { return _refreshStatus(this); }
@@ -568,6 +631,7 @@ class AppState {
         if (this.theme === 'system') this.applyTheme();
       });
       this.applyTheme();
+      this.loadAutoFetchSettings();
     }
   }
 
