@@ -95,6 +95,50 @@ impl LocalGit {
             (FileStatusKind::Unknown, StagingState::Unstaged)
         }
     }
+    /// Apply a patch to the index (for hunk-level staging/unstaging)
+    pub(crate) fn apply_patch(
+        path: &Path,
+        patch: &str,
+        cached: bool,
+        reverse: bool,
+    ) -> Result<(), GitError> {
+        let mut args = vec!["apply"];
+        if cached {
+            args.push("--cached");
+        }
+        if reverse {
+            args.push("--reverse");
+        }
+        args.push("-");
+
+        let output = Self::git_command()
+            .args(&args)
+            .current_dir(path)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .map_err(|e| GitError::OperationFailed(format!("無法執行 git apply: {e}")))?;
+
+        use std::io::Write;
+        let mut child = output;
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin
+                .write_all(patch.as_bytes())
+                .map_err(|e| GitError::OperationFailed(format!("無法寫入 patch: {e}")))?;
+        }
+
+        let result = child
+            .wait_with_output()
+            .map_err(|e| GitError::OperationFailed(format!("git apply 失敗: {e}")))?;
+
+        if result.status.success() {
+            Ok(())
+        } else {
+            let stderr = String::from_utf8_lossy(&result.stderr).to_string();
+            Err(GitError::OperationFailed(stderr))
+        }
+    }
 }
 
 // ── Branch management (CLI-based, not on trait) ──────────

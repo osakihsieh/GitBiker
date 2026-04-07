@@ -158,6 +158,20 @@ pub fn git_revert(
     crate::git::LocalGit::run_git(&repo_path, &args)
 }
 
+/// Stage a patch (hunk-level staging)
+#[tauri::command]
+pub fn git_stage_hunk(path: String, patch: String) -> Result<(), GitError> {
+    let repo_path = std::path::PathBuf::from(&path);
+    crate::git::LocalGit::apply_patch(&repo_path, &patch, true, false)
+}
+
+/// Unstage a patch (hunk-level unstaging)
+#[tauri::command]
+pub fn git_unstage_hunk(path: String, patch: String) -> Result<(), GitError> {
+    let repo_path = std::path::PathBuf::from(&path);
+    crate::git::LocalGit::apply_patch(&repo_path, &patch, true, true)
+}
+
 /// Cherry-pick 指定 commit 到當前分支
 #[tauri::command]
 pub fn git_cherry_pick(

@@ -39,6 +39,16 @@ export async function gitUnstage(path: string, files: string[]): Promise<void> {
   return invoke('git_unstage', { path, files });
 }
 
+// ── Hunk-level staging ──────────────────────────────
+
+export async function gitStageHunk(path: string, patch: string): Promise<void> {
+  return invoke('git_stage_hunk', { path, patch });
+}
+
+export async function gitUnstageHunk(path: string, patch: string): Promise<void> {
+  return invoke('git_unstage_hunk', { path, patch });
+}
+
 export async function gitCommit(path: string, message: string): Promise<string> {
   return invoke('git_commit', { path, message });
 }

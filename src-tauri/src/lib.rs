@@ -58,6 +58,8 @@ pub fn run() {
             commands::git_stash_drop,
             commands::git_init,
             commands::git_revert,
+            commands::git_stage_hunk,
+            commands::git_unstage_hunk,
             commands::git_cherry_pick,
             commands::git_cherry_pick_abort,
             commands::git_cherry_pick_continue,
