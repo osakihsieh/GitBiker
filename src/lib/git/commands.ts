@@ -314,3 +314,27 @@ export async function scanGitRepos(path: string): Promise<string[]> {
 export async function gitBranchCompare(path: string, base: string, compare: string): Promise<BranchCompareResult> {
   return invoke('git_branch_compare', { path, base, compare });
 }
+
+// ── AI Commit Message ────────────────────────────────
+
+export interface GenerateCommitMessageParams {
+  path: string;
+  provider: string;
+  apiKey: string;
+  model: string;
+  language: string;
+  customPrompt?: string;
+  ollamaEndpoint?: string;
+}
+
+export async function generateCommitMessage(params: GenerateCommitMessageParams): Promise<string> {
+  return invoke('generate_commit_message', {
+    path: params.path,
+    provider: params.provider,
+    apiKey: params.apiKey,
+    model: params.model,
+    language: params.language,
+    customPrompt: params.customPrompt ?? null,
+    ollamaEndpoint: params.ollamaEndpoint ?? null,
+  });
+}

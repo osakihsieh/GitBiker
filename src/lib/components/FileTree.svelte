@@ -1,11 +1,12 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitStage, gitUnstage, gitCommit, gitIgnore, gitCheckoutFile, openInEditor, gitStashPushFiles } from '$lib/git/commands';
+  import { gitStage, gitUnstage, gitCommit, gitIgnore, gitCheckoutFile, openInEditor, gitStashPushFiles, generateCommitMessage } from '$lib/git/commands';
   import type { FileStatus } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
   let commitMessage = $state('');
   let committing = $state(false);
+  let generating = $state(false);
   let contextMenu = $state<{ file: FileStatus; x: number; y: number } | null>(null);
 
   function statusLabel(kind: FileStatus['kind']): string {
@@ -74,6 +75,35 @@
       app.addToast(String(e), 'error');
     } finally {
       committing = false;
+    }
+  }
+
+  async function handleAiGenerate() {
+    if (!app.repoPath || app.stagedFiles.length === 0 || generating) return;
+
+    // Validate API key for non-Ollama providers
+    if (app.aiProvider !== 'ollama' && !app.aiApiKey.trim()) {
+      app.addToast('請先在設定中填入 API Key', 'error');
+      return;
+    }
+
+    generating = true;
+    try {
+      const message = await generateCommitMessage({
+        path: app.repoPath,
+        provider: app.aiProvider,
+        apiKey: app.aiApiKey,
+        model: app.aiModel,
+        language: app.aiLanguage,
+        customPrompt: app.aiCustomPrompt || undefined,
+        ollamaEndpoint: app.aiProvider === 'ollama' ? app.aiOllamaEndpoint : undefined,
+      });
+      commitMessage = message;
+      app.addToast('AI 已生成 commit message', 'success');
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    } finally {
+      generating = false;
     }
   }
 
@@ -290,6 +320,17 @@
     ></textarea>
     <div class="commit-actions">
       <button
+        class="ai-gen-btn"
+        onclick={handleAiGenerate}
+        disabled={app.stagedFiles.length === 0 || generating || committing}
+      >
+        {#if generating}
+          <span class="spinner"></span> 生成中...
+        {:else}
+          AI 生成
+        {/if}
+      </button>
+      <button
         class="commit-btn"
         onclick={handleCommit}
         disabled={!commitMessage.trim() || committing || app.stagedFiles.length === 0}
@@ -439,9 +480,28 @@
   .commit-form textarea::placeholder { color: var(--text-muted); }
   .commit-actions {
     margin-top: var(--space-sm);
+    display: flex;
+    gap: var(--space-xs);
   }
+  .ai-gen-btn {
+    background: var(--bg-surface);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+  .ai-gen-btn:hover:not(:disabled) { background: var(--bg-hover); }
+  .ai-gen-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .commit-btn {
-    width: 100%;
+    flex: 1;
     background: var(--accent);
     color: var(--bg-primary);
     border: none;

@@ -276,6 +276,130 @@
     </div>
 
     <div class="section">
+      <div class="section-title">AI Commit Message</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">AI 提供者</span>
+          <span class="setting-desc">選擇用來生成 commit message 的 AI 服務</span>
+        </div>
+        <select
+          class="editor-select"
+          value={app.aiProvider}
+          onchange={(e) => {
+            const val = e.currentTarget.value as 'gemini' | 'openai' | 'ollama';
+            app.aiProvider = val;
+            app.aiModel = '';
+            app.saveAiSettings();
+          }}
+        >
+          <option value="gemini">Gemini</option>
+          <option value="openai">OpenAI</option>
+          <option value="ollama">Ollama (本地)</option>
+        </select>
+      </div>
+
+      {#if app.aiProvider !== 'ollama'}
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">API Key</span>
+            <span class="setting-desc">
+              {app.aiProvider === 'gemini' ? 'Google AI Studio API Key' : 'OpenAI API Key'}
+            </span>
+          </div>
+          <input
+            type="password"
+            class="remote-input ai-key-input"
+            placeholder="輸入 API Key..."
+            value={app.aiApiKey}
+            onchange={(e) => {
+              app.aiApiKey = e.currentTarget.value;
+              app.saveAiSettings();
+            }}
+          />
+        </div>
+      {/if}
+
+      {#if app.aiProvider === 'ollama'}
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Ollama Endpoint</span>
+            <span class="setting-desc">Ollama 服務位址</span>
+          </div>
+          <input
+            type="text"
+            class="remote-input ai-key-input"
+            placeholder="http://localhost:11434"
+            value={app.aiOllamaEndpoint}
+            onchange={(e) => {
+              app.aiOllamaEndpoint = e.currentTarget.value;
+              app.saveAiSettings();
+            }}
+          />
+        </div>
+      {/if}
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">模型</span>
+          <span class="setting-desc">
+            {#if app.aiProvider === 'gemini'}
+              預設: gemini-2.0-flash
+            {:else if app.aiProvider === 'openai'}
+              預設: gpt-4o-mini
+            {:else}
+              預設: llama3
+            {/if}
+          </span>
+        </div>
+        <input
+          type="text"
+          class="remote-input ai-model-input"
+          placeholder={app.aiProvider === 'gemini' ? 'gemini-2.0-flash' : app.aiProvider === 'openai' ? 'gpt-4o-mini' : 'llama3'}
+          value={app.aiModel}
+          onchange={(e) => {
+            app.aiModel = e.currentTarget.value;
+            app.saveAiSettings();
+          }}
+        />
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">生成語言</span>
+          <span class="setting-desc">Commit message 的語言偏好</span>
+        </div>
+        <select
+          class="editor-select"
+          value={app.aiLanguage}
+          onchange={(e) => {
+            app.aiLanguage = e.currentTarget.value as 'zh-TW' | 'en' | 'auto';
+            app.saveAiSettings();
+          }}
+        >
+          <option value="zh-TW">中文（前綴英文）</option>
+          <option value="en">English</option>
+          <option value="auto">自動（跟隨歷史風格）</option>
+        </select>
+      </div>
+
+      <div class="setting-row" style="align-items: flex-start;">
+        <div class="setting-info">
+          <span class="setting-label">自訂提示詞</span>
+          <span class="setting-desc">額外指示給 AI（選填）</span>
+        </div>
+      </div>
+      <textarea
+        class="ai-prompt-textarea"
+        placeholder="例如：保持簡潔、不超過一行..."
+        value={app.aiCustomPrompt}
+        onchange={(e) => {
+          app.aiCustomPrompt = e.currentTarget.value;
+          app.saveAiSettings();
+        }}
+      ></textarea>
+    </div>
+
+    <div class="section">
       <div class="section-title">Keyboard Shortcuts</div>
       <div class="shortcuts-list">
         {#each shortcuts as shortcut}
@@ -626,4 +750,30 @@
     gap: var(--space-xs);
     margin-top: var(--space-sm);
   }
+
+  /* AI Settings */
+  .ai-key-input {
+    width: 200px;
+    flex: none;
+  }
+  .ai-model-input {
+    width: 160px;
+    flex: none;
+  }
+  .ai-prompt-textarea {
+    width: 100%;
+    min-height: 60px;
+    max-height: 120px;
+    resize: vertical;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    padding: var(--space-xs) var(--space-sm);
+    outline: none;
+  }
+  .ai-prompt-textarea:focus { border-color: var(--accent); }
+  .ai-prompt-textarea::placeholder { color: var(--text-muted); }
 </style>

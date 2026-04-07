@@ -620,6 +620,128 @@ impl LocalGit {
 
         Ok(MergeCompleteResult { commit_hash: hash })
     }
+
+    /// Get staged diff across all files (HEAD-to-index).
+    /// Returns a list of (file_path, diff_text) pairs and file summaries.
+    /// Handles fresh repos with no HEAD by diffing empty tree to index.
+    pub fn staged_diff_all(
+        &self,
+        path: &Path,
+    ) -> Result<(Vec<crate::ai::FileSummary>, Vec<(String, String)>), GitError> {
+        let repo = Self::open_repo(path)?;
+
+        let head_tree = repo
+            .head()
+            .ok()
+            .and_then(|r| r.peel_to_tree().ok());
+
+        let diff = repo.diff_tree_to_index(
+            head_tree.as_ref(),
+            None,
+            None,
+        )?;
+
+        let stats = diff.stats()?;
+        let mut file_summaries: Vec<crate::ai::FileSummary> = Vec::new();
+        let mut file_diffs: Vec<(String, String)> = Vec::new();
+
+        // First pass: collect file-level info
+        for delta in diff.deltas() {
+            let file_path = delta
+                .new_file()
+                .path()
+                .or_else(|| delta.old_file().path())
+                .map(|p| p.display().to_string())
+                .unwrap_or_default();
+
+            let kind = match delta.status() {
+                git2::Delta::Added => "Added",
+                git2::Delta::Deleted => "Deleted",
+                git2::Delta::Modified => "Modified",
+                git2::Delta::Renamed => "Renamed",
+                git2::Delta::Copied => "Copied",
+                _ => "Unknown",
+            };
+
+            let is_binary = delta.flags().is_binary();
+
+            file_summaries.push(crate::ai::FileSummary {
+                path: file_path.clone(),
+                kind: kind.to_string(),
+                stats: if is_binary { None } else { Some((0, 0)) },
+            });
+        }
+
+        // Second pass: collect diff text per file
+        let mut current_file = String::new();
+        let mut current_diff = String::new();
+        let mut current_adds: usize = 0;
+        let mut current_dels: usize = 0;
+        let mut file_index: usize = 0;
+
+        diff.print(git2::DiffFormat::Patch, |delta, _hunk, line| {
+            let file_path = delta
+                .new_file()
+                .path()
+                .or_else(|| delta.old_file().path())
+                .map(|p| p.display().to_string())
+                .unwrap_or_default();
+
+            if file_path != current_file {
+                // Save previous file's diff
+                if !current_file.is_empty() {
+                    file_diffs.push((current_file.clone(), current_diff.clone()));
+                    // Update stats for previous file
+                    if file_index > 0 && file_index - 1 < file_summaries.len() {
+                        if file_summaries[file_index - 1].stats.is_some() {
+                            file_summaries[file_index - 1].stats =
+                                Some((current_adds, current_dels));
+                        }
+                    }
+                }
+                current_file = file_path;
+                current_diff = String::new();
+                current_adds = 0;
+                current_dels = 0;
+                file_index += 1;
+            }
+
+            let content = String::from_utf8_lossy(line.content());
+            match line.origin() {
+                '+' => {
+                    current_diff.push('+');
+                    current_diff.push_str(&content);
+                    current_adds += 1;
+                }
+                '-' => {
+                    current_diff.push('-');
+                    current_diff.push_str(&content);
+                    current_dels += 1;
+                }
+                ' ' => {
+                    current_diff.push(' ');
+                    current_diff.push_str(&content);
+                }
+                'H' => {
+                    current_diff.push_str(&content);
+                }
+                _ => {}
+            }
+            true
+        })?;
+
+        // Save last file's diff
+        if !current_file.is_empty() {
+            file_diffs.push((current_file, current_diff));
+            if file_index > 0 && file_index - 1 < file_summaries.len() {
+                if file_summaries[file_index - 1].stats.is_some() {
+                    file_summaries[file_index - 1].stats = Some((current_adds, current_dels));
+                }
+            }
+        }
+
+        Ok((file_summaries, file_diffs))
+    }
 }
 
 impl GitOperations for LocalGit {

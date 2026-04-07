@@ -1,3 +1,4 @@
+mod ai;
 mod commands;
 mod git;
 mod watcher;
@@ -88,6 +89,7 @@ pub fn run() {
             commands::open_in_terminal,
             commands::detect_editors,
             commands::run_shell_command,
+            commands::generate_commit_message,
         ])
         .run(tauri::generate_context!())
         .expect("啟動 GitBiker 失敗");

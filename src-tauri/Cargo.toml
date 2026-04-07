@@ -29,4 +29,6 @@ notify-debouncer-full = "0.4"
 which = "7"
 sha2 = "0.10"
 tempfile = "3"
+reqwest = { version = "0.12", features = ["json"] }
+async-trait = "0.1"
 

@@ -10,7 +10,9 @@ import {
   togglePin as _togglePin,
   savePreferredEditor as _savePreferredEditor,
   reorderPinnedRepos as _reorderPinnedRepos,
+  saveAiSettings as _saveAiSettings,
 } from './persistence.svelte';
+import type { AiProviderType, AiLanguage } from './persistence.svelte';
 import {
   refreshStatus as _refreshStatus,
   refreshAll as _refreshAll,
@@ -136,6 +138,14 @@ class AppState {
 
   // ── Editor preference ──
   preferredEditor = $state<string | null>(null);
+
+  // ── AI Settings ──
+  aiProvider = $state<AiProviderType>('gemini');
+  aiApiKey = $state('');
+  aiModel = $state('');
+  aiCustomPrompt = $state('');
+  aiLanguage = $state<AiLanguage>('zh-TW');
+  aiOllamaEndpoint = $state('http://localhost:11434');
 
   // ── Auto Fetch ──
   autoFetchEnabled = $state(false);
@@ -521,6 +531,7 @@ class AppState {
   async togglePin(path: string) { return _togglePin(this, path); }
   async savePreferredEditor(editor: string | null) { return _savePreferredEditor(this, editor); }
   async reorderPinnedRepos(newOrder: string[]) { return _reorderPinnedRepos(this, newOrder); }
+  async saveAiSettings() { return _saveAiSettings(this); }
 
   // ── Auto Fetch ──
 

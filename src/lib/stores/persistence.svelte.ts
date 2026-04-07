@@ -4,6 +4,12 @@ const STORE_FILE = 'app-settings.json';
 const RECENT_REPOS_KEY = 'recentRepos';
 const PINNED_REPOS_KEY = 'pinnedRepos';
 const PREFERRED_EDITOR_KEY = 'preferredEditor';
+const AI_PROVIDER_KEY = 'aiProvider';
+const AI_API_KEY_KEY = 'aiApiKey';
+const AI_MODEL_KEY = 'aiModel';
+const AI_CUSTOM_PROMPT_KEY = 'aiCustomPrompt';
+const AI_LANGUAGE_KEY = 'aiLanguage';
+const AI_OLLAMA_ENDPOINT_KEY = 'aiOllamaEndpoint';
 const MAX_RECENT_REPOS = 10;
 
 let storeInstance: Store | null = null;
@@ -17,11 +23,20 @@ async function getStore(): Promise<Store> {
 
 // ── Types ──────────────────────────────────────────────
 
+export type AiProviderType = 'gemini' | 'openai' | 'ollama';
+export type AiLanguage = 'zh-TW' | 'en' | 'auto';
+
 /** 任何有 recentRepos + pinnedRepos 的物件（避免循環 import AppState） */
 export interface PersistableState {
   recentRepos: string[];
   pinnedRepos: string[];
   preferredEditor: string | null;
+  aiProvider: AiProviderType;
+  aiApiKey: string;
+  aiModel: string;
+  aiCustomPrompt: string;
+  aiLanguage: AiLanguage;
+  aiOllamaEndpoint: string;
 }
 
 // ── Recent Repos ──────────────────────────────────────
@@ -29,10 +44,16 @@ export interface PersistableState {
 export async function loadRecentRepos(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
-    const [savedRecent, savedPinned, savedEditor] = await Promise.all([
+    const [savedRecent, savedPinned, savedEditor, savedAiProvider, savedAiKey, savedAiModel, savedAiPrompt, savedAiLang, savedAiEndpoint] = await Promise.all([
       store.get<string[]>(RECENT_REPOS_KEY),
       store.get<string[]>(PINNED_REPOS_KEY),
       store.get<string | null>(PREFERRED_EDITOR_KEY),
+      store.get<AiProviderType>(AI_PROVIDER_KEY),
+      store.get<string>(AI_API_KEY_KEY),
+      store.get<string>(AI_MODEL_KEY),
+      store.get<string>(AI_CUSTOM_PROMPT_KEY),
+      store.get<AiLanguage>(AI_LANGUAGE_KEY),
+      store.get<string>(AI_OLLAMA_ENDPOINT_KEY),
     ]);
     if (Array.isArray(savedRecent)) {
       state.recentRepos = savedRecent.slice(0, MAX_RECENT_REPOS);
@@ -43,6 +64,12 @@ export async function loadRecentRepos(state: PersistableState): Promise<void> {
     if (typeof savedEditor === 'string') {
       state.preferredEditor = savedEditor;
     }
+    if (savedAiProvider) state.aiProvider = savedAiProvider;
+    if (typeof savedAiKey === 'string') state.aiApiKey = savedAiKey;
+    if (typeof savedAiModel === 'string') state.aiModel = savedAiModel;
+    if (typeof savedAiPrompt === 'string') state.aiCustomPrompt = savedAiPrompt;
+    if (savedAiLang) state.aiLanguage = savedAiLang;
+    if (typeof savedAiEndpoint === 'string') state.aiOllamaEndpoint = savedAiEndpoint;
   } catch {
     // 首次啟動 store 檔案不存在，忽略
   }
@@ -111,6 +138,22 @@ export async function savePreferredEditor(state: PersistableState, editor: strin
   try {
     const store = await getStore();
     await store.set(PREFERRED_EDITOR_KEY, editor);
+  } catch {}
+}
+
+// ── AI Settings ─────────────────────────────────────
+
+export async function saveAiSettings(state: PersistableState): Promise<void> {
+  try {
+    const store = await getStore();
+    await Promise.all([
+      store.set(AI_PROVIDER_KEY, state.aiProvider),
+      store.set(AI_API_KEY_KEY, state.aiApiKey),
+      store.set(AI_MODEL_KEY, state.aiModel),
+      store.set(AI_CUSTOM_PROMPT_KEY, state.aiCustomPrompt),
+      store.set(AI_LANGUAGE_KEY, state.aiLanguage),
+      store.set(AI_OLLAMA_ENDPOINT_KEY, state.aiOllamaEndpoint),
+    ]);
   } catch {}
 }
 
