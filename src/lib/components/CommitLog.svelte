@@ -8,10 +8,22 @@
   let searchType = $state<'message' | 'author' | 'code'>('message');
   let searchResults = $state<Commit[] | null>(null);
   let searching = $state(false);
+  let authorFilter = $state('');
   let contextMenu = $state<{ commit: Commit; x: number; y: number } | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-  const displayCommits = $derived(searchResults ?? app.commits);
+  /** Unique authors from current commit list */
+  const uniqueAuthors = $derived.by(() => {
+    const commits = searchResults ?? app.commits;
+    const authors = new Set(commits.map((c) => c.author));
+    return [...authors].sort();
+  });
+
+  const displayCommits = $derived.by(() => {
+    const base = searchResults ?? app.commits;
+    if (!authorFilter) return base;
+    return base.filter((c) => c.author === authorFilter);
+  });
 
   function timeAgo(timestamp: number): string {
     const seconds = Math.floor(Date.now() / 1000 - timestamp);
@@ -231,6 +243,18 @@
         {/each}
       </optgroup>
     </select>
+    {#if uniqueAuthors.length > 1}
+      <select
+        class="filter-select author-filter"
+        value={authorFilter}
+        onchange={(e) => authorFilter = e.currentTarget.value}
+      >
+        <option value="">All Authors</option>
+        {#each uniqueAuthors as author}
+          <option value={author}>{author}</option>
+        {/each}
+      </select>
+    {/if}
   </div>
 
   <!-- Commit List -->
@@ -386,6 +410,7 @@
     max-width: 150px;
   }
   .filter-select:hover { border-color: var(--accent); }
+  .author-filter { max-width: 120px; }
 
   /* List */
   .history-list {
