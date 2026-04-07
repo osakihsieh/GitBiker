@@ -197,7 +197,7 @@
         </div>
       {/if}
     </div>
-    <InlineTerminal visible={showTerminal} onClose={() => (showTerminal = false)} />
+    <InlineTerminal visible={app.showTerminal} onClose={() => (app.showTerminal = false)} />
   {:else}
     <div class="welcome-toolbar">
       <div class="spacer"></div>

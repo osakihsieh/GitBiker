@@ -140,6 +140,11 @@ class AppState {
   // ── UI state ──
   loading = $state(false);
   toasts = $state<Toast[]>([]);
+  showTerminal = $state(false);
+
+  toggleTerminal(): void {
+    this.showTerminal = !this.showTerminal;
+  }
 
   // ── Switch guard ──
   private switchGuard = false;

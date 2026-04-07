@@ -130,8 +130,9 @@
       if (cmd.startsWith('git ')) {
         app.refreshAll().catch(() => {});
       }
-    } catch (e: unknown) {
-      terminal?.writeln(`\x1b[31m${String(e)}\x1b[0m`);
+    } catch (e: any) {
+      const errorMsg = e?.message || (typeof e === 'string' ? e : JSON.stringify(e));
+      terminal?.writeln(`\x1b[31mError: ${errorMsg}\x1b[0m`);
     }
 
     writePrompt();
