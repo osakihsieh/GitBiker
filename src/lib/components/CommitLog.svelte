@@ -5,12 +5,19 @@
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
   let searchQuery = $state('');
-  let searchType = $state<'message' | 'author' | 'code'>('message');
+  let searchType = $state<'message' | 'author' | 'code' | 'branch'>('message');
   let searchResults = $state<Commit[] | null>(null);
   let searching = $state(false);
   let authorFilter = $state('');
   let contextMenu = $state<{ commit: Commit; x: number; y: number } | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /** Matching branches when searchType is 'branch' */
+  const matchingBranches = $derived.by(() => {
+    if (searchType !== 'branch' || !searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase().trim();
+    return app.branches.filter((b) => b.name.toLowerCase().includes(q));
+  });
 
   /** Unique authors from current commit list */
   const uniqueAuthors = $derived.by(() => {
@@ -191,6 +198,11 @@
 
   async function executeSearch() {
     if (!app.repoPath || !searchQuery.trim()) return;
+    if (searchType === 'branch') {
+      // Branch search is client-side — no need to call git
+      searchResults = null;
+      return;
+    }
     searching = true;
     try {
       searchResults = await gitLogSearch(app.repoPath, searchQuery.trim(), searchType, 200);
@@ -200,6 +212,12 @@
     } finally {
       searching = false;
     }
+  }
+
+  function selectBranch(branchName: string) {
+    app.setLogFilter({ type: 'Branch', value: branchName });
+    searchQuery = '';
+    searchResults = null;
   }
 
   function clearSearch() {
@@ -345,6 +363,7 @@
       <option value="message">Msg</option>
       <option value="author">User</option>
       <option value="code">Code</option>
+      <option value="branch">Branch</option>
     </select>
     <input
       type="text"
@@ -362,6 +381,20 @@
       <span class="search-spinner"></span>
     {/if}
   </div>
+
+  {#if searchType === 'branch' && searchQuery.trim() && matchingBranches.length > 0}
+    <div class="branch-results">
+      {#each matchingBranches as branch}
+        <button class="branch-result-item" onclick={() => selectBranch(branch.name)}>
+          <span class="branch-result-icon">{branch.is_remote ? '☁' : '⎇'}</span>
+          <span class="branch-result-name">{branch.name}</span>
+          {#if branch.is_current}
+            <span class="branch-current-badge">current</span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+  {/if}
 
   <div class="history-header">
     <span class="header-title">Commits</span>
@@ -689,6 +722,45 @@
     height: 100%;
   }
   .empty-icon { font-size: 24px; opacity: 0.3; }
+
+  /* Branch search results */
+  .branch-results {
+    border-bottom: 1px solid var(--border);
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .branch-result-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-xs) var(--space-md);
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    text-align: left;
+  }
+  .branch-result-item:hover { background: var(--bg-hover); }
+  .branch-result-icon { font-size: 12px; color: var(--accent); flex-shrink: 0; }
+  .branch-result-name {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .branch-current-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+    background: var(--accent);
+    color: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+  }
 
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
