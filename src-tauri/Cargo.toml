@@ -1,6 +1,6 @@
 [package]
 name = "gitbiker"
-version = "0.1.0"
+version = "0.2.0"
 description = "GitBiker — Fast, minimal, open-source Git GUI client"
 authors = ["aspdo"]
 edition = "2021"
