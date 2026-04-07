@@ -172,6 +172,34 @@ pub fn git_unstage_hunk(path: String, patch: String) -> Result<(), GitError> {
     crate::git::LocalGit::apply_patch(&repo_path, &patch, true, true)
 }
 
+/// Stash a single hunk by applying it to index then stashing staged changes
+#[tauri::command]
+pub fn git_stash_hunk(path: String, patch: String, message: Option<String>) -> Result<String, GitError> {
+    let repo_path = std::path::PathBuf::from(&path);
+    crate::git::LocalGit::check_index_lock(&repo_path)?;
+
+    // Step 1: Apply the patch to the index
+    crate::git::LocalGit::apply_patch(&repo_path, &patch, true, false)?;
+
+    // Step 2: Stash only the staged changes (requires Git 2.35+)
+    let mut args = vec!["stash", "push", "--staged"];
+    let msg;
+    if let Some(ref m) = message {
+        msg = m.clone();
+        args.push("-m");
+        args.push(&msg);
+    }
+
+    match crate::git::LocalGit::run_git(&repo_path, &args) {
+        Ok(output) => Ok(output),
+        Err(e) => {
+            // If --staged is not supported, unstage and return error
+            let _ = crate::git::LocalGit::apply_patch(&repo_path, &patch, true, true);
+            Err(e)
+        }
+    }
+}
+
 /// Cherry-pick 指定 commit 到當前分支
 #[tauri::command]
 pub fn git_cherry_pick(

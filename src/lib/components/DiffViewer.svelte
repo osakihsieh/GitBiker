@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitStageHunk, gitUnstageHunk } from '$lib/git/commands';
+  import { gitStageHunk, gitUnstageHunk, gitStashHunk } from '$lib/git/commands';
   import type { DiffHunk } from '$lib/git/types';
 
   function fileName(path: string): string {
@@ -63,6 +63,21 @@
     }
   }
 
+  async function handleStashHunk(hunk: DiffHunk) {
+    if (!app.repoPath || !app.currentDiff) return;
+    try {
+      const patch = buildHunkPatch(hunk);
+      await gitStashHunk(app.repoPath, patch);
+      app.addToast('Hunk 已 stash', 'success');
+      await app.refreshStatus();
+      if (app.selectedFile) {
+        await app.loadDiff(app.selectedFile);
+      }
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
   async function handleUnstageHunk(hunk: DiffHunk) {
     if (!app.repoPath || !app.currentDiff) return;
     try {
@@ -113,6 +128,11 @@
                   onclick={() => handleStageHunk(hunk)}
                   title="Stage 此 hunk"
                 >+</button>
+                <button
+                  class="hunk-btn stash"
+                  onclick={() => handleStashHunk(hunk)}
+                  title="Stash 此 hunk"
+                >⊟</button>
               {/if}
             </span>
           {/if}
@@ -244,6 +264,13 @@
   .hunk-btn.unstage:hover {
     background: var(--diff-del-bg);
     border-color: var(--diff-del-text);
+  }
+  .hunk-btn.stash {
+    color: var(--accent);
+  }
+  .hunk-btn.stash:hover {
+    background: var(--bg-surface);
+    border-color: var(--accent);
   }
 
   .diff-empty-state {

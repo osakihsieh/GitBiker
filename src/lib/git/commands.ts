@@ -49,6 +49,10 @@ export async function gitUnstageHunk(path: string, patch: string): Promise<void>
   return invoke('git_unstage_hunk', { path, patch });
 }
 
+export async function gitStashHunk(path: string, patch: string, message?: string): Promise<string> {
+  return invoke('git_stash_hunk', { path, patch, message: message ?? null });
+}
+
 export async function gitCommit(path: string, message: string): Promise<string> {
   return invoke('git_commit', { path, message });
 }
