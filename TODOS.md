@@ -34,11 +34,21 @@
 | US-006 | [Partial Stash](user-stories/US-006-partial-stash.md) | M | StashManager ✅ ✅ |
 | US-007 | [Code History Search](user-stories/US-007-code-history-search.md) | M | CommitLog ✅ ✅ |
 
-### Sprint 3：品質提升（P3）
+### Sprint 3：GitFiend 對標補全（P1-P3）
+
+| # | 功能 | 工作量 | 狀態 |
+|---|------|--------|------|
+| US-011 | Cherry-pick Commit | M | ✅ |
+| US-012 | Hunk/Line-level Staging | L | ✅ |
+| US-009 | Auto Fetch | S | ✅ |
+| US-013 | Filter Commits by Author | S | ✅ |
+| US-014 | Visual Commit Graph | L | ✅ |
+| US-015 | Hunk/Line-level Stash | M | ✅ |
+
+### Sprint 4：品質提升（P3）
 
 | # | User Story | 工作量 | 依賴 |
 |---|-----------|--------|------|
-| US-009 | [Auto Fetch](user-stories/US-009-auto-fetch.md) | S | Fetch + Settings ✅ |
 | US-010 | [Pre-commit Hook 支援](user-stories/US-010-pre-commit-hook-support.md) | S | Commit ✅ |
 
 ---
