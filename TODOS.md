@@ -44,6 +44,9 @@
 | US-013 | Filter Commits by Author | S | ✅ |
 | US-014 | Visual Commit Graph | L | ✅ |
 | US-015 | Hunk/Line-level Stash | M | ✅ |
+| US-016 | Branch 名稱搜尋 | S | ✅ |
+| US-017 | 衝突解決 Custom Edit (行重排) | M | ✅ |
+| US-018 | Multi-Repo 視圖 + 批量操作 | L | ✅ |
 
 ### Sprint 4：品質提升（P3）
 
