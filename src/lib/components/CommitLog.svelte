@@ -25,6 +25,144 @@
     return base.filter((c) => c.author === authorFilter);
   });
 
+  // ── Commit Graph Layout ──
+
+  const LANE_WIDTH = 14;
+  const LANE_COLORS = [
+    'var(--accent)',
+    '#e5c07b',
+    '#c678dd',
+    '#98c379',
+    '#e06c75',
+    '#56b6c2',
+    '#d19a66',
+    '#61afef',
+  ];
+
+  interface GraphNode {
+    lane: number;
+    /** Lines to draw: [fromLane, toLane] pairs for connections to next row */
+    lines: Array<{ fromLane: number; toLane: number; color: string }>;
+    /** Lanes that pass through this row without stopping */
+    passingLanes: Array<{ lane: number; color: string }>;
+    color: string;
+    maxLane: number;
+  }
+
+  const graphLayout = $derived.by((): GraphNode[] => {
+    const commits = displayCommits;
+    if (commits.length === 0) return [];
+
+    // Map commit ID -> index in displayCommits
+    const idToIdx = new Map<string, number>();
+    for (let i = 0; i < commits.length; i++) {
+      idToIdx.set(commits[i].id, i);
+    }
+
+    // activeLanes: tracks which lane each expected parent commit will appear on
+    // key = commit ID, value = lane number
+    const activeLanes = new Map<string, number>();
+    const laneOccupied: boolean[] = [];
+    const result: GraphNode[] = [];
+
+    function allocateLane(): number {
+      for (let i = 0; i < laneOccupied.length; i++) {
+        if (!laneOccupied[i]) {
+          laneOccupied[i] = true;
+          return i;
+        }
+      }
+      laneOccupied.push(true);
+      return laneOccupied.length - 1;
+    }
+
+    function freeLane(lane: number): void {
+      if (lane >= 0 && lane < laneOccupied.length) {
+        laneOccupied[lane] = false;
+      }
+    }
+
+    for (let i = 0; i < commits.length; i++) {
+      const commit = commits[i];
+      let myLane: number;
+
+      // Check if this commit was expected on a lane
+      if (activeLanes.has(commit.id)) {
+        myLane = activeLanes.get(commit.id)!;
+        activeLanes.delete(commit.id);
+      } else {
+        myLane = allocateLane();
+      }
+
+      const color = LANE_COLORS[myLane % LANE_COLORS.length];
+      const lines: GraphNode['lines'] = [];
+      const passingLanes: GraphNode['passingLanes'] = [];
+
+      // Process parents
+      const parents = commit.parents;
+      for (let p = 0; p < parents.length; p++) {
+        const parentId = parents[p];
+        const parentIdx = idToIdx.get(parentId);
+
+        // Only draw if parent is in our visible list
+        if (parentIdx === undefined) continue;
+
+        if (p === 0) {
+          // First parent — continue in same lane
+          if (!activeLanes.has(parentId)) {
+            activeLanes.set(parentId, myLane);
+            lines.push({ fromLane: myLane, toLane: myLane, color });
+          } else {
+            // Parent already expected on another lane — draw merge line
+            const targetLane = activeLanes.get(parentId)!;
+            lines.push({ fromLane: myLane, toLane: targetLane, color });
+            freeLane(myLane);
+          }
+        } else {
+          // Additional parents (merge) — allocate or find lane
+          if (!activeLanes.has(parentId)) {
+            const mergeLane = allocateLane();
+            activeLanes.set(parentId, mergeLane);
+            const mergeColor = LANE_COLORS[mergeLane % LANE_COLORS.length];
+            lines.push({ fromLane: myLane, toLane: mergeLane, color: mergeColor });
+          } else {
+            const targetLane = activeLanes.get(parentId)!;
+            const mergeColor = LANE_COLORS[targetLane % LANE_COLORS.length];
+            lines.push({ fromLane: myLane, toLane: targetLane, color: mergeColor });
+          }
+        }
+      }
+
+      // If no parents link back to this lane, free it
+      if (parents.length === 0) {
+        freeLane(myLane);
+      }
+
+      // Collect passing-through lanes (lanes occupied by other commits' ancestry)
+      for (const [, lane] of activeLanes) {
+        if (lane !== myLane) {
+          passingLanes.push({ lane, color: LANE_COLORS[lane % LANE_COLORS.length] });
+        }
+      }
+
+      const maxLane = Math.max(myLane, ...passingLanes.map((p) => p.lane), ...lines.map((l) => Math.max(l.fromLane, l.toLane)));
+
+      result.push({ lane: myLane, lines, passingLanes, color, maxLane });
+    }
+
+    return result;
+  });
+
+  const graphWidth = $derived(
+    Math.max(20, (Math.max(0, ...graphLayout.map((g) => g.maxLane)) + 1) * LANE_WIDTH + 8)
+  );
+
+  function laneX(lane: number): number {
+    return lane * LANE_WIDTH + LANE_WIDTH / 2 + 4;
+  }
+
+  // ── Utilities ──
+
   function timeAgo(timestamp: number): string {
     const seconds = Math.floor(Date.now() / 1000 - timestamp);
     if (seconds < 60) return 'just now';
@@ -70,7 +208,6 @@
   }
 
   function handleCommitClick(commit: Commit) {
-    // 如果點擊同一個 commit，取消選取回到 worktree
     if (app.selectedCommit?.id === commit.id) {
       app.backToWorktree();
     } else {
@@ -93,7 +230,6 @@
       { id: 'cherryPick', label: 'Cherry-pick 此 Commit' },
     ];
 
-    // 判斷是否為未推送的 commit：在 ahead 範圍內
     const currentBranch = app.branches.find((b) => b.is_current);
     const aheadCount = currentBranch?.ahead ?? 0;
     const commitIndex = displayCommits.findIndex((c) => c.id === commit.id);
@@ -266,17 +402,54 @@
       </div>
     {:else}
       {#each displayCommits as commit, i (commit.id)}
+        {@const graph = graphLayout[i]}
         <button
           class="commit-item"
           class:selected={app.selectedCommit?.id === commit.id}
           onclick={() => handleCommitClick(commit)}
           oncontextmenu={(e) => handleContextMenu(e, commit)}
         >
-          <div class="commit-graph">
-            <div class="commit-dot"></div>
-            {#if i < displayCommits.length - 1}
-              <div class="commit-line"></div>
-            {/if}
+          <div class="commit-graph" style:width="{graphWidth}px">
+            <svg class="graph-svg" width={graphWidth} height="100%">
+              <!-- Passing-through lanes (vertical lines) -->
+              {#if graph}
+                {#each graph.passingLanes as pl}
+                  <line
+                    x1={laneX(pl.lane)} y1="0"
+                    x2={laneX(pl.lane)} y2="100%"
+                    stroke={pl.color} stroke-width="2" opacity="0.4"
+                  />
+                {/each}
+                <!-- Connection lines to next row -->
+                {#each graph.lines as line}
+                  {#if line.fromLane === line.toLane}
+                    <!-- Straight line down -->
+                    <line
+                      x1={laneX(line.fromLane)} y1="50%"
+                      x2={laneX(line.toLane)} y2="100%"
+                      stroke={line.color} stroke-width="2" opacity="0.4"
+                    />
+                  {:else}
+                    <!-- Curved merge/branch line -->
+                    <path
+                      d="M {laneX(line.fromLane)} 50% Q {laneX(line.fromLane)} 100%, {laneX(line.toLane)} 100%"
+                      fill="none" stroke={line.color} stroke-width="2" opacity="0.4"
+                    />
+                  {/if}
+                {/each}
+                <!-- Vertical line from top to dot (if this commit continues a lane) -->
+                <line
+                  x1={laneX(graph.lane)} y1="0"
+                  x2={laneX(graph.lane)} y2="50%"
+                  stroke={graph.color} stroke-width="2" opacity="0.4"
+                />
+                <!-- Commit dot -->
+                <circle
+                  cx={laneX(graph.lane)} cy="50%"
+                  r="4" fill={graph.color}
+                />
+              {/if}
+            </svg>
           </div>
           <div class="commit-info">
             {#if commit.refs && commit.refs.length > 0}
@@ -419,8 +592,8 @@
   }
   .commit-item {
     display: flex;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
+    gap: 0;
+    padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
     border-bottom: 1px solid var(--border);
     background: none;
     border-left: 2px solid transparent;
@@ -431,35 +604,29 @@
     cursor: pointer;
     color: var(--text-primary);
     font-family: var(--font-ui);
+    min-height: 48px;
   }
   .commit-item:hover { background: var(--bg-hover); }
   .commit-item.selected {
     background: var(--bg-surface);
     border-left-color: var(--accent);
   }
+
+  /* Graph column */
   .commit-graph {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 20px;
+    position: relative;
     flex-shrink: 0;
+    min-width: 20px;
   }
-  .commit-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex-shrink: 0;
-    margin-top: 4px;
-    z-index: 1;
+  .graph-svg {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
   }
-  .commit-line {
-    width: 2px;
-    flex: 1;
-    background: var(--accent);
-    opacity: 0.3;
-  }
-  .commit-info { flex: 1; min-width: 0; }
+
+  .commit-info { flex: 1; min-width: 0; padding-left: var(--space-xs); }
 
   /* Ref Tags */
   .commit-tags {
