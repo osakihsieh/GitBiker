@@ -305,6 +305,12 @@ export async function openInTerminal(path: string): Promise<void> {
   return invoke('open_in_terminal', { path });
 }
 
+// ── Multi-repo ──────────────────────────────────────
+
+export async function scanGitRepos(path: string): Promise<string[]> {
+  return invoke('scan_git_repos', { path });
+}
+
 export async function gitBranchCompare(path: string, base: string, compare: string): Promise<BranchCompareResult> {
   return invoke('git_branch_compare', { path, base, compare });
 }

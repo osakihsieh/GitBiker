@@ -1,13 +1,14 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitInit } from '$lib/git/commands';
+  import { gitInit, scanGitRepos } from '$lib/git/commands';
 
   interface Props {
     onOpenRepo: (path: string) => void;
     onClone: () => void;
+    onOpenMultiRepo?: (paths: string[]) => void;
   }
 
-  let { onOpenRepo, onClone }: Props = $props();
+  let { onOpenRepo, onClone, onOpenMultiRepo }: Props = $props();
 
   async function handleOpenLocal() {
     try {
@@ -18,6 +19,26 @@
       });
       if (selected) {
         onOpenRepo(selected);
+      }
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
+  async function handleOpenMultiRepo() {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        directory: true,
+        title: '選擇包含多個 Git Repos 的資料夾',
+      });
+      if (selected) {
+        const repos = await scanGitRepos(selected);
+        if (repos.length === 0) {
+          app.addToast('此資料夾中沒有找到 Git repositories', 'info');
+        } else {
+          onOpenMultiRepo?.(repos);
+        }
       }
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
@@ -73,6 +94,11 @@
       <span class="icon">+</span>
       <span class="label">Init New Repo</span>
       <span class="hint">git init</span>
+    </button>
+    <button class="action-btn" onclick={handleOpenMultiRepo}>
+      <span class="icon">⊞</span>
+      <span class="label">Open Multi-Repo</span>
+      <span class="hint">bulk operations</span>
     </button>
   </div>
 

@@ -158,6 +158,31 @@ pub fn git_revert(
     crate::git::LocalGit::run_git(&repo_path, &args)
 }
 
+/// Scan a folder for git repositories (immediate children only)
+#[tauri::command]
+pub fn scan_git_repos(path: String) -> Result<Vec<String>, GitError> {
+    let folder = std::path::PathBuf::from(&path);
+    if !folder.is_dir() {
+        return Err(GitError::OperationFailed("不是有效的資料夾".to_string()));
+    }
+
+    let mut repos = Vec::new();
+    let entries = std::fs::read_dir(&folder)
+        .map_err(|e| GitError::OperationFailed(format!("無法讀取資料夾: {e}")))?;
+
+    for entry in entries.flatten() {
+        let entry_path = entry.path();
+        if entry_path.is_dir() && entry_path.join(".git").exists() {
+            if let Some(p) = entry_path.to_str() {
+                repos.push(p.to_string());
+            }
+        }
+    }
+
+    repos.sort();
+    Ok(repos)
+}
+
 /// Stage a patch (hunk-level staging)
 #[tauri::command]
 pub fn git_stage_hunk(path: String, patch: String) -> Result<(), GitError> {

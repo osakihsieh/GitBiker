@@ -58,6 +58,7 @@ pub fn run() {
             commands::git_stash_drop,
             commands::git_init,
             commands::git_revert,
+            commands::scan_git_repos,
             commands::git_stage_hunk,
             commands::git_unstage_hunk,
             commands::git_stash_hunk,

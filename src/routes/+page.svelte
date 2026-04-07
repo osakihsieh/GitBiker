@@ -19,12 +19,15 @@
   import ConflictResolver from '$lib/components/ConflictResolver.svelte';
   import FileHistory from '$lib/components/FileHistory.svelte';
   import BranchCompare from '$lib/components/BranchCompare.svelte';
+  import MultiRepoView from '$lib/components/MultiRepoView.svelte';
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
   let showPopover = $state(false);
   let showCommandPalette = $state(false);
   let showTerminal = $state(false);
+  let multiRepoPaths = $state<string[]>([]);
+  let showMultiRepo = $state(false);
 
   // 啟動時從 Tauri Store 載入最近開啟的 repos
   app.loadRecentRepos();
@@ -160,6 +163,8 @@
   <TitleBar />
   {#if showSettings}
     <Settings onClose={() => showSettings = false} />
+  {:else if showMultiRepo}
+    <MultiRepoView repoPaths={multiRepoPaths} onClose={() => showMultiRepo = false} />
   {:else if app.hasRepo}
     <Toolbar
       onOpenSettings={() => showSettings = true}
@@ -206,6 +211,7 @@
     <Welcome
       onOpenRepo={(path) => app.openRepo(path)}
       onClone={handleClone}
+      onOpenMultiRepo={(paths) => { multiRepoPaths = paths; showMultiRepo = true; }}
     />
   {/if}
 
