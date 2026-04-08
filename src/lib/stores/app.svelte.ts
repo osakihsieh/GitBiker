@@ -283,6 +283,8 @@ class AppState {
 
   selectCommit(commit: Commit): void {
     this.selectedCommit = commit;
+    this.selectedFile = null;
+    this.currentDiff = null;
     this.viewMode = 'commit-detail';
   }
 

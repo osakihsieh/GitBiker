@@ -9,6 +9,7 @@
   import DiffViewer from '$lib/components/DiffViewer.svelte';
   import CommitLog from '$lib/components/CommitLog.svelte';
   import CommitFileList from '$lib/components/CommitFileList.svelte';
+  import BranchSidebar from '$lib/components/BranchSidebar.svelte';
   import Welcome from '$lib/components/Welcome.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import CloneDialog from '$lib/components/CloneDialog.svelte';
@@ -61,6 +62,22 @@
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
+    // Esc: clear file selection, return to CommitLog view
+    // Guard: only handle if no modal/popover/palette is open (they handle their own Esc)
+    if (e.key === 'Escape' && !showCommandPalette && !showSettings && !showCloneDialog && activePopover === null) {
+      if (app.selectedFile || app.currentDiff) {
+        e.preventDefault();
+        app.selectedFile = null;
+        app.currentDiff = null;
+        return;
+      }
+      if (app.viewMode === 'commit-detail') {
+        e.preventDefault();
+        app.backToWorktree();
+        return;
+      }
+    }
+
     // Ctrl+`: toggle inline terminal
     if (e.ctrlKey && e.key === '`') {
       e.preventDefault();
@@ -194,22 +211,24 @@
         <BranchCompare />
       {:else}
         <div class="sidebar">
+          <BranchSidebar />
+        </div>
+        <div class="resize-handle"></div>
+        <div class="center" tabindex="-1">
+          {#if app.selectedFile || app.currentDiff}
+            <DiffViewer />
+          {:else if app.viewMode === 'file-history'}
+            <FileHistory />
+          {:else}
+            <CommitLog />
+          {/if}
+        </div>
+        <div class="resize-handle"></div>
+        <div class="right" tabindex="-1">
           {#if app.viewMode === 'commit-detail'}
             <CommitFileList />
           {:else}
             <FileTree />
-          {/if}
-        </div>
-        <div class="resize-handle"></div>
-        <div class="center" tabindex="-1">
-          <DiffViewer />
-        </div>
-        <div class="resize-handle"></div>
-        <div class="right" tabindex="-1">
-          {#if app.viewMode === 'file-history'}
-            <FileHistory />
-          {:else}
-            <CommitLog />
           {/if}
         </div>
       {/if}
