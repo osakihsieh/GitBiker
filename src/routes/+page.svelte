@@ -113,6 +113,11 @@
     // Esc: clear file selection, return to CommitLog view
     // Guard: only handle if no modal/popover/palette is open (they handle their own Esc)
     if (e.key === 'Escape' && !showCommandPalette && !showSettings && !showCloneDialog && activePopover === null) {
+      if (app.stashDiff !== null) {
+        e.preventDefault();
+        app.stashDiff = null;
+        return;
+      }
       if (app.selectedFile || app.currentDiff) {
         e.preventDefault();
         app.selectedFile = null;
@@ -269,7 +274,13 @@
           aria-orientation="vertical"
         ></div>
         <div class="center" tabindex="-1">
-          {#if app.selectedFile || app.currentDiff}
+          {#if app.stashDiff !== null}
+            <div class="breadcrumb-bar">
+              <span class="breadcrumb-current">Stash Diff</span>
+              <button class="breadcrumb-item" style="margin-left:auto" onclick={() => app.stashDiff = null}>✕ 關閉</button>
+            </div>
+            <pre class="stash-diff-viewer">{app.stashDiff}</pre>
+          {:else if app.selectedFile || app.currentDiff}
             <div class="breadcrumb-bar">
               <button class="breadcrumb-item" onclick={() => { app.selectedFile = null; app.currentDiff = null; if (app.viewMode === 'commit-detail') app.backToWorktree(); }}>
                 CommitLog
@@ -447,6 +458,19 @@
     color: var(--text-primary);
     font-family: var(--font-mono);
     font-size: 12px;
+  }
+  .stash-diff-viewer {
+    flex: 1;
+    overflow: auto;
+    margin: 0;
+    padding: var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    white-space: pre;
+    tab-size: 4;
   }
   .resize-handle {
     width: 3px;

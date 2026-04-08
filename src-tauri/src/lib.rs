@@ -57,6 +57,7 @@ pub fn run() {
             commands::git_stash_pop,
             commands::git_stash_apply,
             commands::git_stash_drop,
+            commands::git_stash_show,
             commands::git_init,
             commands::git_revert,
             commands::scan_git_repos,

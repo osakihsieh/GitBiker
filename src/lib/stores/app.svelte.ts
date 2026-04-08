@@ -126,6 +126,9 @@ class AppState {
   // ── currentDiff lives outside tabs (not persisted across tab switches) ──
   currentDiff = $state<DiffResult | null>(null);
 
+  // ── stashDiff: raw patch text from git stash show -p (not persisted) ──
+  stashDiff = $state<string | null>(null);
+
   // ── View mode (proxied to active tab's RepoState) ──
   selectedCommit = $state<Commit | null>(null);
 

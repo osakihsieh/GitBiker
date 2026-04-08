@@ -307,6 +307,11 @@ impl LocalGit {
         Self::run_git(path, &["stash", "drop", &stash_ref])
     }
 
+    pub fn stash_show(&self, path: &Path, index: usize) -> Result<String, GitError> {
+        let stash_ref = format!("stash@{{{index}}}");
+        Self::run_git(path, &["stash", "show", "-p", "--stat", &stash_ref])
+    }
+
     pub fn branch_merge_status(&self, path: &Path, branch_name: &str, base: &str) -> Result<BranchMergeStatus, GitError> {
         let range = format!("{base}..{branch_name}");
         let output = Self::run_git(path, &["rev-list", "--count", &range])?;

@@ -176,6 +176,10 @@ export async function gitStashDrop(path: string, index: number): Promise<string>
   return invoke('git_stash_drop', { path, index });
 }
 
+export async function gitStashShow(path: string, index: number): Promise<string> {
+  return invoke('git_stash_show', { path, index });
+}
+
 export async function startWatching(path: string): Promise<void> {
   return invoke('start_watching', { path });
 }

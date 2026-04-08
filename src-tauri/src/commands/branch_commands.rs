@@ -211,6 +211,15 @@ pub fn git_stash_drop(
 }
 
 #[tauri::command]
+pub fn git_stash_show(
+    state: State<GitState>,
+    path: String,
+    index: usize,
+) -> Result<String, GitError> {
+    state.git.stash_show(&PathBuf::from(&path), index)
+}
+
+#[tauri::command]
 pub fn git_stash_push_files(
     state: State<GitState>,
     path: String,
