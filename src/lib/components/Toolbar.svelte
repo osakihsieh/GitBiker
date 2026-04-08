@@ -1,7 +1,7 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
-  import { gitPush, gitPull, gitFetch, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
+  import { gitPush, gitPushTags, gitPull, gitFetch, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
   import BranchManager from './BranchManager.svelte';
   import StashManager from './StashManager.svelte';
 
@@ -9,6 +9,7 @@
   let branchManagerOpen = $state(false);
   let stashOpen = $state(false);
   let pushing = $state(false);
+  let pushingTags = $state(false);
   let pulling = $state(false);
   let fetching = $state(false);
 
@@ -54,6 +55,24 @@
       app.addToast(String(e), 'error', false);
     } finally {
       pushing = false;
+    }
+  }
+
+  async function handlePushTags() {
+    if (!app.repoPath || pushingTags) return;
+    pushingTags = true;
+    try {
+      const result = await gitPushTags(app.repoPath);
+      if (result.success) {
+        app.addToast(`已推送所有 Tags 到 ${result.remote}`, 'success');
+      } else {
+        app.addToast(result.message, 'error', false);
+      }
+      await app.refreshAll();
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error', false);
+    } finally {
+      pushingTags = false;
     }
   }
 
@@ -236,6 +255,9 @@
     </button>
     <button class="btn" onclick={handlePush} disabled={pushing}>
       {#if pushing}<span class="spinner"></span>{:else}↑{/if} Push
+    </button>
+    <button class="btn" onclick={handlePushTags} disabled={pushingTags} title="推送所有 Tags">
+      {#if pushingTags}<span class="spinner"></span>{:else}🏷{/if} Push Tags
     </button>
     <button class="btn" onclick={handleFetch} disabled={fetching}>
       {#if fetching}<span class="spinner"></span>{:else}↻{/if} Fetch

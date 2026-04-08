@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitLogSearch, gitTagCreate, gitRevert, gitResetSoft, gitResetHard, gitCherryPick } from '$lib/git/commands';
+  import { gitLogSearch, gitTagCreate, gitTagDelete, gitTagDeleteRemote, gitPushTag, gitRevert, gitResetSoft, gitResetHard, gitCherryPick } from '$lib/git/commands';
   import type { Commit } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
@@ -10,6 +10,7 @@
   let searching = $state(false);
   let authorFilter = $state('');
   let contextMenu = $state<{ commit: Commit; x: number; y: number } | null>(null);
+  let tagContextMenu = $state<{ tagName: string; x: number; y: number } | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** Matching branches when searchType is 'branch' */
@@ -424,6 +425,58 @@
     }
   }
 
+  function handleTagContextMenu(e: MouseEvent, tagName: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    tagContextMenu = { tagName, x: e.clientX, y: e.clientY };
+  }
+
+  const tagContextMenuItems: MenuItem[] = [
+    { id: 'pushTag', label: '推送此 Tag' },
+    { id: '_sep1', label: '', separator: true },
+    { id: 'deleteTag', label: '刪除本地 Tag' },
+    { id: 'deleteRemoteTag', label: '刪除遠端 Tag' },
+  ];
+
+  async function handleTagContextSelect(actionId: string) {
+    if (!tagContextMenu || !app.repoPath) return;
+    const { tagName } = tagContextMenu;
+    try {
+      switch (actionId) {
+        case 'pushTag': {
+          const result = await gitPushTag(app.repoPath, tagName);
+          if (result.success) {
+            app.addToast(`已推送 tag: ${tagName}`, 'success');
+          } else {
+            app.addToast(result.message, 'error', false);
+          }
+          break;
+        }
+        case 'deleteTag': {
+          if (confirm(`確定要刪除本地 tag「${tagName}」？`)) {
+            await gitTagDelete(app.repoPath, tagName);
+            app.addToast(`已刪除 tag: ${tagName}`, 'success');
+            await app.refreshAll();
+          }
+          break;
+        }
+        case 'deleteRemoteTag': {
+          if (confirm(`確定要刪除遠端 tag「${tagName}」？\n\n此操作會從 origin 移除該 tag。`)) {
+            const result = await gitTagDeleteRemote(app.repoPath, tagName);
+            if (result.success) {
+              app.addToast(`已刪除遠端 tag: ${tagName}`, 'success');
+            } else {
+              app.addToast(result.message, 'error', false);
+            }
+          }
+          break;
+        }
+      }
+    } catch (e: unknown) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
   function handleSearchKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
       clearSearch();
@@ -586,12 +639,20 @@
               {#if commit.refs && commit.refs.length > 0}
                 <div class="commit-tags">
                   {#each commit.refs.slice(0, 3) as ref}
-                    <span
-                      class="ref-tag"
-                      class:ref-local={ref.kind === 'Local'}
-                      class:ref-remote={ref.kind === 'Remote'}
-                      class:ref-tag-badge={ref.kind === 'Tag'}
-                    >{ref.name}</span>
+                    {#if ref.kind === 'Tag'}
+                      <span
+                        class="ref-tag ref-tag-badge"
+                        role="button"
+                        tabindex="-1"
+                        oncontextmenu={(e) => handleTagContextMenu(e, ref.name)}
+                      >{ref.name}</span>
+                    {:else}
+                      <span
+                        class="ref-tag"
+                        class:ref-local={ref.kind === 'Local'}
+                        class:ref-remote={ref.kind === 'Remote'}
+                      >{ref.name}</span>
+                    {/if}
                   {/each}
                   {#if commit.refs.length > 3}
                     <span class="ref-overflow" title={commit.refs.slice(3).map(r => r.name).join(', ')}>+{commit.refs.length - 3}</span>
@@ -624,6 +685,16 @@
     items={contextMenuItems}
     onSelect={handleContextSelect}
     onClose={() => contextMenu = null}
+  />
+{/if}
+
+{#if tagContextMenu}
+  <ContextMenu
+    x={tagContextMenu.x}
+    y={tagContextMenu.y}
+    items={tagContextMenuItems}
+    onSelect={handleTagContextSelect}
+    onClose={() => tagContextMenu = null}
   />
 {/if}
 
@@ -793,6 +864,7 @@
   .ref-tag-badge {
     background: rgba(81, 207, 102, 0.2);
     color: var(--success);
+    cursor: context-menu;
   }
   .ref-overflow {
     font-size: 10px;

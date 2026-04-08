@@ -62,6 +62,75 @@ pub fn git_tag_create(path: String, name: String, commit_id: Option<String>) -> 
 }
 
 #[tauri::command]
+pub fn git_tag_delete(path: String, name: String) -> Result<(), GitError> {
+    let repo_path = PathBuf::from(&path);
+    LocalGit::run_git(&repo_path, &["tag", "-d", "--", &name])?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn git_tag_delete_remote(path: String, name: String, remote: Option<String>) -> Result<PushResult, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let remote_name = remote.unwrap_or_else(|| "origin".to_string());
+    let refspec = format!(":refs/tags/{}", name);
+    match LocalGit::run_git(&repo_path, &["push", &remote_name, &refspec]) {
+        Ok(output) => Ok(PushResult {
+            remote: remote_name,
+            branch: name,
+            success: true,
+            message: output,
+        }),
+        Err(e) => Ok(PushResult {
+            remote: remote_name,
+            branch: name,
+            success: false,
+            message: e.to_string(),
+        }),
+    }
+}
+
+#[tauri::command]
+pub fn git_push_tag(path: String, name: String, remote: Option<String>) -> Result<PushResult, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let remote_name = remote.unwrap_or_else(|| "origin".to_string());
+    match LocalGit::run_git(&repo_path, &["push", &remote_name, &format!("refs/tags/{}", name)]) {
+        Ok(output) => Ok(PushResult {
+            remote: remote_name,
+            branch: name,
+            success: true,
+            message: output,
+        }),
+        Err(e) => Ok(PushResult {
+            remote: remote_name,
+            branch: name,
+            success: false,
+            message: e.to_string(),
+        }),
+    }
+}
+
+#[tauri::command]
+pub fn git_push_tags(path: String, remote: Option<String>) -> Result<PushResult, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let remote_name = remote.unwrap_or_else(|| "origin".to_string());
+    let args = vec!["push", &remote_name, "--tags"];
+    match LocalGit::run_git(&repo_path, &args) {
+        Ok(output) => Ok(PushResult {
+            remote: remote_name,
+            branch: "--tags".to_string(),
+            success: true,
+            message: output,
+        }),
+        Err(e) => Ok(PushResult {
+            remote: remote_name,
+            branch: "--tags".to_string(),
+            success: false,
+            message: e.to_string(),
+        }),
+    }
+}
+
+#[tauri::command]
 pub fn git_fetch(path: String, remote: Option<String>) -> Result<String, GitError> {
     let repo_path = PathBuf::from(&path);
     let mut args = vec!["fetch"];

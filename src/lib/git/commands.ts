@@ -226,6 +226,22 @@ export async function gitTagCreate(path: string, name: string, commitId?: string
   return invoke('git_tag_create', { path, name, commitId });
 }
 
+export async function gitTagDelete(path: string, name: string): Promise<void> {
+  return invoke('git_tag_delete', { path, name });
+}
+
+export async function gitTagDeleteRemote(path: string, name: string, remote?: string): Promise<PushResult> {
+  return invoke('git_tag_delete_remote', { path, name, remote });
+}
+
+export async function gitPushTag(path: string, name: string, remote?: string): Promise<PushResult> {
+  return invoke('git_push_tag', { path, name, remote });
+}
+
+export async function gitPushTags(path: string, remote?: string): Promise<PushResult> {
+  return invoke('git_push_tags', { path, remote });
+}
+
 export async function gitFetch(path: string, remote?: string): Promise<string> {
   return invoke('git_fetch', { path, remote });
 }
