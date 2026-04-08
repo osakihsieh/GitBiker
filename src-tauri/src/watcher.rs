@@ -3,12 +3,12 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use notify::RecursiveMode;
-use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, FileIdMap};
+use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, RecommendedCache};
 use tauri::{AppHandle, Emitter};
 
 use crate::git::GitError;
 
-type FileWatcher = Debouncer<notify::RecommendedWatcher, FileIdMap>;
+type FileWatcher = Debouncer<notify::RecommendedWatcher, RecommendedCache>;
 
 pub struct WatcherState {
     inner: Mutex<Option<FileWatcher>>,
