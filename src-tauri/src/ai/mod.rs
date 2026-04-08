@@ -120,34 +120,62 @@ pub fn create_provider(
     }
 }
 
+// ── Model Listing ───────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelInfo {
+    pub id: String,
+    pub name: String,
+}
+
+pub async fn list_models(
+    provider: &str,
+    api_key: &str,
+    ollama_endpoint: Option<&str>,
+) -> Result<Vec<ModelInfo>, AiError> {
+    match provider {
+        "gemini" => gemini::list_models(api_key).await,
+        "openai" => openai_compatible::list_openai_models(api_key).await,
+        "ollama" => {
+            let endpoint = ollama_endpoint.unwrap_or("http://localhost:11434");
+            openai_compatible::list_ollama_models(endpoint).await
+        }
+        other => Err(AiError::UnsupportedProvider(other.to_string())),
+    }
+}
+
 // ── System Prompt Builder ────────────────────────────
 
 pub fn build_system_prompt(context: &CommitContext) -> String {
     let mut prompt = String::new();
 
     prompt.push_str("You are a commit message generator for a Git repository.\n");
-    prompt.push_str("Generate a concise, meaningful commit message based on the staged changes.\n\n");
+    prompt.push_str("Generate a commit message with a title and body based on the staged changes.\n\n");
+
+    // Format instruction (shared across languages)
+    prompt.push_str("Format:\n");
+    prompt.push_str("- Line 1: title (type prefix + concise summary, max 72 chars)\n");
+    prompt.push_str("- Line 2: blank line\n");
+    prompt.push_str("- Line 3+: body — explain WHAT changed and WHY, use bullet points for multiple changes\n");
+    prompt.push_str("- Output only the commit message, no explanations or markdown fences\n\n");
 
     // Language instruction
     match context.language.as_str() {
         "zh-TW" => {
-            prompt.push_str("規則：\n");
+            prompt.push_str("語言規則：\n");
             prompt.push_str("- 標題前綴使用英文（feat:, fix:, refactor:, docs:, test:, chore:, perf:, ci:）\n");
-            prompt.push_str("- 標題描述使用繁體中文\n");
-            prompt.push_str("- 只輸出 commit message，不要加任何說明或 markdown 格式\n");
+            prompt.push_str("- 標題描述與內文使用繁體中文\n");
         }
         "en" => {
-            prompt.push_str("Rules:\n");
+            prompt.push_str("Language rules:\n");
             prompt.push_str("- Use conventional commit format (feat:, fix:, refactor:, etc.)\n");
             prompt.push_str("- Write in English\n");
-            prompt.push_str("- Output only the commit message, no explanations or markdown\n");
         }
         _ => {
             // auto: follow recent commit style
-            prompt.push_str("Rules:\n");
+            prompt.push_str("Language rules:\n");
             prompt.push_str("- Use conventional commit format (feat:, fix:, refactor:, etc.)\n");
             prompt.push_str("- Match the language style of the recent commits below\n");
-            prompt.push_str("- Output only the commit message, no explanations or markdown\n");
         }
     }
 

@@ -1,6 +1,92 @@
 use serde::{Deserialize, Serialize};
 
-use super::{build_system_prompt, http_client, AiError, AiProvider, CommitContext, ProviderConfig};
+use super::{build_system_prompt, http_client, AiError, AiProvider, CommitContext, ModelInfo, ProviderConfig};
+
+// ── List Models ─────────────────────────────────────
+
+#[derive(Deserialize)]
+struct OpenAiModelsResponse {
+    data: Option<Vec<OpenAiModelEntry>>,
+}
+
+#[derive(Deserialize)]
+struct OpenAiModelEntry {
+    id: String,
+}
+
+pub async fn list_openai_models(api_key: &str) -> Result<Vec<ModelInfo>, AiError> {
+    if api_key.is_empty() {
+        return Err(AiError::NoApiKey);
+    }
+
+    let response = http_client()
+        .get("https://api.openai.com/v1/models")
+        .bearer_auth(api_key)
+        .send()
+        .await?;
+
+    let status = response.status();
+    if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
+        return Err(AiError::Auth("API Key 無效，請確認設定".to_string()));
+    }
+
+    let body = response.text().await?;
+    let parsed: OpenAiModelsResponse =
+        serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+    let mut models: Vec<ModelInfo> = parsed
+        .data
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|m| {
+            let id = &m.id;
+            id.starts_with("gpt-") || id.starts_with("o1") || id.starts_with("o3") || id.starts_with("o4")
+        })
+        .map(|m| ModelInfo {
+            name: m.id.clone(),
+            id: m.id,
+        })
+        .collect();
+
+    models.sort_by(|a, b| a.id.cmp(&b.id));
+    Ok(models)
+}
+
+#[derive(Deserialize)]
+struct OllamaTagsResponse {
+    models: Option<Vec<OllamaModelEntry>>,
+}
+
+#[derive(Deserialize)]
+struct OllamaModelEntry {
+    name: Option<String>,
+    model: Option<String>,
+}
+
+pub async fn list_ollama_models(endpoint: &str) -> Result<Vec<ModelInfo>, AiError> {
+    let url = format!("{}/api/tags", endpoint.trim_end_matches('/'));
+
+    let response = http_client().get(&url).send().await?;
+
+    let body = response.text().await?;
+    let parsed: OllamaTagsResponse =
+        serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+    let models = parsed
+        .models
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|m| {
+            let id = m.model.or(m.name)?;
+            let name = id.clone();
+            Some(ModelInfo { id, name })
+        })
+        .collect();
+
+    Ok(models)
+}
+
+// ── Provider ────────────────────────────────────────
 
 pub struct OpenAiCompatibleProvider {
     display_name: String,

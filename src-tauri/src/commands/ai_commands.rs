@@ -6,6 +6,19 @@ use crate::git::{GitError, GitOperations};
 
 use std::path::PathBuf;
 
+// ── List AI Models ──────────────────────────────────
+
+#[tauri::command]
+pub async fn list_ai_models(
+    provider: String,
+    api_key: String,
+    ollama_endpoint: Option<String>,
+) -> Result<Vec<ai::ModelInfo>, String> {
+    ai::list_models(&provider, &api_key, ollama_endpoint.as_deref())
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn generate_commit_message(
     state: State<'_, GitState>,

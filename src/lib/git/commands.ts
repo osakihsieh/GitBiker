@@ -327,6 +327,23 @@ export interface GenerateCommitMessageParams {
   ollamaEndpoint?: string;
 }
 
+export interface AiModelInfo {
+  id: string;
+  name: string;
+}
+
+export async function listAiModels(
+  provider: string,
+  apiKey: string,
+  ollamaEndpoint?: string,
+): Promise<AiModelInfo[]> {
+  return invoke('list_ai_models', {
+    provider,
+    apiKey,
+    ollamaEndpoint: ollamaEndpoint ?? null,
+  });
+}
+
 export async function generateCommitMessage(params: GenerateCommitMessageParams): Promise<string> {
   return invoke('generate_commit_message', {
     path: params.path,

@@ -1,6 +1,67 @@
 use serde::{Deserialize, Serialize};
 
-use super::{build_system_prompt, http_client, AiError, AiProvider, CommitContext, ProviderConfig};
+use super::{build_system_prompt, http_client, AiError, AiProvider, CommitContext, ModelInfo, ProviderConfig};
+
+// ── List Models ─────────────────────────────────────
+
+#[derive(Deserialize)]
+struct GeminiModelsResponse {
+    models: Option<Vec<GeminiModelEntry>>,
+}
+
+#[derive(Deserialize)]
+struct GeminiModelEntry {
+    name: Option<String>,
+    #[serde(rename = "displayName")]
+    display_name: Option<String>,
+    #[serde(rename = "supportedGenerationMethods")]
+    supported_generation_methods: Option<Vec<String>>,
+}
+
+pub async fn list_models(api_key: &str) -> Result<Vec<ModelInfo>, AiError> {
+    if api_key.is_empty() {
+        return Err(AiError::NoApiKey);
+    }
+
+    let url = format!(
+        "https://generativelanguage.googleapis.com/v1beta/models?key={}",
+        api_key
+    );
+
+    let response = http_client().get(&url).send().await?;
+
+    let status = response.status();
+    if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
+        return Err(AiError::Auth("API Key 無效，請確認設定".to_string()));
+    }
+
+    let body = response.text().await?;
+    let parsed: GeminiModelsResponse =
+        serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+    let models = parsed
+        .models
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|m| {
+            m.supported_generation_methods
+                .as_ref()
+                .map(|methods| methods.iter().any(|m| m == "generateContent"))
+                .unwrap_or(false)
+        })
+        .filter_map(|m| {
+            let full_name = m.name?;
+            // "models/gemini-2.0-flash" → "gemini-2.0-flash"
+            let id = full_name.strip_prefix("models/").unwrap_or(&full_name).to_string();
+            let name = m.display_name.unwrap_or_else(|| id.clone());
+            Some(ModelInfo { id, name })
+        })
+        .collect();
+
+    Ok(models)
+}
+
+// ── Provider ────────────────────────────────────────
 
 pub struct GeminiProvider {
     api_key: String,

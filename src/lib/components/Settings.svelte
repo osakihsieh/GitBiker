@@ -1,7 +1,7 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors } from '$lib/git/commands';
-  import type { EditorInfo } from '$lib/git/commands';
+  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, listAiModels } from '$lib/git/commands';
+  import type { EditorInfo, AiModelInfo } from '$lib/git/commands';
   import type { RemoteInfo } from '$lib/git/types';
 
   interface Props {
@@ -117,6 +117,41 @@
       app.addToast(String(e), 'error');
     }
   }
+
+  // AI model listing state
+  let aiModels = $state<AiModelInfo[]>([]);
+  let loadingModels = $state(false);
+  let modelsError = $state('');
+
+  async function fetchAiModels() {
+    modelsError = '';
+    loadingModels = true;
+    try {
+      aiModels = await listAiModels(
+        app.aiProvider,
+        app.aiApiKey,
+        app.aiProvider === 'ollama' ? app.aiOllamaEndpoint : undefined,
+      );
+    } catch (e: unknown) {
+      aiModels = [];
+      modelsError = String(e);
+    } finally {
+      loadingModels = false;
+    }
+  }
+
+  // Fetch models when provider, API key, or Ollama endpoint changes
+  $effect(() => {
+    const _provider = app.aiProvider;
+    const _key = app.aiApiKey;
+    const _endpoint = app.aiOllamaEndpoint;
+    // Only fetch when we have the required credential
+    if (_provider === 'ollama' || _key) {
+      fetchAiModels();
+    } else {
+      aiModels = [];
+    }
+  });
 
   // Load editors on mount
   $effect(() => {
@@ -298,6 +333,57 @@
         </select>
       </div>
 
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">模型</span>
+          <span class="setting-desc">
+            {#if loadingModels}
+              載入模型列表中...
+            {:else if modelsError}
+              {app.aiProvider === 'ollama' ? '無法連接 Ollama' : '請先填入 API Key'}
+            {:else if aiModels.length > 0}
+              共 {aiModels.length} 個可用模型
+            {:else}
+              {app.aiProvider === 'ollama' ? '請確認 Ollama 服務已啟動' : '請先填入 API Key 以載入模型'}
+            {/if}
+          </span>
+        </div>
+        <div class="model-select-row">
+          <select
+            class="editor-select"
+            value={app.aiModel}
+            disabled={loadingModels}
+            onchange={(e) => {
+              app.aiModel = e.currentTarget.value;
+              app.saveAiSettings();
+            }}
+          >
+            {#if app.aiProvider === 'gemini'}
+              <option value="">gemini-2.0-flash（預設）</option>
+            {:else if app.aiProvider === 'openai'}
+              <option value="">gpt-4o-mini（預設）</option>
+            {:else}
+              <option value="">llama3（預設）</option>
+            {/if}
+            {#each aiModels as model}
+              <option value={model.id}>{model.name}</option>
+            {/each}
+          </select>
+          <button
+            class="refresh-btn"
+            title="重新載入模型列表"
+            disabled={loadingModels}
+            onclick={fetchAiModels}
+          >
+            {#if loadingModels}
+              ⟳
+            {:else}
+              ↻
+            {/if}
+          </button>
+        </div>
+      </div>
+
       {#if app.aiProvider !== 'ollama'}
         <div class="setting-row">
           <div class="setting-info">
@@ -337,31 +423,6 @@
           />
         </div>
       {/if}
-
-      <div class="setting-row">
-        <div class="setting-info">
-          <span class="setting-label">模型</span>
-          <span class="setting-desc">
-            {#if app.aiProvider === 'gemini'}
-              預設: gemini-2.0-flash
-            {:else if app.aiProvider === 'openai'}
-              預設: gpt-4o-mini
-            {:else}
-              預設: llama3
-            {/if}
-          </span>
-        </div>
-        <input
-          type="text"
-          class="remote-input ai-model-input"
-          placeholder={app.aiProvider === 'gemini' ? 'gemini-2.0-flash' : app.aiProvider === 'openai' ? 'gpt-4o-mini' : 'llama3'}
-          value={app.aiModel}
-          onchange={(e) => {
-            app.aiModel = e.currentTarget.value;
-            app.saveAiSettings();
-          }}
-        />
-      </div>
 
       <div class="setting-row">
         <div class="setting-info">
@@ -759,6 +820,32 @@
   .ai-model-input {
     width: 160px;
     flex: none;
+  }
+  .model-select-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .refresh-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .refresh-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   .ai-prompt-textarea {
     width: 100%;

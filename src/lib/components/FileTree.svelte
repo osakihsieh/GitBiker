@@ -315,7 +315,7 @@
   <div class="commit-form">
     <textarea
       bind:value={commitMessage}
-      placeholder="Commit message (Ctrl+Enter to commit)"
+      placeholder={"標題：feat: 新增功能\n\n內文：說明改了什麼、為什麼改"}
       onkeydown={handleKeydown}
     ></textarea>
     <div class="commit-actions">
@@ -472,8 +472,8 @@
     font-size: var(--font-size-sm);
     padding: var(--space-sm);
     resize: vertical;
-    min-height: 60px;
-    max-height: 120px;
+    min-height: 90px;
+    max-height: 200px;
     outline: none;
   }
   .commit-form textarea:focus { border-color: var(--accent); }

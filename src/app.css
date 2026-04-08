@@ -5,31 +5,31 @@
 
 /* gitbiker Design Tokens */
 :root {
-  /* 背景 */
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16162a;
-  --bg-surface: #232340;
-  --bg-hover: #2a2a4a;
+  /* 背景 — Monokai Pro */
+  --bg-primary: #2d2a2e;
+  --bg-secondary: #221f22;
+  --bg-surface: #403e41;
+  --bg-hover: #4a474b;
 
   /* 文字 */
-  --text-primary: #e0e0e0;
-  --text-secondary: #888;
-  --text-muted: #555;
+  --text-primary: #fcfcfa;
+  --text-secondary: #939293;
+  --text-muted: #727072;
 
-  /* 強調色 */
-  --accent: #4fc1ff;
-  --error: #ff6b6b;
-  --success: #51cf66;
-  --warning: #ffd43b;
+  /* 強調色 — Monokai Pro palette */
+  --accent: #78dce8;
+  --error: #ff6188;
+  --success: #a9dc76;
+  --warning: #ffd866;
 
   /* Diff */
-  --diff-add-bg: rgba(46, 160, 67, 0.44);
-  --diff-del-bg: rgba(248, 81, 73, 0.44);
-  --diff-add-text: #7ee787;
-  --diff-del-text: #ffa198;
+  --diff-add-bg: rgba(169, 220, 118, 0.30);
+  --diff-del-bg: rgba(255, 97, 136, 0.30);
+  --diff-add-text: #a9dc76;
+  --diff-del-text: #ff6188;
 
   /* 邊框 */
-  --border: #2d2d50;
+  --border: #403e41;
 
   /* 字體 */
   --font-ui: system-ui, -apple-system, sans-serif;
@@ -50,22 +50,22 @@
 }
 
 [data-theme="dark"] {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16162a;
-  --bg-surface: #232340;
-  --bg-hover: #2a2a4a;
-  --text-primary: #e0e0e0;
-  --text-secondary: #888;
-  --text-muted: #555;
-  --accent: #4fc1ff;
-  --error: #ff6b6b;
-  --success: #51cf66;
-  --warning: #ffd43b;
-  --diff-add-bg: rgba(46, 160, 67, 0.44);
-  --diff-del-bg: rgba(248, 81, 73, 0.44);
-  --diff-add-text: #7ee787;
-  --diff-del-text: #ffa198;
-  --border: #2d2d50;
+  --bg-primary: #2d2a2e;
+  --bg-secondary: #221f22;
+  --bg-surface: #403e41;
+  --bg-hover: #4a474b;
+  --text-primary: #fcfcfa;
+  --text-secondary: #939293;
+  --text-muted: #727072;
+  --accent: #78dce8;
+  --error: #ff6188;
+  --success: #a9dc76;
+  --warning: #ffd866;
+  --diff-add-bg: rgba(169, 220, 118, 0.30);
+  --diff-del-bg: rgba(255, 97, 136, 0.30);
+  --diff-add-text: #a9dc76;
+  --diff-del-text: #ff6188;
+  --border: #403e41;
 }
 
 [data-theme="light"] {
