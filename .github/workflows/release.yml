@@ -21,7 +21,7 @@ jobs:
             rust-targets: 'aarch64-apple-darwin'
           - os: macos-latest
             target: macos-x86_64
-            args: '--target x86_64-apple-darwin'
+            args: '--target x86_64-apple-darwin --features vendored-openssl'
             rust-targets: 'x86_64-apple-darwin'
           - os: ubuntu-22.04
             target: linux
