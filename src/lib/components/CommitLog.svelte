@@ -32,9 +32,13 @@
     return base.filter((c) => c.author === authorFilter);
   });
 
-  // ── Commit Graph Layout ──
+  const hasWip = $derived(!searchResults && (app.stagedFiles.length + app.unstagedFiles.length) > 0);
 
-  const LANE_WIDTH = 14;
+  // ── Commit Graph ──
+
+  const LANE_WIDTH = 16;
+  const DOT_RADIUS = 5;
+  const LINE_WIDTH = 2;
   const LANE_COLORS = [
     'var(--accent)',
     '#e5c07b',
@@ -48,125 +52,216 @@
 
   interface GraphNode {
     lane: number;
-    /** Lines to draw: [fromLane, toLane] pairs for connections to next row */
-    lines: Array<{ fromLane: number; toLane: number; color: string }>;
-    /** Lanes that pass through this row without stopping */
-    passingLanes: Array<{ lane: number; color: string }>;
     color: string;
-    maxLane: number;
   }
 
+  /** Lane allocation: assign each commit to a lane */
   const graphLayout = $derived.by((): GraphNode[] => {
     const commits = displayCommits;
-    if (commits.length === 0) return [];
+    if (!commits || commits.length === 0) return [];
 
-    // Map commit ID -> index in displayCommits
-    const idToIdx = new Map<string, number>();
-    for (let i = 0; i < commits.length; i++) {
-      idToIdx.set(commits[i].id, i);
-    }
+    try {
+      const idMap = new Map<string, number>();
+      for (let i = 0; i < commits.length; i++) idMap.set(commits[i].id, i);
 
-    // activeLanes: tracks which lane each expected parent commit will appear on
-    // key = commit ID, value = lane number
-    const activeLanes = new Map<string, number>();
-    const laneOccupied: boolean[] = [];
-    const result: GraphNode[] = [];
+      const activeLanes = new Map<string, number>();
+      const laneOccupied: boolean[] = [];
+      const result: GraphNode[] = [];
 
-    function allocateLane(): number {
-      for (let i = 0; i < laneOccupied.length; i++) {
-        if (!laneOccupied[i]) {
-          laneOccupied[i] = true;
-          return i;
+      function allocateLane(): number {
+        for (let i = 0; i < laneOccupied.length; i++) {
+          if (!laneOccupied[i]) { laneOccupied[i] = true; return i; }
         }
-      }
-      laneOccupied.push(true);
-      return laneOccupied.length - 1;
-    }
-
-    function freeLane(lane: number): void {
-      if (lane >= 0 && lane < laneOccupied.length) {
-        laneOccupied[lane] = false;
-      }
-    }
-
-    for (let i = 0; i < commits.length; i++) {
-      const commit = commits[i];
-      let myLane: number;
-
-      // Check if this commit was expected on a lane
-      if (activeLanes.has(commit.id)) {
-        myLane = activeLanes.get(commit.id)!;
-        activeLanes.delete(commit.id);
-      } else {
-        myLane = allocateLane();
+        laneOccupied.push(true);
+        return laneOccupied.length - 1;
       }
 
-      const color = LANE_COLORS[myLane % LANE_COLORS.length];
-      const lines: GraphNode['lines'] = [];
-      const passingLanes: GraphNode['passingLanes'] = [];
+      function freeLane(lane: number): void {
+        if (lane >= 0 && lane < laneOccupied.length) laneOccupied[lane] = false;
+      }
 
-      // Process parents
-      const parents = commit.parents;
-      for (let p = 0; p < parents.length; p++) {
-        const parentId = parents[p];
-        const parentIdx = idToIdx.get(parentId);
+      for (let i = 0; i < commits.length; i++) {
+        const commit = commits[i];
+        let myLane: number;
 
-        // Only draw if parent is in our visible list
-        if (parentIdx === undefined) continue;
-
-        if (p === 0) {
-          // First parent — continue in same lane
-          if (!activeLanes.has(parentId)) {
-            activeLanes.set(parentId, myLane);
-            lines.push({ fromLane: myLane, toLane: myLane, color });
-          } else {
-            // Parent already expected on another lane — draw merge line
-            const targetLane = activeLanes.get(parentId)!;
-            lines.push({ fromLane: myLane, toLane: targetLane, color });
-            freeLane(myLane);
-          }
+        if (activeLanes.has(commit.id)) {
+          myLane = activeLanes.get(commit.id)!;
+          activeLanes.delete(commit.id);
         } else {
-          // Additional parents (merge) — allocate or find lane
-          if (!activeLanes.has(parentId)) {
-            const mergeLane = allocateLane();
-            activeLanes.set(parentId, mergeLane);
-            const mergeColor = LANE_COLORS[mergeLane % LANE_COLORS.length];
-            lines.push({ fromLane: myLane, toLane: mergeLane, color: mergeColor });
+          myLane = allocateLane();
+        }
+
+        const parents = commit.parents ?? [];
+        for (let p = 0; p < parents.length; p++) {
+          const parentId = parents[p];
+          if (!idMap.has(parentId)) continue;
+
+          if (p === 0) {
+            if (!activeLanes.has(parentId)) {
+              activeLanes.set(parentId, myLane);
+            } else {
+              freeLane(myLane);
+            }
           } else {
-            const targetLane = activeLanes.get(parentId)!;
-            const mergeColor = LANE_COLORS[targetLane % LANE_COLORS.length];
-            lines.push({ fromLane: myLane, toLane: targetLane, color: mergeColor });
+            if (!activeLanes.has(parentId)) {
+              const mergeLane = allocateLane();
+              activeLanes.set(parentId, mergeLane);
+            }
           }
         }
+
+        if (parents.length === 0) freeLane(myLane);
+
+        result.push({
+          lane: myLane,
+          color: LANE_COLORS[myLane % LANE_COLORS.length],
+        });
       }
 
-      // If no parents link back to this lane, free it
-      if (parents.length === 0) {
-        freeLane(myLane);
-      }
-
-      // Collect passing-through lanes (lanes occupied by other commits' ancestry)
-      for (const [, lane] of activeLanes) {
-        if (lane !== myLane) {
-          passingLanes.push({ lane, color: LANE_COLORS[lane % LANE_COLORS.length] });
-        }
-      }
-
-      const maxLane = Math.max(myLane, ...passingLanes.map((p) => p.lane), ...lines.map((l) => Math.max(l.fromLane, l.toLane)));
-
-      result.push({ lane: myLane, lines, passingLanes, color, maxLane });
+      return result;
+    } catch {
+      return commits.map(() => ({ lane: 0, color: LANE_COLORS[0] }));
     }
-
-    return result;
   });
 
   const graphWidth = $derived(
-    Math.max(20, (Math.max(0, ...graphLayout.map((g) => g.maxLane)) + 1) * LANE_WIDTH + 8)
+    Math.max(28, (Math.max(0, ...graphLayout.map((g) => g.lane)) + 1) * LANE_WIDTH + 12)
   );
 
   function laneX(lane: number): number {
     return lane * LANE_WIDTH + LANE_WIDTH / 2 + 4;
   }
+
+  // ── DOM measurement for single-SVG overlay ──
+
+  let listInnerEl: HTMLElement | undefined = $state();
+  let rowMids: number[] = $state([]);
+  let totalGraphHeight: number = $state(0);
+
+  function measureRows() {
+    const el = listInnerEl;
+    if (!el) return;
+    const items = el.querySelectorAll('.commit-item');
+    if (items.length === 0) return;
+    const mids: number[] = [];
+    let maxBottom = 0;
+    for (const item of items) {
+      const htmlEl = item as HTMLElement;
+      mids.push(htmlEl.offsetTop + htmlEl.offsetHeight / 2);
+      const bottom = htmlEl.offsetTop + htmlEl.offsetHeight;
+      if (bottom > maxBottom) maxBottom = bottom;
+    }
+    rowMids = mids;
+    totalGraphHeight = maxBottom;
+  }
+
+  // Measure after DOM updates when commits change
+  $effect(() => {
+    const el = listInnerEl;
+    const commitCount = displayCommits.length;
+    const wip = hasWip;
+    if (!el || commitCount === 0) {
+      rowMids = [];
+      totalGraphHeight = 0;
+      return;
+    }
+    const tid = setTimeout(() => {
+      try { measureRows(); } catch { /* safe */ }
+    }, 50);
+    return () => clearTimeout(tid);
+  });
+
+  // ResizeObserver for dynamic row height changes
+  $effect(() => {
+    const el = listInnerEl;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      try { measureRows(); } catch { /* safe */ }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  });
+
+  // ── SVG path computation ──
+
+  interface SvgPath { d: string; color: string; dashed?: boolean }
+  interface SvgDot { cx: number; cy: number; color: string; hollow?: boolean }
+
+  const graphSvgData = $derived.by((): { paths: SvgPath[]; dots: SvgDot[] } => {
+    if (rowMids.length === 0 || graphLayout.length === 0) return { paths: [], dots: [] };
+
+    try {
+    const paths: SvgPath[] = [];
+    const dots: SvgDot[] = [];
+    const commits = displayCommits;
+    const wipOffset = hasWip ? 1 : 0;
+
+    // Build id→index map
+    const idToIdx = new Map<string, number>();
+    for (let i = 0; i < commits.length; i++) idToIdx.set(commits[i].id, i);
+
+    // WIP row
+    if (hasWip && rowMids.length > 0) {
+      const wipLane = graphLayout[0]?.lane ?? 0;
+      const wipColor = graphLayout[0]?.color ?? LANE_COLORS[0];
+      const wipY = rowMids[0];
+      dots.push({ cx: laneX(wipLane), cy: wipY, color: wipColor, hollow: true });
+
+      if (rowMids.length > wipOffset) {
+        const firstY = rowMids[wipOffset];
+        paths.push({
+          d: `M ${laneX(wipLane)} ${wipY + DOT_RADIUS + 2} L ${laneX(wipLane)} ${firstY}`,
+          color: wipColor,
+          dashed: true,
+        });
+      }
+    }
+
+    // Commit dots and parent connections
+    for (let i = 0; i < commits.length; i++) {
+      const graph = graphLayout[i];
+      if (!graph) continue;
+      const posIdx = i + wipOffset;
+      if (posIdx >= rowMids.length) continue;
+
+      const cx = laneX(graph.lane);
+      const cy = rowMids[posIdx];
+      dots.push({ cx, cy, color: graph.color });
+
+      const parents = commits[i].parents ?? [];
+      for (let p = 0; p < parents.length; p++) {
+        const parentId = parents[p];
+        const parentIdx = idToIdx.get(parentId);
+        if (parentIdx === undefined) continue;
+        const parentPosIdx = parentIdx + wipOffset;
+        if (parentPosIdx >= rowMids.length) continue;
+        const parentGraph = graphLayout[parentIdx];
+        if (!parentGraph) continue;
+
+        const toX = laneX(parentGraph.lane);
+        const toY = rowMids[parentPosIdx];
+        // First parent: use commit's color. Other parents: use parent lane's color.
+        const color = p === 0 ? graph.color : parentGraph.color;
+
+        if (cx === toX) {
+          // Same lane: straight line
+          paths.push({ d: `M ${cx} ${cy} L ${toX} ${toY}`, color });
+        } else {
+          // Different lane: smooth cubic bezier
+          const dy = toY - cy;
+          paths.push({
+            d: `M ${cx} ${cy} C ${cx} ${cy + dy * 0.4}, ${toX} ${toY - dy * 0.4}, ${toX} ${toY}`,
+            color,
+          });
+        }
+      }
+    }
+
+    return { paths, dots };
+    } catch {
+      return { paths: [], dots: [] };
+    }
+  });
 
   // ── Utilities ──
 
@@ -199,7 +294,6 @@
   async function executeSearch() {
     if (!app.repoPath || !searchQuery.trim()) return;
     if (searchType === 'branch') {
-      // Branch search is client-side — no need to call git
       searchResults = null;
       return;
     }
@@ -434,115 +528,91 @@
         <div>No commits matching "{searchQuery}"</div>
       </div>
     {:else}
-      <!-- WIP row -->
-      {@const wipCount = app.stagedFiles.length + app.unstagedFiles.length}
-      {#if wipCount > 0 && !searchResults}
-        <button
-          class="commit-item wip-item"
-          class:selected={!app.selectedCommit && app.viewMode === 'worktree'}
-          onclick={() => app.backToWorktree()}
-        >
-          <div class="commit-graph" style:width="{graphWidth}px">
-            <svg class="graph-svg" width={graphWidth} height="100%">
-              {#if graphLayout[0]}
-                <line
-                  x1={laneX(graphLayout[0].lane)} y1="50%"
-                  x2={laneX(graphLayout[0].lane)} y2="100%"
-                  stroke={graphLayout[0].color} stroke-width="2" opacity="0.4"
-                />
+      <div class="commit-list-inner" bind:this={listInnerEl}>
+        <!-- Single overlay SVG for entire graph -->
+        {#if totalGraphHeight > 0}
+          <svg
+            class="graph-overlay"
+            width={graphWidth}
+            height={totalGraphHeight}
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {#each graphSvgData.paths as p}
+              <path
+                d={p.d}
+                fill="none"
+                stroke={p.color}
+                stroke-width={LINE_WIDTH}
+                stroke-dasharray={p.dashed ? '4 3' : 'none'}
+              />
+            {/each}
+            {#each graphSvgData.dots as d}
+              {#if d.hollow}
                 <circle
-                  cx={laneX(graphLayout[0].lane)} cy="50%"
-                  r="4" fill="none" stroke={graphLayout[0].color} stroke-width="2"
+                  cx={d.cx} cy={d.cy} r={DOT_RADIUS}
+                  fill="var(--bg-primary)" stroke={d.color} stroke-width={LINE_WIDTH}
                 />
+              {:else}
+                <circle cx={d.cx} cy={d.cy} r={DOT_RADIUS} fill={d.color} />
               {/if}
-            </svg>
-          </div>
-          <div class="commit-info">
-            <div class="wip-badge">// WIP</div>
-            <div class="commit-msg">{wipCount} file{wipCount !== 1 ? 's' : ''} changed</div>
-          </div>
-        </button>
-      {/if}
-      {#each displayCommits as commit, i (commit.id)}
-        {@const graph = graphLayout[i]}
-        <button
-          class="commit-item"
-          class:selected={app.selectedCommit?.id === commit.id}
-          onclick={() => handleCommitClick(commit)}
-          oncontextmenu={(e) => handleContextMenu(e, commit)}
-        >
-          <div class="commit-graph" style:width="{graphWidth}px">
-            <svg class="graph-svg" width={graphWidth} height="100%">
-              <!-- Passing-through lanes (vertical lines) -->
-              {#if graph}
-                {#each graph.passingLanes as pl}
-                  <line
-                    x1={laneX(pl.lane)} y1="0"
-                    x2={laneX(pl.lane)} y2="100%"
-                    stroke={pl.color} stroke-width="2" opacity="0.4"
-                  />
-                {/each}
-                <!-- Connection lines to next row -->
-                {#each graph.lines as line}
-                  {#if line.fromLane === line.toLane}
-                    <!-- Straight line down -->
-                    <line
-                      x1={laneX(line.fromLane)} y1="50%"
-                      x2={laneX(line.toLane)} y2="100%"
-                      stroke={line.color} stroke-width="2" opacity="0.4"
-                    />
-                  {:else}
-                    <!-- Curved merge/branch line -->
-                    <path
-                      d="M {laneX(line.fromLane)} 50% Q {laneX(line.fromLane)} 100%, {laneX(line.toLane)} 100%"
-                      fill="none" stroke={line.color} stroke-width="2" opacity="0.4"
-                    />
-                  {/if}
-                {/each}
-                <!-- Vertical line from top to dot (if this commit continues a lane) -->
-                <line
-                  x1={laneX(graph.lane)} y1="0"
-                  x2={laneX(graph.lane)} y2="50%"
-                  stroke={graph.color} stroke-width="2" opacity="0.4"
-                />
-                <!-- Commit dot -->
-                <circle
-                  cx={laneX(graph.lane)} cy="50%"
-                  r="4" fill={graph.color}
-                />
-              {/if}
-            </svg>
-          </div>
-          <div class="commit-info">
-            {#if commit.refs && commit.refs.length > 0}
-              <div class="commit-tags">
-                {#each commit.refs.slice(0, 3) as ref}
-                  <span
-                    class="ref-tag"
-                    class:ref-local={ref.kind === 'Local'}
-                    class:ref-remote={ref.kind === 'Remote'}
-                    class:ref-tag-badge={ref.kind === 'Tag'}
-                  >{ref.name}</span>
-                {/each}
-                {#if commit.refs.length > 3}
-                  <span class="ref-overflow" title={commit.refs.slice(3).map(r => r.name).join(', ')}>+{commit.refs.length - 3}</span>
-                {/if}
-              </div>
-            {/if}
-            <div class="commit-msg" title={commit.message}>{firstLine(commit.message)}</div>
-            <div class="commit-meta">
-              <span class="commit-hash">{shortHash(commit.id)}</span>
-              <span>{commit.author}</span>
-              <span>{timeAgo(commit.timestamp)}</span>
+            {/each}
+          </svg>
+        {/if}
+
+        <!-- WIP row -->
+        {#if hasWip}
+          <button
+            class="commit-item wip-item"
+            class:selected={!app.selectedCommit && app.viewMode === 'worktree'}
+            onclick={() => app.backToWorktree()}
+          >
+            <div class="graph-spacer" style:width="{graphWidth}px"></div>
+            <div class="commit-info">
+              <div class="wip-badge">// WIP</div>
+              <div class="commit-msg">{app.stagedFiles.length + app.unstagedFiles.length} file{app.stagedFiles.length + app.unstagedFiles.length !== 1 ? 's' : ''} changed</div>
             </div>
+          </button>
+        {/if}
+
+        {#each displayCommits as commit, i (commit.id)}
+          <button
+            class="commit-item"
+            class:selected={app.selectedCommit?.id === commit.id}
+            onclick={() => handleCommitClick(commit)}
+            oncontextmenu={(e) => handleContextMenu(e, commit)}
+          >
+            <div class="graph-spacer" style:width="{graphWidth}px"></div>
+            <div class="commit-info">
+              {#if commit.refs && commit.refs.length > 0}
+                <div class="commit-tags">
+                  {#each commit.refs.slice(0, 3) as ref}
+                    <span
+                      class="ref-tag"
+                      class:ref-local={ref.kind === 'Local'}
+                      class:ref-remote={ref.kind === 'Remote'}
+                      class:ref-tag-badge={ref.kind === 'Tag'}
+                    >{ref.name}</span>
+                  {/each}
+                  {#if commit.refs.length > 3}
+                    <span class="ref-overflow" title={commit.refs.slice(3).map(r => r.name).join(', ')}>+{commit.refs.length - 3}</span>
+                  {/if}
+                </div>
+              {/if}
+              <div class="commit-msg" title={commit.message}>{firstLine(commit.message)}</div>
+              <div class="commit-meta">
+                <span class="commit-hash">{shortHash(commit.id)}</span>
+                <span>{commit.author}</span>
+                <span>{timeAgo(commit.timestamp)}</span>
+              </div>
+            </div>
+          </button>
+        {:else}
+          <div class="empty-state">
+            <div class="empty-icon">◯</div>
+            <div>No commits yet</div>
           </div>
-        </button>
-      {:else}
-        <div class="empty-state">
-          <div class="empty-icon">◯</div>
-          <div>No commits yet</div>
-        </div>
-      {/each}
+        {/each}
+      </div>
     {/if}
   </div>
 </div>
@@ -652,8 +722,22 @@
     overflow-y: auto;
     flex: 1;
   }
+  .commit-list-inner {
+    position: relative;
+  }
+  .graph-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .graph-spacer {
+    flex-shrink: 0;
+  }
   .commit-item {
     display: flex;
+    align-items: center;
     gap: 0;
     padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
     border-bottom: 1px solid var(--border);
@@ -666,7 +750,7 @@
     cursor: pointer;
     color: var(--text-primary);
     font-family: var(--font-ui);
-    min-height: 48px;
+    min-height: 40px;
   }
   .commit-item:hover { background: var(--bg-hover); }
   .commit-item.selected {
@@ -674,21 +758,13 @@
     border-left-color: var(--accent);
   }
 
-  /* Graph column */
-  .commit-graph {
+  .commit-info {
+    flex: 1;
+    min-width: 0;
+    padding-left: var(--space-xs);
     position: relative;
-    flex-shrink: 0;
-    min-width: 20px;
+    z-index: 2;
   }
-  .graph-svg {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-  }
-
-  .commit-info { flex: 1; min-width: 0; padding-left: var(--space-xs); }
 
   /* Ref Tags */
   .commit-tags {
@@ -755,7 +831,6 @@
   /* WIP row */
   .wip-item {
     background: var(--bg-surface);
-    border-bottom: 2px solid var(--accent);
   }
   .wip-item:hover { background: var(--bg-hover); }
   .wip-badge {

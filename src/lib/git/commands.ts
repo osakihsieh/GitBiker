@@ -16,6 +16,8 @@ import type {
   MergeDryRunResult,
   MergeCompleteResult,
   ResolveChoice,
+  LogFilter,
+  BranchCompareResult,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
