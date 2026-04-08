@@ -337,6 +337,7 @@ export interface GenerateCommitMessageParams {
   language: string;
   customPrompt?: string;
   ollamaEndpoint?: string;
+  commitType?: string;
 }
 
 export interface AiModelInfo {
@@ -365,6 +366,7 @@ export async function generateCommitMessage(params: GenerateCommitMessageParams)
     language: params.language,
     customPrompt: params.customPrompt ?? null,
     ollamaEndpoint: params.ollamaEndpoint ?? null,
+    commitType: params.commitType ?? null,
   });
 }
 

@@ -29,6 +29,7 @@ pub async fn generate_commit_message(
     language: String,
     custom_prompt: Option<String>,
     ollama_endpoint: Option<String>,
+    commit_type: Option<String>,
 ) -> Result<String, GitError> {
     let repo_path = PathBuf::from(&path);
 
@@ -59,6 +60,7 @@ pub async fn generate_commit_message(
         recent_messages,
         language,
         custom_prompt,
+        commit_type,
     };
 
     // 5. Create provider and generate (async HTTP)

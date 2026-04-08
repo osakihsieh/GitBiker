@@ -8,6 +8,10 @@
   let commitBody = $state('');
   let committing = $state(false);
   let generating = $state(false);
+  let commitType = $state('auto');
+
+  const COMMIT_TYPES = ['auto', 'feat', 'fix', 'refactor', 'docs', 'test', 'chore', 'perf', 'ci'] as const;
+  const TYPE_PREFIX_RE = /^(feat|fix|refactor|docs|test|chore|perf|ci):\s*/;
   let contextMenu = $state<{ file: FileStatus; x: number; y: number } | null>(null);
 
   function statusLabel(kind: FileStatus['kind']): string {
@@ -79,6 +83,7 @@
       app.addToast(`Committed ${hash.substring(0, 7)}`, 'success');
       commitTitle = '';
       commitBody = '';
+      commitType = 'auto';
       await app.refreshAll();
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
@@ -106,6 +111,7 @@
         language: app.aiLanguage,
         customPrompt: app.aiCustomPrompt || undefined,
         ollamaEndpoint: app.aiProvider === 'ollama' ? app.aiOllamaEndpoint : undefined,
+        commitType: commitType !== 'auto' ? commitType : undefined,
       });
       // Split AI response into title + body at first blank line
       const blankIdx = message.indexOf('\n\n');
@@ -122,6 +128,21 @@
     } finally {
       generating = false;
     }
+  }
+
+  function handleCommitTypeChange(newType: string) {
+    commitType = newType;
+
+    // If there's already a title, swap the prefix
+    if (commitTitle.trim() && newType !== 'auto') {
+      const match = commitTitle.match(TYPE_PREFIX_RE);
+      if (match) {
+        commitTitle = commitTitle.replace(TYPE_PREFIX_RE, `${newType}: `);
+      } else {
+        commitTitle = `${newType}: ${commitTitle}`;
+      }
+    }
+    // If switching back to auto and title has a prefix, leave it as-is
   }
 
   function selectFile(path: string) {
@@ -330,13 +351,24 @@
 
   <!-- Commit Form -->
   <div class="commit-form">
-    <input
-      type="text"
-      class="commit-title-input"
-      bind:value={commitTitle}
-      placeholder="feat: 簡述變更"
-      onkeydown={handleKeydown}
-    />
+    <div class="commit-title-row">
+      <select
+        class="commit-type-select"
+        value={commitType}
+        onchange={(e) => handleCommitTypeChange((e.target as HTMLSelectElement).value)}
+      >
+        {#each COMMIT_TYPES as t}
+          <option value={t}>{t === 'auto' ? 'auto' : `${t}:`}</option>
+        {/each}
+      </select>
+      <input
+        type="text"
+        class="commit-title-input"
+        bind:value={commitTitle}
+        placeholder="簡述變更"
+        onkeydown={handleKeydown}
+      />
+    </div>
     <textarea
       class="commit-body-input"
       bind:value={commitBody}
@@ -487,11 +519,30 @@
     padding: var(--space-sm) var(--space-md);
     flex-shrink: 0;
   }
+  .commit-title-row {
+    display: flex;
+    align-items: stretch;
+  }
+  .commit-type-select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm) 0 0 0;
+    border-right: none;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    padding: var(--space-xs) var(--space-xs);
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    border-bottom: none;
+  }
+  .commit-type-select:focus { border-color: var(--accent); }
   .commit-title-input {
     width: 100%;
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    border-radius: 0 var(--radius-sm) 0 0;
     color: var(--text-primary);
     font-family: var(--font-ui);
     font-size: var(--font-size-sm);
@@ -501,7 +552,7 @@
     border-bottom: none;
   }
   .commit-title-input:focus { border-color: var(--accent); }
-  .commit-title-input:focus + .commit-body-input { border-color: var(--accent); }
+  .commit-title-row:focus-within + .commit-body-input { border-color: var(--accent); }
   .commit-title-input::placeholder { color: var(--text-muted); font-weight: 400; }
   .commit-body-input {
     width: 100%;

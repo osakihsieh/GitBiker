@@ -84,6 +84,7 @@ pub struct CommitContext {
     pub recent_messages: Vec<String>,
     pub language: String,
     pub custom_prompt: Option<String>,
+    pub commit_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -158,6 +159,20 @@ pub fn build_system_prompt(context: &CommitContext) -> String {
     prompt.push_str("- Line 2: blank line\n");
     prompt.push_str("- Line 3+: body — explain WHAT changed and WHY, use bullet points for multiple changes\n");
     prompt.push_str("- Output only the commit message, no explanations or markdown fences\n\n");
+
+    // Commit type instruction
+    match context.commit_type.as_deref() {
+        Some("auto") | None => {
+            prompt.push_str("Commit type selection:\n");
+            prompt.push_str("- Analyze the staged diff carefully to determine the correct commit type\n");
+            prompt.push_str("- Do NOT default to 'feat:'. Use 'fix:' for bug fixes, 'refactor:' for code restructuring, 'docs:' for documentation changes, 'test:' for test changes, 'chore:' for maintenance, 'perf:' for performance improvements, 'ci:' for CI changes\n");
+            prompt.push_str("- Only use 'feat:' for genuinely new features or capabilities\n\n");
+        }
+        Some(commit_type) => {
+            prompt.push_str(&format!("Commit type: You MUST use the prefix: {}:\n", commit_type));
+            prompt.push_str(&format!("- Do not use any other prefix. Generate a description that matches the '{}' intent.\n\n", commit_type));
+        }
+    }
 
     // Language instruction
     match context.language.as_str() {
@@ -329,6 +344,7 @@ mod tests {
             recent_messages: vec!["feat: 新增登入功能".to_string(), "fix: 修正 bug".to_string()],
             language: "zh-TW".to_string(),
             custom_prompt: Some("保持簡潔".to_string()),
+            commit_type: None,
         };
         let prompt = build_system_prompt(&ctx);
         assert!(prompt.contains("繁體中文"));
@@ -344,6 +360,7 @@ mod tests {
             recent_messages: vec![],
             language: "en".to_string(),
             custom_prompt: None,
+            commit_type: None,
         };
         let prompt = build_system_prompt(&ctx);
         assert!(prompt.contains("English"));
@@ -358,10 +375,56 @@ mod tests {
             recent_messages: vec!["refactor: split module".to_string()],
             language: "auto".to_string(),
             custom_prompt: None,
+            commit_type: None,
         };
         let prompt = build_system_prompt(&ctx);
         assert!(prompt.contains("Match the language style"));
         assert!(prompt.contains("refactor: split module"));
+    }
+
+    #[test]
+    fn build_prompt_commit_type_auto() {
+        let ctx = CommitContext {
+            diff_summary: String::new(),
+            staged_files: vec![],
+            recent_messages: vec![],
+            language: "en".to_string(),
+            custom_prompt: None,
+            commit_type: Some("auto".to_string()),
+        };
+        let prompt = build_system_prompt(&ctx);
+        assert!(prompt.contains("Do NOT default to 'feat:'"));
+        assert!(!prompt.contains("MUST use the prefix"));
+    }
+
+    #[test]
+    fn build_prompt_commit_type_fix() {
+        let ctx = CommitContext {
+            diff_summary: String::new(),
+            staged_files: vec![],
+            recent_messages: vec![],
+            language: "en".to_string(),
+            custom_prompt: None,
+            commit_type: Some("fix".to_string()),
+        };
+        let prompt = build_system_prompt(&ctx);
+        assert!(prompt.contains("MUST use the prefix: fix:"));
+        assert!(!prompt.contains("Do NOT default to 'feat:'"));
+    }
+
+    #[test]
+    fn build_prompt_commit_type_none() {
+        let ctx = CommitContext {
+            diff_summary: String::new(),
+            staged_files: vec![],
+            recent_messages: vec![],
+            language: "en".to_string(),
+            custom_prompt: None,
+            commit_type: None,
+        };
+        let prompt = build_system_prompt(&ctx);
+        assert!(prompt.contains("Do NOT default to 'feat:'"));
+        assert!(!prompt.contains("MUST use the prefix"));
     }
 
     #[test]
