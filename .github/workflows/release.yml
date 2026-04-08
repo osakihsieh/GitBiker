@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows
+            args: ''
+            rust-targets: ''
+          - os: macos-latest
+            target: macos-aarch64
+            args: '--target aarch64-apple-darwin'
+            rust-targets: 'aarch64-apple-darwin'
+          - os: macos-latest
+            target: macos-x86_64
+            args: '--target x86_64-apple-darwin'
+            rust-targets: 'x86_64-apple-darwin'
+          - os: ubuntu-22.04
+            target: linux
+            args: ''
+            rust-targets: ''
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets }}
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build and release Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'GitBiker ${{ github.ref_name }}'
+          releaseBody: |
+            GitBiker ${{ github.ref_name }} 發佈
+
+            ## 安裝檔案
+            - **Windows**: `.msi` 或 `.exe` (NSIS 安裝程式)
+            - **macOS (Apple Silicon)**: `.dmg` (aarch64)
+            - **macOS (Intel)**: `.dmg` (x86_64)
+            - **Linux (Ubuntu/Debian)**: `.deb`
+            - **Linux (Fedora/RHEL)**: `.rpm`
+            - **Linux (通用)**: `.AppImage`
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
