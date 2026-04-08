@@ -2,6 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
   import { invoke } from '@tauri-apps/api/core';
+  import { detectShells } from '$lib/git/commands';
+  import type { ShellInfo } from '$lib/git/commands';
   import { Terminal } from '@xterm/xterm';
   import { FitAddon } from '@xterm/addon-fit';
   import '@xterm/xterm/css/xterm.css';
@@ -18,11 +20,46 @@
   let fitAddon: FitAddon | null = null;
   let inputBuffer = '';
   let mounted = false;
+  let availableShells = $state<ShellInfo[]>([]);
+  let panelEl = $state<HTMLDivElement | null>(null);
+  let panelHeight = $state(200);
+  let dragging = $state(false);
 
   interface ShellOutput {
     stdout: string;
     stderr: string;
     exit_code: number;
+  }
+
+  function onResizeStart(e: MouseEvent) {
+    e.preventDefault();
+    dragging = true;
+    const startY = e.clientY;
+    const startHeight = panelHeight;
+
+    function onMouseMove(ev: MouseEvent) {
+      // 往上拖 = clientY 變小 = 高度增加
+      const delta = startY - ev.clientY;
+      panelHeight = Math.max(80, Math.min(startHeight + delta, window.innerHeight * 0.8));
+      fitAddon?.fit();
+    }
+
+    function onMouseUp() {
+      dragging = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
+  async function loadShells() {
+    try {
+      availableShells = await detectShells();
+    } catch {
+      availableShells = [];
+    }
   }
 
   function initTerminal() {
@@ -116,14 +153,15 @@
       const result: ShellOutput = await invoke('run_shell_command', {
         path: app.repoPath,
         command: cmd,
+        shell: app.terminalShell ?? null,
       });
 
       if (result.stdout) {
-        terminal?.writeln(result.stdout.trimEnd());
+        terminal?.write(result.stdout.trimEnd().replace(/\n/g, '\r\n') + '\r\n');
       }
       if (result.stderr) {
         const color = result.exit_code === 0 ? '33' : '31'; // yellow for warnings, red for errors
-        terminal?.writeln(`\x1b[${color}m${result.stderr.trimEnd()}\x1b[0m`);
+        terminal?.write(`\x1b[${color}m${result.stderr.trimEnd().replace(/\n/g, '\r\n')}\x1b[0m\r\n`);
       }
 
       // Auto refresh git status after git commands
@@ -140,6 +178,7 @@
 
   $effect(() => {
     if (visible && terminalEl && !mounted) {
+      loadShells();
       // Wait for DOM to settle
       requestAnimationFrame(() => initTerminal());
     }
@@ -168,10 +207,28 @@
 </script>
 
 {#if visible}
-  <div class="terminal-panel">
+  <div class="terminal-panel" bind:this={panelEl} style="height: {panelHeight}px">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="resize-handle" onmousedown={onResizeStart}></div>
     <div class="terminal-header">
-      <span class="terminal-title">Terminal (git commands only)</span>
-      <button class="terminal-close" onclick={onClose}>×</button>
+      <span class="terminal-title">Terminal</span>
+      <div class="terminal-actions">
+        <select
+          class="shell-select"
+          value={app.terminalShell ?? ''}
+          onchange={async (e) => {
+            const val = (e.target as HTMLSelectElement).value;
+            app.terminalShell = val || null;
+            await app.saveTerminalShell();
+          }}
+        >
+          <option value="">Git only</option>
+          {#each availableShells as shell}
+            <option value={shell.id}>{shell.name}</option>
+          {/each}
+        </select>
+        <button class="terminal-close" onclick={onClose}>×</button>
+      </div>
     </div>
     <div class="terminal-body" bind:this={terminalEl}></div>
   </div>
@@ -183,9 +240,22 @@
     background: #1e1e2e;
     display: flex;
     flex-direction: column;
-    height: 200px;
-    min-height: 100px;
+    min-height: 80px;
     flex-shrink: 0;
+    position: relative;
+  }
+  .resize-handle {
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    cursor: ns-resize;
+    z-index: 10;
+  }
+  .resize-handle:hover,
+  .resize-handle:active {
+    background: rgba(137, 180, 250, 0.3);
   }
   .terminal-header {
     display: flex;
@@ -200,6 +270,33 @@
     font-size: 11px;
     color: #6c7086;
     font-family: var(--font-ui);
+  }
+  .terminal-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .shell-select {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #a6adc8;
+    font-size: 11px;
+    font-family: var(--font-ui);
+    padding: 1px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    outline: none;
+  }
+  .shell-select:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #cdd6f4;
+  }
+  .shell-select:focus {
+    border-color: rgba(137, 180, 250, 0.4);
+  }
+  .shell-select option {
+    background: #1e1e2e;
+    color: #cdd6f4;
   }
   .terminal-close {
     background: none;

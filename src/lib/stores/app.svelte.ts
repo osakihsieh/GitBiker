@@ -13,6 +13,7 @@ import {
   saveAiSettings as _saveAiSettings,
   saveDisableAutoCrlf as _saveDisableAutoCrlf,
   saveIgnoreEol as _saveIgnoreEol,
+  saveTerminalShell as _saveTerminalShell,
 } from './persistence.svelte';
 import type { AiProviderType, AiLanguage } from './persistence.svelte';
 import {
@@ -152,6 +153,9 @@ class AppState {
   // ── Git Settings ──
   disableAutoCrlf = $state(true); // 預設開啟：禁止自動轉換換行符
   ignoreEol = $state(false); // 忽略換行符差異（LF/CRLF）
+
+  // ── Terminal Settings ──
+  terminalShell = $state<string | null>(null); // null = git-only 模式
 
   // ── Auto Fetch ──
   autoFetchEnabled = $state(false);
@@ -544,6 +548,7 @@ class AppState {
   async saveAiSettings() { return _saveAiSettings(this); }
   async saveDisableAutoCrlf() { return _saveDisableAutoCrlf(this); }
   async saveIgnoreEol() { return _saveIgnoreEol(this); }
+  async saveTerminalShell() { return _saveTerminalShell(this); }
 
   // ── Auto Fetch ──
 

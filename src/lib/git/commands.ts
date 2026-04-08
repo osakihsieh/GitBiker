@@ -291,6 +291,18 @@ export async function detectEditors(): Promise<EditorInfo[]> {
   return invoke('detect_editors');
 }
 
+// ── Shell Detection ──────────────────────────────────
+
+export interface ShellInfo {
+  id: string;
+  name: string;
+  command: string;
+}
+
+export async function detectShells(): Promise<ShellInfo[]> {
+  return invoke('detect_shells');
+}
+
 // ── External Tools ────────────────────────────────────
 
 export async function openInFolder(path: string): Promise<void> {

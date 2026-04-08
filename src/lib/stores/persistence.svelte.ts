@@ -12,6 +12,7 @@ const AI_LANGUAGE_KEY = 'aiLanguage';
 const AI_OLLAMA_ENDPOINT_KEY = 'aiOllamaEndpoint';
 const DISABLE_AUTO_CRLF_KEY = 'disableAutoCrlf';
 const IGNORE_EOL_KEY = 'ignoreEol';
+const TERMINAL_SHELL_KEY = 'terminalShell';
 const SCAN_PATHS_KEY = 'multiRepoScanPaths';
 const CACHED_REPO_INFOS_KEY = 'multiRepoCachedInfos';
 const MULTI_REPO_REFRESH_INTERVAL_KEY = 'multiRepoRefreshInterval';
@@ -44,6 +45,7 @@ export interface PersistableState {
   aiOllamaEndpoint: string;
   disableAutoCrlf: boolean;
   ignoreEol: boolean;
+  terminalShell: string | null;
 }
 
 // ── Recent Repos ──────────────────────────────────────
@@ -51,7 +53,7 @@ export interface PersistableState {
 export async function loadAppSettings(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
-    const [savedRecent, savedPinned, savedEditor, savedAiProvider, savedAiKey, savedAiModel, savedAiPrompt, savedAiLang, savedAiEndpoint, savedDisableAutoCrlf, savedIgnoreEol] = await Promise.all([
+    const [savedRecent, savedPinned, savedEditor, savedAiProvider, savedAiKey, savedAiModel, savedAiPrompt, savedAiLang, savedAiEndpoint, savedDisableAutoCrlf, savedIgnoreEol, savedTerminalShell] = await Promise.all([
       store.get<string[]>(RECENT_REPOS_KEY),
       store.get<string[]>(PINNED_REPOS_KEY),
       store.get<string | null>(PREFERRED_EDITOR_KEY),
@@ -63,6 +65,7 @@ export async function loadAppSettings(state: PersistableState): Promise<void> {
       store.get<string>(AI_OLLAMA_ENDPOINT_KEY),
       store.get<boolean>(DISABLE_AUTO_CRLF_KEY),
       store.get<boolean>(IGNORE_EOL_KEY),
+      store.get<string | null>(TERMINAL_SHELL_KEY),
     ]);
     if (Array.isArray(savedRecent)) {
       state.recentRepos = savedRecent.slice(0, MAX_RECENT_REPOS);
@@ -81,6 +84,7 @@ export async function loadAppSettings(state: PersistableState): Promise<void> {
     if (typeof savedAiEndpoint === 'string') state.aiOllamaEndpoint = savedAiEndpoint;
     if (typeof savedDisableAutoCrlf === 'boolean') state.disableAutoCrlf = savedDisableAutoCrlf;
     if (typeof savedIgnoreEol === 'boolean') state.ignoreEol = savedIgnoreEol;
+    if (typeof savedTerminalShell === 'string') state.terminalShell = savedTerminalShell;
   } catch {
     // 首次啟動 store 檔案不存在，忽略
   }
@@ -181,6 +185,15 @@ export async function saveIgnoreEol(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
     await store.set(IGNORE_EOL_KEY, state.ignoreEol);
+  } catch {}
+}
+
+// ── Terminal Shell ────────────────────────────────────
+
+export async function saveTerminalShell(state: PersistableState): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(TERMINAL_SHELL_KEY, state.terminalShell);
   } catch {}
 }
 

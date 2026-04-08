@@ -1,8 +1,8 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
-  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, listAiModels, setGitDisableAutoCrlf, setGitIgnoreEol } from '$lib/git/commands';
-  import type { EditorInfo, AiModelInfo } from '$lib/git/commands';
+  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, detectShells, listAiModels, setGitDisableAutoCrlf, setGitIgnoreEol } from '$lib/git/commands';
+  import type { EditorInfo, ShellInfo, AiModelInfo } from '$lib/git/commands';
   import type { RemoteInfo } from '$lib/git/types';
 
   interface Props {
@@ -16,6 +16,21 @@
   let detectingEditors = $state(false);
   let customEditorCommand = $state('');
   const CUSTOM_VALUE = '__custom__';
+
+  // Shell settings state
+  let detectedShells = $state<ShellInfo[]>([]);
+  let detectingShells = $state(false);
+
+  async function loadShells() {
+    detectingShells = true;
+    try {
+      detectedShells = await detectShells();
+    } catch {
+      detectedShells = [];
+    } finally {
+      detectingShells = false;
+    }
+  }
 
   // Derive current selection value for the dropdown
   let editorSelectValue = $derived.by(() => {
@@ -154,9 +169,10 @@
     }
   });
 
-  // Load editors on mount
+  // Load editors and shells on mount
   $effect(() => {
     loadEditors();
+    loadShells();
   });
 
   // Load remotes when settings opens and repo is available
@@ -374,6 +390,41 @@
             <span class="toggle-thumb"></span>
           </span>
         </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">終端機</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Shell</span>
+          <span class="setting-desc">
+            {#if app.terminalShell}
+              已選擇 Shell，內建終端機可執行任意命令
+            {:else}
+              未設定 Shell，內建終端機僅支援 Git 命令
+            {/if}
+          </span>
+        </div>
+        <select
+          class="select"
+          value={app.terminalShell ?? ''}
+          disabled={detectingShells}
+          onchange={async (e) => {
+            const val = (e.target as HTMLSelectElement).value;
+            app.terminalShell = val || null;
+            await app.saveTerminalShell();
+            app.addToast(
+              val ? `已切換終端機為 ${detectedShells.find((s) => s.id === val)?.name ?? val}` : '已切換為僅 Git 命令模式',
+              'success',
+            );
+          }}
+        >
+          <option value="">僅 Git 命令</option>
+          {#each detectedShells as shell}
+            <option value={shell.id}>{shell.name}</option>
+          {/each}
+        </select>
       </div>
     </div>
 

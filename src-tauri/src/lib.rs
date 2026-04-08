@@ -89,6 +89,7 @@ pub fn run() {
             commands::open_in_terminal,
             commands::detect_editors,
             commands::run_shell_command,
+            commands::detect_shells,
             commands::generate_commit_message,
             commands::list_ai_models,
             commands::set_git_disable_auto_crlf,
