@@ -933,6 +933,8 @@ impl GitOperations for LocalGit {
         let repo = Self::open_repo(path)?;
         let mut diff_opts = DiffOptions::new();
         diff_opts.pathspec(file);
+        diff_opts.include_untracked(true);
+        diff_opts.show_untracked_content(true);
 
         let diff = repo.diff_index_to_workdir(None, Some(&mut diff_opts))?;
         let stats = diff.stats()?;
