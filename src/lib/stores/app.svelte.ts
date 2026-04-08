@@ -1,7 +1,7 @@
 import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent, LogFilter, BranchCompareResult } from '$lib/git/types';
 import { gitGetConflictFiles, gitGetConflictContent, gitBranchCompare } from '$lib/git/commands';
 import {
-  loadRecentRepos as _loadRecentRepos,
+  loadAppSettings as _loadAppSettings,
   addRecentRepo as _addRecentRepo,
   removeRecentRepo as _removeRecentRepo,
   isPinned as _isPinned,
@@ -12,6 +12,7 @@ import {
   reorderPinnedRepos as _reorderPinnedRepos,
   saveAiSettings as _saveAiSettings,
   saveDisableAutoCrlf as _saveDisableAutoCrlf,
+  saveIgnoreEol as _saveIgnoreEol,
 } from './persistence.svelte';
 import type { AiProviderType, AiLanguage } from './persistence.svelte';
 import {
@@ -150,6 +151,7 @@ class AppState {
 
   // ── Git Settings ──
   disableAutoCrlf = $state(true); // 預設開啟：禁止自動轉換換行符
+  ignoreEol = $state(false); // 忽略換行符差異（LF/CRLF）
 
   // ── Auto Fetch ──
   autoFetchEnabled = $state(false);
@@ -526,8 +528,8 @@ class AppState {
 
   // ── Persistence wrappers (maintain existing API) ──
 
-  async loadRecentRepos() {
-    await _loadRecentRepos(this);
+  async loadAppSettings() {
+    await _loadAppSettings(this);
     // 載入持久化設定後，同步 CRLF 設定到 Rust 後端
     this.syncDisableAutoCrlf();
   }
@@ -541,6 +543,7 @@ class AppState {
   async reorderPinnedRepos(newOrder: string[]) { return _reorderPinnedRepos(this, newOrder); }
   async saveAiSettings() { return _saveAiSettings(this); }
   async saveDisableAutoCrlf() { return _saveDisableAutoCrlf(this); }
+  async saveIgnoreEol() { return _saveIgnoreEol(this); }
 
   // ── Auto Fetch ──
 
@@ -653,6 +656,7 @@ class AppState {
       this.applyTheme();
       this.loadAutoFetchSettings();
       this.syncDisableAutoCrlf();
+      this.syncIgnoreEol();
     }
   }
 
@@ -661,6 +665,14 @@ class AppState {
     try {
       const { setGitDisableAutoCrlf } = await import('$lib/git/commands');
       await setGitDisableAutoCrlf(this.disableAutoCrlf);
+    } catch {}
+  }
+
+  /** 將 ignoreEol 設定同步到 Rust 後端 */
+  async syncIgnoreEol(): Promise<void> {
+    try {
+      const { setGitIgnoreEol } = await import('$lib/git/commands');
+      await setGitIgnoreEol(this.ignoreEol);
     } catch {}
   }
 

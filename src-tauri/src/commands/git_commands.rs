@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use tauri::{AppHandle, State};
 
 use crate::git::types::*;
-use crate::git::local_git::{get_disable_auto_crlf, set_disable_auto_crlf};
+use crate::git::local_git::{get_disable_auto_crlf, set_disable_auto_crlf, get_ignore_eol, set_ignore_eol};
 use crate::git::{GitError, GitOperations, LocalGit};
 use crate::watcher::WatcherState;
 
@@ -159,29 +159,60 @@ pub fn git_revert(
     crate::git::LocalGit::run_git(&repo_path, &args)
 }
 
-/// Scan a folder for git repositories (immediate children only)
+/// Scan a folder for git repositories up to `max_depth` levels deep.
+/// Once a `.git` directory is found, that subtree is not descended further.
 #[tauri::command]
-pub fn scan_git_repos(path: String) -> Result<Vec<String>, GitError> {
+pub fn scan_git_repos(path: String, max_depth: Option<u32>) -> Result<Vec<String>, GitError> {
     let folder = std::path::PathBuf::from(&path);
     if !folder.is_dir() {
         return Err(GitError::OperationFailed("不是有效的資料夾".to_string()));
     }
 
+    let depth_limit = max_depth.unwrap_or(2);
     let mut repos = Vec::new();
-    let entries = std::fs::read_dir(&folder)
+    scan_repos_recursive(&folder, depth_limit, 0, &mut repos)?;
+    repos.sort();
+    Ok(repos)
+}
+
+fn scan_repos_recursive(
+    dir: &std::path::Path,
+    max_depth: u32,
+    current_depth: u32,
+    repos: &mut Vec<String>,
+) -> Result<(), GitError> {
+    if current_depth >= max_depth {
+        return Ok(());
+    }
+
+    let entries = std::fs::read_dir(dir)
         .map_err(|e| GitError::OperationFailed(format!("無法讀取資料夾: {e}")))?;
 
     for entry in entries.flatten() {
         let entry_path = entry.path();
-        if entry_path.is_dir() && entry_path.join(".git").exists() {
+        if !entry_path.is_dir() {
+            continue;
+        }
+
+        // Skip common non-project directories
+        if let Some(name) = entry_path.file_name().and_then(|n| n.to_str()) {
+            if name.starts_with('.') || name == "node_modules" || name == "target" || name == "vendor" {
+                continue;
+            }
+        }
+
+        if entry_path.join(".git").exists() {
             if let Some(p) = entry_path.to_str() {
                 repos.push(p.to_string());
             }
+            // Don't descend into git repos (no nested scanning)
+        } else {
+            // Recurse into subdirectory
+            let _ = scan_repos_recursive(&entry_path, max_depth, current_depth + 1, repos);
         }
     }
 
-    repos.sort();
-    Ok(repos)
+    Ok(())
 }
 
 /// Stage a patch (hunk-level staging)
@@ -371,4 +402,14 @@ pub fn set_git_disable_auto_crlf(disabled: bool) {
 #[tauri::command]
 pub fn get_git_disable_auto_crlf() -> bool {
     get_disable_auto_crlf()
+}
+
+#[tauri::command]
+pub fn set_git_ignore_eol(enabled: bool) {
+    set_ignore_eol(enabled);
+}
+
+#[tauri::command]
+pub fn get_git_ignore_eol() -> bool {
+    get_ignore_eol()
 }

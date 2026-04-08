@@ -5,7 +5,7 @@
   interface Props {
     onOpenRepo: (path: string) => void;
     onClone: () => void;
-    onOpenMultiRepo?: (paths: string[]) => void;
+    onOpenMultiRepo?: (scanPath: string) => void;
   }
 
   let { onOpenRepo, onClone, onOpenMultiRepo }: Props = $props();
@@ -37,7 +37,7 @@
         if (repos.length === 0) {
           app.addToast('此資料夾中沒有找到 Git repositories', 'info');
         } else {
-          onOpenMultiRepo?.(repos);
+          onOpenMultiRepo?.(selected);
         }
       }
     } catch (e: unknown) {

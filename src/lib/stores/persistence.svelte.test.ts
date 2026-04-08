@@ -3,7 +3,7 @@ import { mockStore } from '../../tests/mocks/tauri';
 import '../../tests/mocks/tauri';
 
 import {
-  loadRecentRepos,
+  loadAppSettings,
   addRecentRepo,
   removeRecentRepo,
   isPinned,
@@ -24,13 +24,13 @@ describe('persistence', () => {
     _resetStoreForTest();
   });
 
-  describe('loadRecentRepos', () => {
+  describe('loadAppSettings', () => {
     it('從 store 載入 recentRepos 和 pinnedRepos', async () => {
       const state = createMockState();
       mockStore.get.mockResolvedValueOnce(['/repo/a', '/repo/b']);
       mockStore.get.mockResolvedValueOnce(['/pinned/a']);
 
-      await loadRecentRepos(state);
+      await loadAppSettings(state);
       expect(state.recentRepos).toEqual(['/repo/a', '/repo/b']);
       expect(state.pinnedRepos).toEqual(['/pinned/a']);
     });
@@ -40,7 +40,7 @@ describe('persistence', () => {
       mockStore.get.mockResolvedValueOnce(null);
       mockStore.get.mockResolvedValueOnce(null);
 
-      await loadRecentRepos(state);
+      await loadAppSettings(state);
       expect(state.recentRepos).toEqual([]);
       expect(state.pinnedRepos).toEqual([]);
     });
@@ -49,7 +49,7 @@ describe('persistence', () => {
       const state = createMockState();
       mockStore.get.mockRejectedValueOnce(new Error('store error'));
 
-      await expect(loadRecentRepos(state)).resolves.toBeUndefined();
+      await expect(loadAppSettings(state)).resolves.toBeUndefined();
       expect(state.recentRepos).toEqual([]);
     });
   });

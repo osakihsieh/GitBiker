@@ -1,6 +1,7 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, listAiModels, setGitDisableAutoCrlf } from '$lib/git/commands';
+  import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
+  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, listAiModels, setGitDisableAutoCrlf, setGitIgnoreEol } from '$lib/git/commands';
   import type { EditorInfo, AiModelInfo } from '$lib/git/commands';
   import type { RemoteInfo } from '$lib/git/types';
 
@@ -343,6 +344,93 @@
           </span>
         </button>
       </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">忽略換行符差異</span>
+          <span class="setting-desc">
+            {#if app.ignoreEol}
+              已開啟：狀態和差異比較中將忽略僅換行符號（LF/CRLF）的變更
+            {:else}
+              已關閉：換行符號差異會顯示為修改
+            {/if}
+          </span>
+        </div>
+        <button
+          class="toggle-btn"
+          class:active={app.ignoreEol}
+          role="switch"
+          aria-checked={app.ignoreEol}
+          onclick={async () => {
+            app.ignoreEol = !app.ignoreEol;
+            await setGitIgnoreEol(app.ignoreEol);
+            await app.saveIgnoreEol();
+            app.addToast(
+              app.ignoreEol ? '已開啟忽略換行符差異' : '已關閉忽略換行符差異',
+              'success',
+            );
+          }}
+        >
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Multi-Repo 掃描目錄</div>
+      <div class="setting-desc" style="margin-bottom: var(--space-sm);">
+        設定要掃描 Git repos 的目錄。掃描深度最多 2 層。
+      </div>
+      {#if multiRepo.scanPaths.length > 0}
+        {#each multiRepo.scanPaths as scanPath}
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label" style="font-family: var(--font-mono); font-size: 12px;">{scanPath}</span>
+              <span class="setting-desc">
+                {multiRepo.repos.filter((r) => r.scanPath === scanPath).length} repos
+              </span>
+            </div>
+            <button
+              class="btn"
+              style="color: var(--error);"
+              onclick={async () => {
+                await multiRepo.removeScanPath(scanPath);
+                app.addToast('已移除掃描目錄', 'success');
+              }}
+            >
+              移除
+            </button>
+          </div>
+        {/each}
+      {:else}
+        <div class="setting-desc" style="padding: var(--space-md) 0; text-align: center; color: var(--text-muted);">
+          尚未設定掃描目錄
+        </div>
+      {/if}
+      <button
+        class="btn"
+        style="margin-top: var(--space-sm);"
+        onclick={async () => {
+          try {
+            const { open: openDialog } = await import('@tauri-apps/plugin-dialog');
+            const selected = await openDialog({ directory: true, title: '選擇包含 Git Repos 的資料夾' });
+            if (selected) {
+              await multiRepo.addScanPath(selected, app.repoPath);
+              const count = multiRepo.repos.filter((r) => r.scanPath === selected).length;
+              if (count === 0) {
+                app.addToast('此目錄中沒有找到 Git repositories', 'info');
+              } else {
+                app.addToast(`已新增掃描目錄，找到 ${count} 個 repos`, 'success');
+              }
+            }
+          } catch (e) {
+            app.addToast(String(e), 'error');
+          }
+        }}
+      >
+        + 新增目錄
+      </button>
     </div>
 
     <div class="section">

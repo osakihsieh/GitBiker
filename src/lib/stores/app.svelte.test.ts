@@ -253,22 +253,22 @@ describe('AppState', () => {
   });
 
   describe('recentRepos 持久化', () => {
-    it('loadRecentRepos 從 store 載入', async () => {
+    it('loadAppSettings 從 store 載入', async () => {
       const repos = ['/repo/a', '/repo/b'];
       mockStore.get.mockResolvedValueOnce(repos);
       mockStore.get.mockResolvedValueOnce(null); // pinnedRepos
 
-      await app.loadRecentRepos();
+      await app.loadAppSettings();
       expect(mockStore.get).toHaveBeenCalledWith('recentRepos');
       expect(app.recentRepos).toEqual(repos);
     });
 
-    it('loadRecentRepos 在 store 為空時保持空陣列', async () => {
+    it('loadAppSettings 在 store 為空時保持空陣列', async () => {
       mockStore.get.mockResolvedValueOnce(null);
       mockStore.get.mockResolvedValueOnce(null);
       app.recentRepos = [];
 
-      await app.loadRecentRepos();
+      await app.loadAppSettings();
       expect(app.recentRepos).toEqual([]);
     });
 

@@ -93,6 +93,8 @@ pub fn run() {
             commands::list_ai_models,
             commands::set_git_disable_auto_crlf,
             commands::get_git_disable_auto_crlf,
+            commands::set_git_ignore_eol,
+            commands::get_git_ignore_eol,
         ])
         .run(tauri::generate_context!())
         .expect("啟動 GitBiker 失敗");

@@ -14,6 +14,8 @@ const MAX_CONFLICT_FILE_BYTES: usize = 1024 * 1024; // 1MB
 
 /// 預設開啟：禁止 Git 自動轉換換行符（core.autocrlf=false）
 static DISABLE_AUTO_CRLF: AtomicBool = AtomicBool::new(true);
+/// 忽略換行符差異（LF/CRLF）
+static IGNORE_EOL: AtomicBool = AtomicBool::new(false);
 
 pub fn set_disable_auto_crlf(value: bool) {
     DISABLE_AUTO_CRLF.store(value, Ordering::Relaxed);
@@ -21,6 +23,14 @@ pub fn set_disable_auto_crlf(value: bool) {
 
 pub fn get_disable_auto_crlf() -> bool {
     DISABLE_AUTO_CRLF.load(Ordering::Relaxed)
+}
+
+pub fn set_ignore_eol(value: bool) {
+    IGNORE_EOL.store(value, Ordering::Relaxed);
+}
+
+pub fn get_ignore_eol() -> bool {
+    IGNORE_EOL.load(Ordering::Relaxed)
 }
 
 pub struct LocalGit;
@@ -154,6 +164,25 @@ impl LocalGit {
             let stderr = String::from_utf8_lossy(&result.stderr).to_string();
             Err(GitError::OperationFailed(stderr))
         }
+    }
+}
+
+// ── EOL check helpers ─────────────────────────────────────
+
+impl LocalGit {
+    /// 檢查檔案是否僅有 EOL（LF/CRLF）差異
+    fn is_eol_only_change(repo: &Repository, file_path: &str) -> bool {
+        let mut diff_opts = DiffOptions::new();
+        diff_opts.pathspec(file_path);
+        diff_opts.ignore_whitespace_eol(true);
+
+        let Ok(diff) = repo.diff_index_to_workdir(None, Some(&mut diff_opts)) else {
+            return false;
+        };
+        let Ok(stats) = diff.stats() else {
+            return false;
+        };
+        stats.insertions() == 0 && stats.deletions() == 0
     }
 }
 
@@ -769,6 +798,7 @@ impl GitOperations for LocalGit {
             .include_ignored(false);
 
         let statuses = repo.statuses(Some(&mut opts))?;
+        let ignore_eol = IGNORE_EOL.load(Ordering::Relaxed);
         let mut result = Vec::new();
 
         for entry in statuses.iter() {
@@ -803,6 +833,21 @@ impl GitOperations for LocalGit {
                     | git2::Status::WT_RENAMED
                     | git2::Status::CONFLICTED,
             ) {
+                // 忽略 EOL 差異：對僅標記為 WT_MODIFIED 的檔案做快速 diff 檢查
+                if ignore_eol
+                    && git_status.contains(git2::Status::WT_MODIFIED)
+                    && !git_status.intersects(
+                        git2::Status::WT_NEW
+                            | git2::Status::WT_DELETED
+                            | git2::Status::WT_RENAMED
+                            | git2::Status::CONFLICTED,
+                    )
+                {
+                    if Self::is_eol_only_change(&repo, file_path) {
+                        continue;
+                    }
+                }
+
                 let (kind, _) = Self::map_status_kind(
                     git_status
                         & (git2::Status::WT_NEW
@@ -951,6 +996,9 @@ impl GitOperations for LocalGit {
         diff_opts.pathspec(file);
         diff_opts.include_untracked(true);
         diff_opts.show_untracked_content(true);
+        if IGNORE_EOL.load(Ordering::Relaxed) {
+            diff_opts.ignore_whitespace_eol(true);
+        }
 
         let diff = repo.diff_index_to_workdir(None, Some(&mut diff_opts))?;
         let stats = diff.stats()?;
@@ -975,6 +1023,12 @@ impl GitOperations for LocalGit {
                         lines: Vec::new(),
                     });
                 }
+            } else if hunks.is_empty() {
+                // Untracked 檔案可能沒有 hunk header，建立一個預設的
+                hunks.push(DiffHunk {
+                    header: String::new(),
+                    lines: Vec::new(),
+                });
             }
 
             let content = String::from_utf8_lossy(line.content()).to_string();
@@ -1003,6 +1057,62 @@ impl GitOperations for LocalGit {
             }
             true
         })?;
+
+        // 如果 diff 為空，檢查是否為 untracked 檔案，直接讀取內容
+        if hunks.is_empty() && stats.insertions() == 0 && stats.deletions() == 0 {
+            let full_path = path.join(file);
+            if full_path.exists() && full_path.is_file() {
+                if let Ok(content) = std::fs::read(&full_path) {
+                    // 檢查是否為二進制
+                    let is_binary_content = content.iter().take(8000).any(|&b| b == 0);
+                    if is_binary_content {
+                        return Ok(DiffResult {
+                            file_path: file.to_path_buf(),
+                            hunks: vec![],
+                            stats: DiffStats { additions: 0, deletions: 0 },
+                            is_binary: true,
+                            is_truncated: false,
+                        });
+                    }
+
+                    if let Ok(text) = String::from_utf8(content) {
+                        let lines_vec: Vec<&str> = text.lines().collect();
+                        let line_count = lines_vec.len();
+                        let mut diff_lines = Vec::with_capacity(line_count);
+                        let mut total = 0usize;
+                        let mut trunc = false;
+
+                        for (i, line_str) in lines_vec.into_iter().enumerate() {
+                            total += line_str.len();
+                            if total > MAX_DIFF_BYTES {
+                                trunc = true;
+                                break;
+                            }
+                            diff_lines.push(DiffLine {
+                                kind: DiffLineKind::Addition,
+                                content: line_str.to_string(),
+                                old_lineno: None,
+                                new_lineno: Some((i + 1) as u32),
+                            });
+                        }
+
+                        return Ok(DiffResult {
+                            file_path: file.to_path_buf(),
+                            hunks: vec![DiffHunk {
+                                header: format!("@@ -0,0 +1,{line_count} @@"),
+                                lines: diff_lines,
+                            }],
+                            stats: DiffStats {
+                                additions: line_count,
+                                deletions: 0,
+                            },
+                            is_binary: false,
+                            is_truncated: trunc,
+                        });
+                    }
+                }
+            }
+        }
 
         Ok(DiffResult {
             file_path: file.to_path_buf(),

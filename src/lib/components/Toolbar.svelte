@@ -1,5 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
   import { gitPush, gitPull, gitFetch, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
   import BranchManager from './BranchManager.svelte';
   import StashManager from './StashManager.svelte';
@@ -143,8 +144,9 @@
   interface Props {
     onOpenSettings?: () => void;
     onOpenPopover?: () => void;
+    onOpenMultiRepo?: () => void;
   }
-  let { onOpenSettings, onOpenPopover }: Props = $props();
+  let { onOpenSettings, onOpenPopover, onOpenMultiRepo }: Props = $props();
 </script>
 
 <svelte:window onkeydown={handleBranchKeydown} />
@@ -152,6 +154,18 @@
 <div class="toolbar">
   <button class="folder-btn" onclick={onOpenPopover} aria-label="Open repo switcher">
     <span class="folder-icon">📁</span><span class="chevron">▾</span>
+  </button>
+
+  <button class="multi-repo-btn" onclick={onOpenMultiRepo} aria-label="Multi-repo manager (Ctrl+M)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+    </svg>
+    {#if multiRepo.dirtyCount > 0}
+      <span class="multi-repo-badge" aria-label="{multiRepo.dirtyCount} repositories with changes">
+        {multiRepo.dirtyCount > 9 ? '9+' : multiRepo.dirtyCount}
+      </span>
+    {/if}
   </button>
 
   <div class="branch-wrapper">
@@ -257,6 +271,36 @@
   }
   .folder-btn:hover { border-color: var(--accent); }
   .folder-icon { font-size: 14px; }
+  .multi-repo-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs) var(--space-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .multi-repo-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .multi-repo-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--warning);
+    color: var(--bg-primary);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-ui);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    line-height: 1;
+  }
   .branch-wrapper { position: relative; }
   .branch-selector {
     display: flex;

@@ -19,18 +19,22 @@
   import ConflictResolver from '$lib/components/ConflictResolver.svelte';
   import FileHistory from '$lib/components/FileHistory.svelte';
   import BranchCompare from '$lib/components/BranchCompare.svelte';
-  import MultiRepoView from '$lib/components/MultiRepoView.svelte';
+  import MultiRepoPopover from '$lib/components/MultiRepoPopover.svelte';
+  import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
-  let showPopover = $state(false);
   let showCommandPalette = $state(false);
   let showTerminal = $state(false);
-  let multiRepoPaths = $state<string[]>([]);
-  let showMultiRepo = $state(false);
 
-  // 啟動時從 Tauri Store 載入最近開啟的 repos
-  app.loadRecentRepos();
+  // Popover 互斥管理
+  type ActivePopover = 'repo' | 'multiRepo' | null;
+  let activePopover = $state<ActivePopover>(null);
+  let autoOpenMultiRepo = $state(false);
+
+  // 啟動時從 Tauri Store 載入應用設定 + multi-repo store
+  app.loadAppSettings();
+  multiRepo.init(app.repoPath);
 
   // Load diff when selected file changes
   $effect(() => {
@@ -51,7 +55,11 @@
   }
 
   function togglePopover() {
-    showPopover = !showPopover;
+    activePopover = activePopover === 'repo' ? null : 'repo';
+  }
+
+  function toggleMultiRepo() {
+    activePopover = activePopover === 'multiRepo' ? null : 'multiRepo';
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
@@ -101,10 +109,17 @@
       return;
     }
 
-    // Ctrl+T: open popover
-    if (e.ctrlKey && e.key === 't') {
+    // Ctrl+T: open repo popover
+    if (e.ctrlKey && !e.shiftKey && e.key === 't') {
       e.preventDefault();
-      showPopover = true;
+      activePopover = 'repo';
+      return;
+    }
+
+    // Ctrl+M: toggle multi-repo popover
+    if (e.ctrlKey && !e.shiftKey && e.key === 'm') {
+      e.preventDefault();
+      toggleMultiRepo();
       return;
     }
 
@@ -163,12 +178,11 @@
   <TitleBar />
   {#if showSettings}
     <Settings onClose={() => showSettings = false} />
-  {:else if showMultiRepo}
-    <MultiRepoView repoPaths={multiRepoPaths} onClose={() => showMultiRepo = false} />
   {:else if app.hasRepo}
     <Toolbar
       onOpenSettings={() => showSettings = true}
       onOpenPopover={togglePopover}
+      onOpenMultiRepo={toggleMultiRepo}
     />
     <TabBar onOpenPopover={togglePopover} />
     <div class="main">
@@ -211,14 +225,27 @@
     <Welcome
       onOpenRepo={(path) => app.openRepo(path)}
       onClone={handleClone}
-      onOpenMultiRepo={(paths) => { multiRepoPaths = paths; showMultiRepo = true; }}
+      onOpenMultiRepo={async (scanPath) => {
+        await multiRepo.addScanPath(scanPath, null);
+        const repos = multiRepo.repos;
+        if (repos.length > 0) {
+          await app.openRepo(repos[0].path);
+          // Auto-open multi-repo popover after workspace loads
+          setTimeout(() => { activePopover = 'multiRepo'; }, 300);
+        }
+      }}
     />
   {/if}
 
   <RepoPopover
-    open={showPopover}
-    onClose={() => showPopover = false}
+    open={activePopover === 'repo'}
+    onClose={() => activePopover = null}
     onClone={handleClone}
+  />
+
+  <MultiRepoPopover
+    open={activePopover === 'multiRepo'}
+    onClose={() => activePopover = null}
   />
 
   {#if showCloneDialog}

@@ -307,8 +307,8 @@ export async function openInTerminal(path: string): Promise<void> {
 
 // ── Multi-repo ──────────────────────────────────────
 
-export async function scanGitRepos(path: string): Promise<string[]> {
-  return invoke('scan_git_repos', { path });
+export async function scanGitRepos(path: string, maxDepth?: number): Promise<string[]> {
+  return invoke('scan_git_repos', { path, maxDepth: maxDepth ?? 2 });
 }
 
 export async function gitBranchCompare(path: string, base: string, compare: string): Promise<BranchCompareResult> {
@@ -364,4 +364,14 @@ export async function setGitDisableAutoCrlf(disabled: boolean): Promise<void> {
 
 export async function getGitDisableAutoCrlf(): Promise<boolean> {
   return invoke('get_git_disable_auto_crlf');
+}
+
+// ── Git EOL Ignore Settings ──────────────────────────────
+
+export async function setGitIgnoreEol(enabled: boolean): Promise<void> {
+  return invoke('set_git_ignore_eol', { enabled });
+}
+
+export async function getGitIgnoreEol(): Promise<boolean> {
+  return invoke('get_git_ignore_eol');
 }
