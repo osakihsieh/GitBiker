@@ -31,6 +31,54 @@
   let activePopover = $state<ActivePopover>(null);
   let autoOpenMultiRepo = $state(false);
 
+  // ── Resize handles ──
+  let sidebarWidth = $state(240);
+  let rightWidth = $state(320);
+  let resizing = $state<'sidebar' | 'right' | null>(null);
+
+  function handleResizeStart(panel: 'sidebar' | 'right') {
+    return (e: MouseEvent) => {
+      e.preventDefault();
+      resizing = panel;
+      const startX = e.clientX;
+      const startWidth = panel === 'sidebar' ? sidebarWidth : rightWidth;
+
+      function onMove(ev: MouseEvent) {
+        const delta = panel === 'sidebar'
+          ? ev.clientX - startX
+          : startX - ev.clientX;
+        const newWidth = Math.max(180, Math.min(400, startWidth + delta));
+        if (panel === 'sidebar') {
+          sidebarWidth = newWidth;
+        } else {
+          rightWidth = newWidth;
+        }
+      }
+
+      function onUp() {
+        resizing = null;
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        // Persist widths
+        try {
+          localStorage.setItem('gitbiker-sidebar-width', String(sidebarWidth));
+          localStorage.setItem('gitbiker-right-width', String(rightWidth));
+        } catch {}
+      }
+
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    };
+  }
+
+  // Restore persisted widths
+  if (typeof localStorage !== 'undefined') {
+    const sw = localStorage.getItem('gitbiker-sidebar-width');
+    const rw = localStorage.getItem('gitbiker-right-width');
+    if (sw) sidebarWidth = Math.max(180, Math.min(400, Number(sw)));
+    if (rw) rightWidth = Math.max(180, Math.min(400, Number(rw)));
+  }
+
   // 啟動時從 Tauri Store 載入應用設定 + multi-repo store
   app.loadAppSettings();
   multiRepo.init(app.repoPath);
@@ -210,12 +258,33 @@
       {:else if app.viewMode === 'branch-compare'}
         <BranchCompare />
       {:else}
-        <div class="sidebar">
+        <div class="sidebar" style:width="{sidebarWidth}px">
           <BranchSidebar />
         </div>
-        <div class="resize-handle"></div>
+        <div
+          class="resize-handle"
+          class:active={resizing === 'sidebar'}
+          onmousedown={handleResizeStart('sidebar')}
+          role="separator"
+          aria-orientation="vertical"
+        ></div>
         <div class="center" tabindex="-1">
           {#if app.selectedFile || app.currentDiff}
+            <div class="breadcrumb-bar">
+              <button class="breadcrumb-item" onclick={() => { app.selectedFile = null; app.currentDiff = null; if (app.viewMode === 'commit-detail') app.backToWorktree(); }}>
+                CommitLog
+              </button>
+              {#if app.viewMode === 'commit-detail' && app.selectedCommit}
+                <span class="breadcrumb-sep">&gt;</span>
+                <button class="breadcrumb-item" onclick={() => { app.selectedFile = null; app.currentDiff = null; }}>
+                  {app.selectedCommit.id.substring(0, 7)} "{app.selectedCommit.message.split('\n')[0].substring(0, 30)}{app.selectedCommit.message.split('\n')[0].length > 30 ? '...' : ''}"
+                </button>
+              {/if}
+              {#if app.selectedFile}
+                <span class="breadcrumb-sep">&gt;</span>
+                <span class="breadcrumb-current">{app.selectedFile.replace(/\\/g, '/').split('/').pop()}</span>
+              {/if}
+            </div>
             <DiffViewer />
           {:else if app.viewMode === 'file-history'}
             <FileHistory />
@@ -223,8 +292,14 @@
             <CommitLog />
           {/if}
         </div>
-        <div class="resize-handle"></div>
-        <div class="right" tabindex="-1">
+        <div
+          class="resize-handle"
+          class:active={resizing === 'right'}
+          onmousedown={handleResizeStart('right')}
+          role="separator"
+          aria-orientation="vertical"
+        ></div>
+        <div class="right" style:width="{rightWidth}px" tabindex="-1">
           {#if app.viewMode === 'commit-detail'}
             <CommitFileList />
           {:else}
@@ -316,7 +391,6 @@
     overflow: hidden;
   }
   .sidebar {
-    width: 240px;
     min-width: 180px;
     max-width: 400px;
     background: var(--bg-secondary);
@@ -335,7 +409,6 @@
     outline: none;
   }
   .right {
-    width: 320px;
     min-width: 180px;
     max-width: 400px;
     background: var(--bg-secondary);
@@ -346,11 +419,41 @@
     flex-shrink: 0;
     outline: none;
   }
+  .breadcrumb-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-family: var(--font-ui);
+    flex-shrink: 0;
+    min-height: 28px;
+  }
+  .breadcrumb-item {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font-ui);
+    padding: 1px 4px;
+    border-radius: var(--radius-sm);
+  }
+  .breadcrumb-item:hover { background: var(--bg-hover); text-decoration: underline; }
+  .breadcrumb-sep { color: var(--text-muted); font-size: 11px; }
+  .breadcrumb-current {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
   .resize-handle {
     width: 3px;
     cursor: col-resize;
     background: transparent;
     flex-shrink: 0;
+    transition: background 0.15s;
   }
-  .resize-handle:hover { background: var(--accent); }
+  .resize-handle:hover, .resize-handle.active { background: var(--accent); }
 </style>

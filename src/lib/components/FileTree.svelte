@@ -287,6 +287,13 @@
 </script>
 
 <div class="file-tree">
+  <!-- File changes summary -->
+  {#if app.stagedFiles.length + app.unstagedFiles.length > 0}
+    <div class="changes-badge">
+      <span class="changes-count">{app.stagedFiles.length + app.unstagedFiles.length}</span> file change{app.stagedFiles.length + app.unstagedFiles.length !== 1 ? 's' : ''} on <span class="changes-branch">{app.currentBranch}</span>
+    </div>
+  {/if}
+
   <!-- Staged -->
   <div class="section-header">
     <span>Staged <span class="count">{app.stagedFiles.length}</span></span>
@@ -418,6 +425,27 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+  }
+  .changes-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    font-size: 12px;
+    font-family: var(--font-ui);
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .changes-count {
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .changes-branch {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text-primary);
   }
   .section-header {
     display: flex;

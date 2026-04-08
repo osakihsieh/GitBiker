@@ -434,6 +434,35 @@
         <div>No commits matching "{searchQuery}"</div>
       </div>
     {:else}
+      <!-- WIP row -->
+      {@const wipCount = app.stagedFiles.length + app.unstagedFiles.length}
+      {#if wipCount > 0 && !searchResults}
+        <button
+          class="commit-item wip-item"
+          class:selected={!app.selectedCommit && app.viewMode === 'worktree'}
+          onclick={() => app.backToWorktree()}
+        >
+          <div class="commit-graph" style:width="{graphWidth}px">
+            <svg class="graph-svg" width={graphWidth} height="100%">
+              {#if graphLayout[0]}
+                <line
+                  x1={laneX(graphLayout[0].lane)} y1="50%"
+                  x2={laneX(graphLayout[0].lane)} y2="100%"
+                  stroke={graphLayout[0].color} stroke-width="2" opacity="0.4"
+                />
+                <circle
+                  cx={laneX(graphLayout[0].lane)} cy="50%"
+                  r="4" fill="none" stroke={graphLayout[0].color} stroke-width="2"
+                />
+              {/if}
+            </svg>
+          </div>
+          <div class="commit-info">
+            <div class="wip-badge">// WIP</div>
+            <div class="commit-msg">{wipCount} file{wipCount !== 1 ? 's' : ''} changed</div>
+          </div>
+        </button>
+      {/if}
       {#each displayCommits as commit, i (commit.id)}
         {@const graph = graphLayout[i]}
         <button
@@ -722,6 +751,24 @@
     height: 100%;
   }
   .empty-icon { font-size: 24px; opacity: 0.3; }
+
+  /* WIP row */
+  .wip-item {
+    background: var(--bg-surface);
+    border-bottom: 2px solid var(--accent);
+  }
+  .wip-item:hover { background: var(--bg-hover); }
+  .wip-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    background: rgba(97, 175, 239, 0.15);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 2px;
+  }
 
   /* Branch search results */
   .branch-results {
