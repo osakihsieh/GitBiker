@@ -18,6 +18,7 @@ import type {
   ResolveChoice,
   LogFilter,
   BranchCompareResult,
+  TagInfo,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
@@ -221,6 +222,10 @@ export async function gitRemoteRename(path: string, oldName: string, newName: st
 }
 
 // ── Tag + Fetch ──────────────────────────────────────
+
+export async function gitTags(path: string): Promise<TagInfo[]> {
+  return invoke('git_tags', { path });
+}
 
 export async function gitTagCreate(path: string, name: string, commitId?: string): Promise<void> {
   return invoke('git_tag_create', { path, name, commitId });

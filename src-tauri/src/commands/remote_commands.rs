@@ -49,6 +49,36 @@ pub fn git_remote_rename(path: String, old_name: String, new_name: String) -> Re
 }
 
 #[tauri::command]
+pub fn git_tags(path: String) -> Result<Vec<TagInfo>, GitError> {
+    let repo_path = PathBuf::from(&path);
+    // format: refname, objectname, subject, creatordate (unix timestamp)
+    let output = LocalGit::run_git(
+        &repo_path,
+        &[
+            "tag", "-l",
+            "--format=%(refname:short)\t%(objectname:short)\t%(contents:subject)\t%(creatordate:unix)",
+            "--sort=-creatordate",
+        ],
+    )?;
+
+    let tags: Vec<TagInfo> = output
+        .lines()
+        .filter(|line| !line.is_empty())
+        .map(|line| {
+            let parts: Vec<&str> = line.splitn(4, '\t').collect();
+            TagInfo {
+                name: parts.first().unwrap_or(&"").to_string(),
+                commit_id: parts.get(1).unwrap_or(&"").to_string(),
+                message: parts.get(2).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+                timestamp: parts.get(3).and_then(|s| s.trim().parse::<i64>().ok()),
+            }
+        })
+        .collect();
+
+    Ok(tags)
+}
+
+#[tauri::command]
 pub fn git_tag_create(path: String, name: String, commit_id: Option<String>) -> Result<(), GitError> {
     let repo_path = PathBuf::from(&path);
     let mut args = vec!["tag", "--", &name];

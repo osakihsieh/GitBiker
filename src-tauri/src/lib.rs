@@ -82,6 +82,7 @@ pub fn run() {
             commands::git_remote_add,
             commands::git_remote_remove,
             commands::git_remote_rename,
+            commands::git_tags,
             commands::git_tag_create,
             commands::git_tag_delete,
             commands::git_tag_delete_remote,

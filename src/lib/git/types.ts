@@ -121,6 +121,13 @@ export interface PullResult {
   conflicts: string[];
 }
 
+export interface TagInfo {
+  name: string;
+  commit_id: string;
+  message: string | null;
+  timestamp: number | null;
+}
+
 export interface BranchCompareResult {
   base: string;
   compare: string;

@@ -1,5 +1,5 @@
-import type { FileStatus, Commit, DiffResult, Branch, LogFilter } from '$lib/git/types';
-import { gitStatus, gitLog, gitBranches, gitDiff, startWatching, stopWatching } from '$lib/git/commands';
+import type { FileStatus, Commit, DiffResult, Branch, LogFilter, TagInfo } from '$lib/git/types';
+import { gitStatus, gitLog, gitBranches, gitDiff, gitTags, startWatching, stopWatching } from '$lib/git/commands';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 const MAX_COMMITS_PER_TAB = 200;
@@ -13,6 +13,7 @@ export interface GitActionableState {
     unstagedFiles: FileStatus[];
     commits: Commit[];
     branches: Branch[];
+    tags: TagInfo[];
     currentBranch: string;
     logFilter: LogFilter;
   } } | null;
@@ -21,6 +22,7 @@ export interface GitActionableState {
     unstagedFiles: FileStatus[];
     commits: Commit[];
     branches: Branch[];
+    tags: TagInfo[];
     currentBranch: string;
     logFilter: LogFilter;
   } }>;
@@ -80,15 +82,17 @@ export async function refreshAll(state: GitActionableState): Promise<void> {
   const tab = state.activeTab;
   if (!tab) return;
   try {
-    const [status, commits, branches] = await Promise.all([
+    const [status, commits, branches, tags] = await Promise.all([
       gitStatus(tab.path),
       gitLog(tab.path, MAX_COMMITS_PER_TAB, tab.state.logFilter),
       gitBranches(tab.path),
+      gitTags(tab.path),
     ]);
     tab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
     tab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
     tab.state.commits = commits;
     tab.state.branches = branches;
+    tab.state.tags = tags;
     tab.state.currentBranch = branches.find((b) => b.is_current)?.name || tab.state.currentBranch;
   } catch (e: unknown) {
     state.addToast(String(e), 'error');
@@ -117,16 +121,18 @@ export async function loadRepoData(
   const reactiveTab = state.tabs.find((t) => t.id === tabId);
   if (!reactiveTab) return;
 
-  const [status, commits, branches] = await Promise.all([
+  const [status, commits, branches, tags] = await Promise.all([
     gitStatus(path),
     gitLog(path, MAX_COMMITS_PER_TAB, reactiveTab.state.logFilter),
     gitBranches(path),
+    gitTags(path),
   ]);
 
   reactiveTab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
   reactiveTab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
   reactiveTab.state.commits = commits;
   reactiveTab.state.branches = branches;
+  reactiveTab.state.tags = tags;
   reactiveTab.state.currentBranch = branches.find((b) => b.is_current)?.name || 'main';
 }
 

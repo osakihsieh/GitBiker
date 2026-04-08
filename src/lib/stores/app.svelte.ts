@@ -1,4 +1,4 @@
-import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent, LogFilter, BranchCompareResult } from '$lib/git/types';
+import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent, LogFilter, BranchCompareResult, TagInfo } from '$lib/git/types';
 import { gitGetConflictFiles, gitGetConflictContent, gitBranchCompare } from '$lib/git/commands';
 import {
   loadAppSettings as _loadAppSettings,
@@ -51,6 +51,8 @@ export interface RepoState {
   hunkChoices: Record<number, 'Ours' | 'Theirs' | 'Both' | 'Custom'>;
   // File history
   fileHistoryTarget: string | null;
+  // Tags
+  tags: TagInfo[];
   // Log filter
   logFilter: LogFilter;
   // Branch compare
@@ -79,6 +81,7 @@ export function createEmptyState(): RepoState {
     currentBranch: '',
     selectedFile: null,
     viewMode: 'worktree',
+    tags: [],
     conflictFiles: [],
     activeConflictFile: null,
     conflictContent: null,
@@ -209,6 +212,10 @@ class AppState {
     return this.activeTab?.state.branches ?? [];
   }
 
+  get tags(): TagInfo[] {
+    return this.activeTab?.state.tags ?? [];
+  }
+
   get currentBranch(): string {
     return this.activeTab?.state.currentBranch ?? '';
   }
@@ -247,6 +254,11 @@ class AppState {
   set branches(value: Branch[]) {
     const tab = this.activeTab;
     if (tab) tab.state.branches = value;
+  }
+
+  set tags(value: TagInfo[]) {
+    const tab = this.activeTab;
+    if (tab) tab.state.tags = value;
   }
 
   // ── Conflict State (proxied to active tab) ──

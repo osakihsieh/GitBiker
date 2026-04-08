@@ -221,6 +221,14 @@ pub struct PullResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TagInfo {
+    pub name: String,
+    pub commit_id: String,
+    pub message: Option<String>,
+    pub timestamp: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BranchCompareResult {
     pub base: String,
     pub compare: String,
