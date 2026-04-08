@@ -25,8 +25,6 @@
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
   let showCommandPalette = $state(false);
-  let showTerminal = $state(false);
-
   // Popover 互斥管理
   type ActivePopover = 'repo' | 'multiRepo' | null;
   let activePopover = $state<ActivePopover>(null);
@@ -66,7 +64,7 @@
     // Ctrl+`: toggle inline terminal
     if (e.ctrlKey && e.key === '`') {
       e.preventDefault();
-      showTerminal = !showTerminal;
+      app.toggleTerminal();
       return;
     }
 
