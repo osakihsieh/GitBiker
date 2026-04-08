@@ -83,4 +83,8 @@ npm run tauri build
 
 ## License
 
-MIT
+Friendly Non‑Commercial License (with Approval for Commercial Use) v1.1
+
+非商業使用免費，商業使用需取得作者書面同意。詳見 [LICENSE](./LICENSE)。
+
+Copyright (c) 2026 [osakihsieh](https://github.com/osakihsieh)

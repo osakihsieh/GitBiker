@@ -537,7 +537,11 @@
         </div>
         <div class="about-row">
           <span class="about-label">License</span>
-          <span class="about-value">MIT</span>
+          <span class="about-value">Non‑Commercial (v1.1)</span>
+        </div>
+        <div class="about-row">
+          <span class="about-label">Copyright</span>
+          <span class="about-value">&copy; 2026 <a href="https://github.com/osakihsieh" target="_blank" rel="noopener noreferrer">osakihsieh</a></span>
         </div>
       </div>
     </div>
