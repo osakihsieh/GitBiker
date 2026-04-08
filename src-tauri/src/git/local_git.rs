@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use git2::{DiffOptions, Repository, StatusOptions};
 use sha2::{Digest, Sha256};
@@ -10,6 +11,17 @@ use crate::git::types::*;
 
 const MAX_DIFF_BYTES: usize = 10 * 1024 * 1024; // 10MB
 const MAX_CONFLICT_FILE_BYTES: usize = 1024 * 1024; // 1MB
+
+/// 預設開啟：禁止 Git 自動轉換換行符（core.autocrlf=false）
+static DISABLE_AUTO_CRLF: AtomicBool = AtomicBool::new(true);
+
+pub fn set_disable_auto_crlf(value: bool) {
+    DISABLE_AUTO_CRLF.store(value, Ordering::Relaxed);
+}
+
+pub fn get_disable_auto_crlf() -> bool {
+    DISABLE_AUTO_CRLF.load(Ordering::Relaxed)
+}
 
 pub struct LocalGit;
 
@@ -34,19 +46,23 @@ impl LocalGit {
     }
 
     /// 建立隱藏 console 視窗的 git Command（Windows 專用）
+    /// 若 DISABLE_AUTO_CRLF 開啟，自動注入 -c core.autocrlf=false
     pub(crate) fn git_command() -> Command {
         #[cfg(target_os = "windows")]
-        {
+        let mut cmd = {
             use std::os::windows::process::CommandExt;
             // 優先嘗試執行 git.exe 以避免執行 .cmd 帶來的額外視窗風險
-            let mut cmd = Command::new("git");
-            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
-            cmd
-        }
+            let mut c = Command::new("git");
+            c.creation_flags(0x08000000); // CREATE_NO_WINDOW
+            c
+        };
         #[cfg(not(target_os = "windows"))]
-        {
-            Command::new("git")
+        let mut cmd = Command::new("git");
+
+        if DISABLE_AUTO_CRLF.load(Ordering::Relaxed) {
+            cmd.args(["-c", "core.autocrlf=false"]);
         }
+        cmd
     }
 
     pub(crate) fn run_git(path: &Path, args: &[&str]) -> Result<String, GitError> {

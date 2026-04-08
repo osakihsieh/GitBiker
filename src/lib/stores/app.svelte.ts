@@ -11,6 +11,7 @@ import {
   savePreferredEditor as _savePreferredEditor,
   reorderPinnedRepos as _reorderPinnedRepos,
   saveAiSettings as _saveAiSettings,
+  saveDisableAutoCrlf as _saveDisableAutoCrlf,
 } from './persistence.svelte';
 import type { AiProviderType, AiLanguage } from './persistence.svelte';
 import {
@@ -146,6 +147,9 @@ class AppState {
   aiCustomPrompt = $state('');
   aiLanguage = $state<AiLanguage>('zh-TW');
   aiOllamaEndpoint = $state('http://localhost:11434');
+
+  // ── Git Settings ──
+  disableAutoCrlf = $state(true); // 預設開啟：禁止自動轉換換行符
 
   // ── Auto Fetch ──
   autoFetchEnabled = $state(false);
@@ -522,7 +526,11 @@ class AppState {
 
   // ── Persistence wrappers (maintain existing API) ──
 
-  async loadRecentRepos() { return _loadRecentRepos(this); }
+  async loadRecentRepos() {
+    await _loadRecentRepos(this);
+    // 載入持久化設定後，同步 CRLF 設定到 Rust 後端
+    this.syncDisableAutoCrlf();
+  }
   async addRecentRepo(path: string) { return _addRecentRepo(this, path); }
   async removeRecentRepo(path: string) { return _removeRecentRepo(this, path); }
   isPinned(path: string) { return _isPinned(this, path); }
@@ -532,6 +540,7 @@ class AppState {
   async savePreferredEditor(editor: string | null) { return _savePreferredEditor(this, editor); }
   async reorderPinnedRepos(newOrder: string[]) { return _reorderPinnedRepos(this, newOrder); }
   async saveAiSettings() { return _saveAiSettings(this); }
+  async saveDisableAutoCrlf() { return _saveDisableAutoCrlf(this); }
 
   // ── Auto Fetch ──
 
@@ -643,7 +652,16 @@ class AppState {
       });
       this.applyTheme();
       this.loadAutoFetchSettings();
+      this.syncDisableAutoCrlf();
     }
+  }
+
+  /** 將 disableAutoCrlf 設定同步到 Rust 後端 */
+  async syncDisableAutoCrlf(): Promise<void> {
+    try {
+      const { setGitDisableAutoCrlf } = await import('$lib/git/commands');
+      await setGitDisableAutoCrlf(this.disableAutoCrlf);
+    } catch {}
   }
 
   setTheme(value: 'system' | 'dark' | 'light') {

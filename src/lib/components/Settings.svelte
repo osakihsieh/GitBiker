@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
-  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, listAiModels } from '$lib/git/commands';
+  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, listAiModels, setGitDisableAutoCrlf } from '$lib/git/commands';
   import type { EditorInfo, AiModelInfo } from '$lib/git/commands';
   import type { RemoteInfo } from '$lib/git/types';
 
@@ -307,6 +307,41 @@
             <option value="15">每 15 分鐘</option>
           </select>
         </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Git</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">禁止自動轉換換行符</span>
+          <span class="setting-desc">
+            {#if app.disableAutoCrlf}
+              已開啟：Git 不會自動將 LF 轉換為 CRLF（推薦 Windows 使用）
+            {:else}
+              已關閉：Git 將按照系統預設處理換行符
+            {/if}
+          </span>
+        </div>
+        <button
+          class="toggle-btn"
+          class:active={app.disableAutoCrlf}
+          role="switch"
+          aria-checked={app.disableAutoCrlf}
+          onclick={async () => {
+            app.disableAutoCrlf = !app.disableAutoCrlf;
+            await setGitDisableAutoCrlf(app.disableAutoCrlf);
+            await app.saveDisableAutoCrlf();
+            app.addToast(
+              app.disableAutoCrlf ? '已禁止 Git 自動轉換換行符' : '已恢復 Git 預設換行符處理',
+              'success',
+            );
+          }}
+        >
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </button>
       </div>
     </div>
 
@@ -867,4 +902,42 @@
   }
   .ai-prompt-textarea:focus { border-color: var(--accent); }
   .ai-prompt-textarea::placeholder { color: var(--text-muted); }
+
+  /* Toggle Switch */
+  .toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .toggle-track {
+    display: block;
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .toggle-btn.active .toggle-track {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .toggle-thumb {
+    display: block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .toggle-btn.active .toggle-thumb {
+    transform: translateX(18px);
+    background: var(--bg-primary);
+  }
 </style>

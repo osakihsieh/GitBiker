@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use tauri::{AppHandle, State};
 
 use crate::git::types::*;
+use crate::git::local_git::{get_disable_auto_crlf, set_disable_auto_crlf};
 use crate::git::{GitError, GitOperations, LocalGit};
 use crate::watcher::WatcherState;
 
@@ -360,4 +361,14 @@ pub fn check_git_version() -> Result<String, GitError> {
 
     let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
     Ok(version)
+}
+
+#[tauri::command]
+pub fn set_git_disable_auto_crlf(disabled: bool) {
+    set_disable_auto_crlf(disabled);
+}
+
+#[tauri::command]
+pub fn get_git_disable_auto_crlf() -> bool {
+    get_disable_auto_crlf()
 }

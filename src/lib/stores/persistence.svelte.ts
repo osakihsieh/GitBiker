@@ -10,6 +10,7 @@ const AI_MODEL_KEY = 'aiModel';
 const AI_CUSTOM_PROMPT_KEY = 'aiCustomPrompt';
 const AI_LANGUAGE_KEY = 'aiLanguage';
 const AI_OLLAMA_ENDPOINT_KEY = 'aiOllamaEndpoint';
+const DISABLE_AUTO_CRLF_KEY = 'disableAutoCrlf';
 const MAX_RECENT_REPOS = 10;
 
 let storeInstance: Store | null = null;
@@ -37,6 +38,7 @@ export interface PersistableState {
   aiCustomPrompt: string;
   aiLanguage: AiLanguage;
   aiOllamaEndpoint: string;
+  disableAutoCrlf: boolean;
 }
 
 // ── Recent Repos ──────────────────────────────────────
@@ -44,7 +46,7 @@ export interface PersistableState {
 export async function loadRecentRepos(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
-    const [savedRecent, savedPinned, savedEditor, savedAiProvider, savedAiKey, savedAiModel, savedAiPrompt, savedAiLang, savedAiEndpoint] = await Promise.all([
+    const [savedRecent, savedPinned, savedEditor, savedAiProvider, savedAiKey, savedAiModel, savedAiPrompt, savedAiLang, savedAiEndpoint, savedDisableAutoCrlf] = await Promise.all([
       store.get<string[]>(RECENT_REPOS_KEY),
       store.get<string[]>(PINNED_REPOS_KEY),
       store.get<string | null>(PREFERRED_EDITOR_KEY),
@@ -54,6 +56,7 @@ export async function loadRecentRepos(state: PersistableState): Promise<void> {
       store.get<string>(AI_CUSTOM_PROMPT_KEY),
       store.get<AiLanguage>(AI_LANGUAGE_KEY),
       store.get<string>(AI_OLLAMA_ENDPOINT_KEY),
+      store.get<boolean>(DISABLE_AUTO_CRLF_KEY),
     ]);
     if (Array.isArray(savedRecent)) {
       state.recentRepos = savedRecent.slice(0, MAX_RECENT_REPOS);
@@ -70,6 +73,7 @@ export async function loadRecentRepos(state: PersistableState): Promise<void> {
     if (typeof savedAiPrompt === 'string') state.aiCustomPrompt = savedAiPrompt;
     if (savedAiLang) state.aiLanguage = savedAiLang;
     if (typeof savedAiEndpoint === 'string') state.aiOllamaEndpoint = savedAiEndpoint;
+    if (typeof savedDisableAutoCrlf === 'boolean') state.disableAutoCrlf = savedDisableAutoCrlf;
   } catch {
     // 首次啟動 store 檔案不存在，忽略
   }
@@ -154,6 +158,15 @@ export async function saveAiSettings(state: PersistableState): Promise<void> {
       store.set(AI_LANGUAGE_KEY, state.aiLanguage),
       store.set(AI_OLLAMA_ENDPOINT_KEY, state.aiOllamaEndpoint),
     ]);
+  } catch {}
+}
+
+// ── Git Settings ───────────────────────────────────────
+
+export async function saveDisableAutoCrlf(state: PersistableState): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(DISABLE_AUTO_CRLF_KEY, state.disableAutoCrlf);
   } catch {}
 }
 

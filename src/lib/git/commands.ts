@@ -355,3 +355,13 @@ export async function generateCommitMessage(params: GenerateCommitMessageParams)
     ollamaEndpoint: params.ollamaEndpoint ?? null,
   });
 }
+
+// ── Git CRLF Settings ──────────────────────────────────
+
+export async function setGitDisableAutoCrlf(disabled: boolean): Promise<void> {
+  return invoke('set_git_disable_auto_crlf', { disabled });
+}
+
+export async function getGitDisableAutoCrlf(): Promise<boolean> {
+  return invoke('get_git_disable_auto_crlf');
+}

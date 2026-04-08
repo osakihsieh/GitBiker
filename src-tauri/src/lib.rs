@@ -91,6 +91,8 @@ pub fn run() {
             commands::run_shell_command,
             commands::generate_commit_message,
             commands::list_ai_models,
+            commands::set_git_disable_auto_crlf,
+            commands::get_git_disable_auto_crlf,
         ])
         .run(tauri::generate_context!())
         .expect("啟動 GitBiker 失敗");
