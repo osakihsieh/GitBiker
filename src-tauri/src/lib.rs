@@ -5,6 +5,7 @@ mod watcher;
 
 use commands::git_commands::GitState;
 use git::LocalGit;
+use tauri::Manager;
 use watcher::WatcherState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -19,6 +20,14 @@ pub fn run() {
     tracing::info!("GitBiker 啟動中...");
 
     tauri::Builder::default()
+        .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                if let Ok(icon) = tauri::image::Image::from_bytes(include_bytes!("../icons/icon.ico")) {
+                    let _ = window.set_icon(icon);
+                }
+            }
+            Ok(())
+        })
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())

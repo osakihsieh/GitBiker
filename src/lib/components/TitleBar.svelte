@@ -30,7 +30,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="titlebar">
   <div class="titlebar-left" data-tauri-drag-region>
-    <span class="app-icon">⑇</span>
+    <img src="/GitBiker.png" alt="GitBiker" class="app-icon" />
     <span class="app-name">GitBiker</span>
   </div>
 
@@ -83,8 +83,10 @@
     cursor: default;
   }
   .app-icon {
-    font-size: 14px;
-    color: var(--accent);
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
   }
   .app-name {
     font-size: 12px;
