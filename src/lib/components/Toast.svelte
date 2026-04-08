@@ -21,7 +21,7 @@
 <style>
   .toast-container {
     position: fixed;
-    top: 52px;
+    bottom: 16px;
     right: 16px;
     z-index: 100;
     display: flex;
@@ -65,7 +65,7 @@
     font-size: 14px;
   }
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-8px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
 </style>

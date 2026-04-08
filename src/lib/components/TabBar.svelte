@@ -164,12 +164,12 @@
   .tab-bar {
     display: flex;
     align-items: center;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-    height: 28px;
+    background: transparent;
+    height: 32px;
     flex-shrink: 0;
     user-select: none;
     position: relative;
+    width: 100%;
   }
   .tabs-scroll {
     display: flex;
@@ -184,7 +184,7 @@
     align-items: center;
     gap: var(--space-xs);
     padding: 0 var(--space-md);
-    height: 28px;
+    height: 32px;
     font-size: 12px;
     font-family: var(--font-ui);
     color: var(--text-secondary);
@@ -239,7 +239,7 @@
     align-items: center;
     justify-content: center;
     width: 20px;
-    height: 28px;
+    height: 32px;
     background: var(--bg-secondary);
     border: none;
     color: var(--text-muted);

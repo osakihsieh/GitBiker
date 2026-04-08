@@ -243,7 +243,9 @@
 <svelte:window onkeydown={handleGlobalKeydown} />
 
 <div class="app-root">
-  <TitleBar />
+  <TitleBar>
+    <TabBar onOpenPopover={togglePopover} />
+  </TitleBar>
   {#if showSettings}
     <Settings onClose={() => showSettings = false} />
   {:else if app.hasRepo}
@@ -252,7 +254,6 @@
       onOpenPopover={togglePopover}
       onOpenMultiRepo={toggleMultiRepo}
     />
-    <TabBar onOpenPopover={togglePopover} />
     <div class="main">
       {#if app.viewMode === 'conflict-resolution'}
         <ConflictResolver />

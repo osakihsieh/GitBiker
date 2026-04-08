@@ -14,6 +14,7 @@ import {
   saveDisableAutoCrlf as _saveDisableAutoCrlf,
   saveIgnoreEol as _saveIgnoreEol,
   saveTerminalShell as _saveTerminalShell,
+  saveUseSystemNotification as _saveUseSystemNotification,
 } from './persistence.svelte';
 import type { AiProviderType, AiLanguage } from './persistence.svelte';
 import {
@@ -171,6 +172,7 @@ class AppState {
   // ── UI state ──
   loading = $state(false);
   toasts = $state<Toast[]>([]);
+  useSystemNotification = $state(false);
   showTerminal = $state(false);
 
   toggleTerminal(): void {
@@ -566,6 +568,7 @@ class AppState {
   async saveDisableAutoCrlf() { return _saveDisableAutoCrlf(this); }
   async saveIgnoreEol() { return _saveIgnoreEol(this); }
   async saveTerminalShell() { return _saveTerminalShell(this); }
+  async saveUseSystemNotification() { return _saveUseSystemNotification(this); }
 
   // ── Auto Fetch ──
 
@@ -634,6 +637,14 @@ class AppState {
   // ── Toast ──
 
   addToast(message: string, type: Toast['type'], autoDismiss = true) {
+    // 若啟用系統通知，且非需手動關閉的錯誤 → 用 OS 通知
+    if (this.useSystemNotification && autoDismiss) {
+      import('@tauri-apps/plugin-notification').then(({ sendNotification }) => {
+        sendNotification({ title: 'GitBiker', body: message });
+      });
+      return;
+    }
+
     const id = ++toastCounter;
     this.toasts = [...this.toasts, { id, message, type, autoDismiss }];
 

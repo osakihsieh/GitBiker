@@ -16,6 +16,7 @@ const TERMINAL_SHELL_KEY = 'terminalShell';
 const SCAN_PATHS_KEY = 'multiRepoScanPaths';
 const CACHED_REPO_INFOS_KEY = 'multiRepoCachedInfos';
 const MULTI_REPO_REFRESH_INTERVAL_KEY = 'multiRepoRefreshInterval';
+const USE_SYSTEM_NOTIFICATION_KEY = 'useSystemNotification';
 const MAX_RECENT_REPOS = 10;
 
 let storeInstance: Store | null = null;
@@ -46,6 +47,7 @@ export interface PersistableState {
   disableAutoCrlf: boolean;
   ignoreEol: boolean;
   terminalShell: string | null;
+  useSystemNotification: boolean;
 }
 
 // ── Recent Repos ──────────────────────────────────────
@@ -53,7 +55,7 @@ export interface PersistableState {
 export async function loadAppSettings(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
-    const [savedRecent, savedPinned, savedEditor, savedAiProvider, savedAiKey, savedAiModel, savedAiPrompt, savedAiLang, savedAiEndpoint, savedDisableAutoCrlf, savedIgnoreEol, savedTerminalShell] = await Promise.all([
+    const [savedRecent, savedPinned, savedEditor, savedAiProvider, savedAiKey, savedAiModel, savedAiPrompt, savedAiLang, savedAiEndpoint, savedDisableAutoCrlf, savedIgnoreEol, savedTerminalShell, savedUseSystemNotification] = await Promise.all([
       store.get<string[]>(RECENT_REPOS_KEY),
       store.get<string[]>(PINNED_REPOS_KEY),
       store.get<string | null>(PREFERRED_EDITOR_KEY),
@@ -66,6 +68,7 @@ export async function loadAppSettings(state: PersistableState): Promise<void> {
       store.get<boolean>(DISABLE_AUTO_CRLF_KEY),
       store.get<boolean>(IGNORE_EOL_KEY),
       store.get<string | null>(TERMINAL_SHELL_KEY),
+      store.get<boolean>(USE_SYSTEM_NOTIFICATION_KEY),
     ]);
     if (Array.isArray(savedRecent)) {
       state.recentRepos = savedRecent.slice(0, MAX_RECENT_REPOS);
@@ -85,6 +88,7 @@ export async function loadAppSettings(state: PersistableState): Promise<void> {
     if (typeof savedDisableAutoCrlf === 'boolean') state.disableAutoCrlf = savedDisableAutoCrlf;
     if (typeof savedIgnoreEol === 'boolean') state.ignoreEol = savedIgnoreEol;
     if (typeof savedTerminalShell === 'string') state.terminalShell = savedTerminalShell;
+    if (typeof savedUseSystemNotification === 'boolean') state.useSystemNotification = savedUseSystemNotification;
   } catch {
     // 首次啟動 store 檔案不存在，忽略
   }
@@ -185,6 +189,15 @@ export async function saveIgnoreEol(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
     await store.set(IGNORE_EOL_KEY, state.ignoreEol);
+  } catch {}
+}
+
+// ── Notification Mode ─────────────────────────────────
+
+export async function saveUseSystemNotification(state: PersistableState): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(USE_SYSTEM_NOTIFICATION_KEY, state.useSystemNotification);
   } catch {}
 }
 

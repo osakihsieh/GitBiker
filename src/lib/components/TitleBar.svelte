@@ -1,11 +1,16 @@
 <script lang="ts">
   import { getCurrentWindow } from '@tauri-apps/api/window';
+  import type { Snippet } from 'svelte';
+
+  interface Props {
+    children?: Snippet;
+  }
+  let { children }: Props = $props();
 
   let maximized = $state(false);
 
   const appWindow = getCurrentWindow();
 
-  // Track maximize state
   $effect(() => {
     let cleanup: (() => void) | undefined;
 
@@ -24,12 +29,14 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="titlebar">
-  <div class="titlebar-left">
+  <div class="titlebar-left" data-tauri-drag-region>
     <span class="app-icon">⑇</span>
     <span class="app-name">GitBiker</span>
   </div>
 
-  <div class="titlebar-drag" data-tauri-drag-region ondblclick={toggleMaximize}></div>
+  <div class="titlebar-tabs" data-tauri-drag-region ondblclick={toggleMaximize}>
+    {@render children?.()}
+  </div>
 
   <div class="titlebar-controls">
     <button class="control-btn" onclick={minimize} aria-label="Minimize">
@@ -59,9 +66,10 @@
 <style>
   .titlebar {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     height: 32px;
     background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     user-select: none;
     -webkit-user-select: none;
@@ -70,8 +78,9 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding-left: var(--space-sm);
+    padding: 0 var(--space-md) 0 var(--space-sm);
     flex-shrink: 0;
+    cursor: default;
   }
   .app-icon {
     font-size: 14px;
@@ -81,10 +90,14 @@
     font-size: 12px;
     color: var(--text-muted);
     font-family: var(--font-ui);
+    white-space: nowrap;
   }
-  .titlebar-drag {
+  .titlebar-tabs {
     flex: 1;
-    height: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
   }
   .titlebar-controls {
     display: flex;

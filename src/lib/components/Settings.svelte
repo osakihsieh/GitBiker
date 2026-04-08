@@ -240,6 +240,33 @@
           {/each}
         </div>
       </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">通知方式</span>
+          <span class="setting-desc">
+            {app.useSystemNotification ? '使用 OS 系統通知，不遮擋操作介面' : '使用應用程式內通知（右下角）'}
+          </span>
+        </div>
+        <button
+          class="toggle-btn"
+          class:active={app.useSystemNotification}
+          role="switch"
+          aria-checked={app.useSystemNotification}
+          onclick={async () => {
+            app.useSystemNotification = !app.useSystemNotification;
+            await app.saveUseSystemNotification();
+            app.addToast(
+              app.useSystemNotification ? '已切換為系統通知' : '已切換為應用內通知',
+              'success'
+            );
+          }}
+        >
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </button>
+      </div>
     </div>
 
     <div class="section">
