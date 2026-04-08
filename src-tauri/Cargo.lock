@@ -1402,7 +1402,7 @@ dependencies = [
 
 [[package]]
 name = "gitbiker"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "git2",
