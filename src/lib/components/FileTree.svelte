@@ -4,7 +4,8 @@
   import type { FileStatus } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
-  let commitMessage = $state('');
+  let commitTitle = $state('');
+  let commitBody = $state('');
   let committing = $state(false);
   let generating = $state(false);
   let contextMenu = $state<{ file: FileStatus; x: number; y: number } | null>(null);
@@ -63,13 +64,21 @@
     }
   }
 
+  function buildCommitMessage(): string {
+    const title = commitTitle.trim();
+    const body = commitBody.trim();
+    if (!body) return title;
+    return `${title}\n\n${body}`;
+  }
+
   async function handleCommit() {
-    if (!app.repoPath || !commitMessage.trim() || committing) return;
+    if (!app.repoPath || !commitTitle.trim() || committing) return;
     committing = true;
     try {
-      const hash = await gitCommit(app.repoPath, commitMessage);
+      const hash = await gitCommit(app.repoPath, buildCommitMessage());
       app.addToast(`Committed ${hash.substring(0, 7)}`, 'success');
-      commitMessage = '';
+      commitTitle = '';
+      commitBody = '';
       await app.refreshAll();
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
@@ -98,7 +107,15 @@
         customPrompt: app.aiCustomPrompt || undefined,
         ollamaEndpoint: app.aiProvider === 'ollama' ? app.aiOllamaEndpoint : undefined,
       });
-      commitMessage = message;
+      // Split AI response into title + body at first blank line
+      const blankIdx = message.indexOf('\n\n');
+      if (blankIdx !== -1) {
+        commitTitle = message.substring(0, blankIdx).trim();
+        commitBody = message.substring(blankIdx + 2).trim();
+      } else {
+        commitTitle = message.trim();
+        commitBody = '';
+      }
       app.addToast('AI 已生成 commit message', 'success');
     } catch (e: unknown) {
       app.addToast(String(e), 'error');
@@ -313,9 +330,17 @@
 
   <!-- Commit Form -->
   <div class="commit-form">
+    <input
+      type="text"
+      class="commit-title-input"
+      bind:value={commitTitle}
+      placeholder="feat: 簡述變更"
+      onkeydown={handleKeydown}
+    />
     <textarea
-      bind:value={commitMessage}
-      placeholder={"標題：feat: 新增功能\n\n內文：說明改了什麼、為什麼改"}
+      class="commit-body-input"
+      bind:value={commitBody}
+      placeholder="詳細說明（選填）"
       onkeydown={handleKeydown}
     ></textarea>
     <div class="commit-actions">
@@ -333,7 +358,7 @@
       <button
         class="commit-btn"
         onclick={handleCommit}
-        disabled={!commitMessage.trim() || committing || app.stagedFiles.length === 0}
+        disabled={!commitTitle.trim() || committing || app.stagedFiles.length === 0}
       >
         {#if committing}
           <span class="spinner"></span>
@@ -462,22 +487,38 @@
     padding: var(--space-sm) var(--space-md);
     flex-shrink: 0;
   }
-  .commit-form textarea {
+  .commit-title-input {
     width: 100%;
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    padding: var(--space-sm);
+    outline: none;
+    border-bottom: none;
+  }
+  .commit-title-input:focus { border-color: var(--accent); }
+  .commit-title-input:focus + .commit-body-input { border-color: var(--accent); }
+  .commit-title-input::placeholder { color: var(--text-muted); font-weight: 400; }
+  .commit-body-input {
+    width: 100%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
     color: var(--text-primary);
     font-family: var(--font-ui);
     font-size: var(--font-size-sm);
     padding: var(--space-sm);
     resize: vertical;
-    min-height: 90px;
-    max-height: 200px;
+    min-height: 48px;
+    max-height: 160px;
     outline: none;
   }
-  .commit-form textarea:focus { border-color: var(--accent); }
-  .commit-form textarea::placeholder { color: var(--text-muted); }
+  .commit-body-input:focus { border-color: var(--accent); }
+  .commit-body-input::placeholder { color: var(--text-muted); }
   .commit-actions {
     margin-top: var(--space-sm);
     display: flex;
