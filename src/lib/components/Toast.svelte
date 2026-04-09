@@ -1,15 +1,13 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import { cn } from '$lib/utils/cn';
 
   let expanded = $state<Set<number>>(new Set());
 
   function toggleExpand(id: number) {
     const next = new Set(expanded);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
     expanded = next;
   }
 
@@ -21,111 +19,68 @@
     const firstLine = message.split('\n')[0];
     return firstLine.length > 120 ? firstLine.slice(0, 117) + '…' : firstLine;
   }
+
+  const typeStyles: Record<string, string> = {
+    success: 'border-[var(--success)]/40 bg-[var(--success)]/10 text-[var(--success)]',
+    error: 'border-[var(--error)]/40 bg-[var(--error)]/10 text-[var(--error)]',
+    info: 'border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[var(--accent)]',
+  };
+
+  const typeIcons: Record<string, string> = {
+    success: '✓',
+    error: '✕',
+    info: 'ℹ',
+  };
 </script>
 
 {#if app.toasts.length > 0}
-  <div class="toast-container">
+  <div class="fixed bottom-4 right-4 z-[300] flex flex-col gap-2" role="region" aria-label="Notifications">
     {#each app.toasts as toast (toast.id)}
-      <div class="toast toast-{toast.type}">
-        <span class="toast-icon">
-          {#if toast.type === 'success'}✓{:else if toast.type === 'error'}✕{:else}ℹ{/if}
-        </span>
-        <span class="toast-body">
+      <div
+        class={cn(
+          'flex min-w-[220px] max-w-[480px] items-start gap-2.5',
+          'rounded-md border px-3 py-2.5 text-xs shadow-lg',
+          'animate-in slide-in-from-right-2 fade-in-0',
+          typeStyles[toast.type] ?? typeStyles.info
+        )}
+        role="alert"
+        aria-live="polite"
+      >
+        <!-- Icon -->
+        <span class="mt-0.5 shrink-0 font-semibold">{typeIcons[toast.type] ?? 'ℹ'}</span>
+
+        <!-- Body -->
+        <span class="flex min-w-0 flex-1 flex-col gap-1">
           {#if isLong(toast.message) && !expanded.has(toast.id)}
-            <span class="toast-message">{summary(toast.message)}</span>
-            <button class="toast-expand" onclick={() => toggleExpand(toast.id)}>展開</button>
+            <span class="break-words leading-relaxed">{summary(toast.message)}</span>
+            <button
+              class="self-start text-[10px] opacity-70 underline hover:opacity-100 bg-transparent border-none cursor-pointer p-0 text-inherit"
+              onclick={() => toggleExpand(toast.id)}
+            >展開</button>
           {:else if isLong(toast.message) && expanded.has(toast.id)}
-            <span class="toast-message toast-message--full">{toast.message}</span>
-            <button class="toast-expand" onclick={() => toggleExpand(toast.id)}>收起</button>
+            <span class="block max-h-60 overflow-y-auto break-words whitespace-pre-wrap leading-relaxed">{toast.message}</span>
+            <button
+              class="self-start text-[10px] opacity-70 underline hover:opacity-100 bg-transparent border-none cursor-pointer p-0 text-inherit"
+              onclick={() => toggleExpand(toast.id)}
+            >收起</button>
           {:else}
-            <span class="toast-message">{toast.message}</span>
+            <span class="break-words leading-relaxed">{toast.message}</span>
           {/if}
         </span>
+
+        <!-- Close (only for non-auto-dismiss) -->
         {#if !toast.autoDismiss}
-          <button class="toast-close" onclick={() => app.removeToast(toast.id)}>✕</button>
+          <button
+            class="shrink-0 rounded p-0.5 opacity-60 hover:opacity-100 transition-opacity bg-transparent border-none cursor-pointer text-inherit"
+            onclick={() => app.removeToast(toast.id)}
+            aria-label="關閉通知"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
         {/if}
       </div>
     {/each}
   </div>
 {/if}
-
-<style>
-  .toast-container {
-    position: fixed;
-    bottom: 16px;
-    right: 16px;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-  .toast {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-sm);
-    animation: fadeIn 0.2s ease;
-    min-width: 200px;
-    max-width: 480px;
-  }
-  .toast-success {
-    background: #1a3d2a;
-    border: 1px solid var(--success);
-    color: var(--success);
-  }
-  .toast-error {
-    background: #3d1a1a;
-    border: 1px solid var(--error);
-    color: var(--error);
-  }
-  .toast-info {
-    background: var(--bg-surface);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-  }
-  .toast-icon { flex-shrink: 0; padding-top: 1px; }
-  .toast-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-  }
-  .toast-message {
-    word-break: break-word;
-    white-space: pre-wrap;
-    line-height: 1.4;
-  }
-  .toast-message--full {
-    max-height: 240px;
-    overflow-y: auto;
-    display: block;
-  }
-  .toast-expand {
-    align-self: flex-start;
-    background: none;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    padding: 0;
-    font-size: 11px;
-    opacity: 0.7;
-    text-decoration: underline;
-  }
-  .toast-expand:hover { opacity: 1; }
-  .toast-close {
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    padding: 2px;
-    font-size: 14px;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-</style>

@@ -1,3 +1,54 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+/* shadcn-svelte CSS variables (mapped to Monokai Pro) */
+@layer base {
+  :root {
+    --background: 39 4% 17%; /* #2d2a2e */
+    --foreground: 60 7% 98%; /* #fcfcfa */
+    --card: 300 4% 19%; /* #403e41 */
+    --card-foreground: 60 7% 98%;
+    --popover: 300 5% 14%; /* #221f22 */
+    --popover-foreground: 60 7% 98%;
+    --primary: 191 70% 69%; /* #78dce8 */
+    --primary-foreground: 39 4% 17%;
+    --secondary: 300 4% 19%;
+    --secondary-foreground: 60 7% 98%;
+    --muted: 300 4% 25%;
+    --muted-foreground: 300 1% 57%; /* #939293 */
+    --accent: 300 4% 30%;
+    --accent-foreground: 60 7% 98%;
+    --destructive: 344 100% 69%; /* #ff6188 */
+    --destructive-foreground: 60 7% 98%;
+    --border: 300 4% 25%;
+    --input: 300 4% 25%;
+    --ring: 191 70% 69%;
+    --radius: 0.25rem;
+  }
+  [data-theme="light"] {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 210 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 82%;
+    --input: 0 0% 82%;
+    --ring: 210 100% 40%;
+    --radius: 0.25rem;
+  }
+}
+
 /* Tauri drag region (Windows touch/pen support) */
 [data-tauri-drag-region] {
   app-region: drag;

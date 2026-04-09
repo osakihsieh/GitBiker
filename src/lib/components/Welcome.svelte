@@ -2,6 +2,8 @@
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { gitInit, scanGitRepos } from '$lib/git/commands';
+  import UiButton from '$lib/components/ui/button.svelte';
+  import { cn } from '$lib/utils/cn';
 
   interface Props {
     onOpenRepo: (path: string) => void;
@@ -64,9 +66,10 @@
   }
 </script>
 
-<div class="welcome">
-  <div class="logo">
-    <svg class="logo-icon" viewBox="0 0 64 64" fill="none">
+<div class="flex h-full flex-col items-center justify-center gap-10 px-12 py-12">
+  <!-- Logo -->
+  <div class="flex flex-col items-center gap-3">
+    <svg class="h-14 w-14" viewBox="0 0 64 64" fill="none">
       <circle cx="16" cy="44" r="10" stroke="var(--accent)" stroke-width="2" fill="none"/>
       <circle cx="48" cy="44" r="10" stroke="var(--accent)" stroke-width="2" fill="none"/>
       <path d="M16 44 L28 24 L40 44 L48 44" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linejoin="round"/>
@@ -76,157 +79,73 @@
       <circle cx="36" cy="12" r="2" fill="var(--text-primary)" opacity="0.4"/>
       <circle cx="46" cy="12" r="2" fill="var(--text-primary)" opacity="0.4"/>
     </svg>
-    <div class="logo-text">GitBiker</div>
-    <div class="logo-sub">fast. minimal. yours.</div>
+    <div class="text-2xl font-light tracking-widest text-[var(--text-primary)]">GitBiker</div>
+    <div class="text-xs tracking-wide text-[var(--text-muted)]">fast. minimal. yours.</div>
   </div>
 
-  <div class="actions">
-    <button class="action-btn" onclick={onClone}>
-      <span class="icon">⇣</span>
-      <span class="label">Clone a Repo</span>
-      <span class="hint">from URL</span>
-    </button>
-    <button class="action-btn" onclick={handleOpenLocal}>
-      <span class="icon">📂</span>
-      <span class="label">Open Local Repo</span>
-      <span class="hint">from disk</span>
-    </button>
-    <button class="action-btn" onclick={handleInitRepo}>
-      <span class="icon">+</span>
-      <span class="label">Init New Repo</span>
-      <span class="hint">git init</span>
-    </button>
-    <button class="action-btn" onclick={handleOpenMultiRepo}>
-      <span class="icon">⊞</span>
-      <span class="label">Open Multi-Repo</span>
-      <span class="hint">bulk operations</span>
-    </button>
+  <!-- Actions -->
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    {#each [
+      { icon: '⇣', label: 'Clone a Repo', hint: 'from URL', action: onClone },
+      { icon: '📂', label: 'Open Local', hint: 'from disk', action: handleOpenLocal },
+      { icon: '+', label: 'Init New Repo', hint: 'git init', action: handleInitRepo },
+      { icon: '⊞', label: 'Multi-Repo', hint: 'bulk ops', action: handleOpenMultiRepo },
+    ] as item}
+      <button
+        class={cn(
+          'flex flex-col items-center gap-2 rounded-md border border-[var(--border)]',
+          'bg-[var(--bg-surface)] px-6 py-5 transition-all duration-150',
+          'hover:border-[var(--accent)] hover:bg-[var(--bg-hover)]',
+          'cursor-pointer min-w-[140px]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]'
+        )}
+        onclick={item.action}
+      >
+        <span class="text-2xl text-[var(--accent)]">{item.icon}</span>
+        <div class="flex flex-col items-center gap-0.5">
+          <span class="text-sm font-medium text-[var(--text-primary)]">{item.label}</span>
+          <span class="text-[10px] text-[var(--text-muted)]">{item.hint}</span>
+        </div>
+      </button>
+    {/each}
   </div>
 
-  <div class="recent">
-    <div class="recent-header">Recent Repos</div>
+  <!-- Recent repos -->
+  <div class="w-full max-w-md">
+    <div class="mb-2 border-b border-[var(--border)] pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+      Recent Repos
+    </div>
+
     {#if app.recentRepos.length > 0}
-      <div class="recent-list">
+      <div class="flex flex-col">
         {#each app.recentRepos as repoPath}
-          <button class="recent-item" onclick={() => onOpenRepo(repoPath)}>
-            <span class="repo-icon">📁</span>
-            <div class="repo-info">
-              <div class="repo-name">{repoPath.replace(/\\/g, '/').split('/').pop()}</div>
-              <div class="repo-path">{repoPath}</div>
+          <button
+            class={cn(
+              'flex items-center gap-3 rounded-sm px-3 py-2 text-left',
+              'bg-transparent border-none cursor-pointer w-full',
+              'hover:bg-[var(--bg-hover)] transition-colors',
+              'focus-visible:outline-none focus-visible:bg-[var(--bg-hover)]'
+            )}
+            onclick={() => onOpenRepo(repoPath)}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium text-[var(--text-primary)]">
+                {repoPath.replace(/\\/g, '/').split('/').pop()}
+              </div>
+              <div class="truncate font-mono text-[10px] text-[var(--text-muted)]">{repoPath}</div>
             </div>
           </button>
         {/each}
       </div>
     {:else}
-      <div class="recent-empty">
+      <div class="py-6 text-center text-sm text-[var(--text-muted)]">
         No repos yet. Clone or open one to get started.
       </div>
     {/if}
   </div>
 
-  <div class="version">v0.1.0</div>
+  <div class="fixed bottom-3 text-[10px] text-[var(--text-muted)] opacity-40">v0.3.0</div>
 </div>
-
-<style>
-  .welcome {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 32px;
-    padding: 48px;
-    height: 100%;
-  }
-  .logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-  .logo-icon { width: 64px; height: 64px; }
-  .logo-text {
-    font-size: 24px;
-    font-weight: 300;
-    letter-spacing: 2px;
-  }
-  .logo-sub {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-    letter-spacing: 1px;
-  }
-  .actions { display: flex; gap: 16px; }
-  .action-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 20px 32px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    cursor: pointer;
-    font-family: var(--font-ui);
-    min-width: 160px;
-    transition: border-color 0.15s, background 0.15s;
-  }
-  .action-btn:hover {
-    border-color: var(--accent);
-    background: var(--bg-hover);
-  }
-  .icon { font-size: 24px; color: var(--accent); }
-  .label { font-size: var(--font-size-lg); font-weight: 500; }
-  .hint { font-size: 11px; color: var(--text-muted); }
-  .recent { width: 100%; max-width: 480px; }
-  .recent-header {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-secondary);
-    margin-bottom: var(--space-sm);
-    padding-bottom: var(--space-xs);
-    border-bottom: 1px solid var(--border);
-  }
-  .recent-empty {
-    text-align: center;
-    padding: 24px;
-    color: var(--text-muted);
-    font-size: var(--font-size-md);
-  }
-  .recent-list { display: flex; flex-direction: column; }
-  .recent-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    font-family: var(--font-ui);
-    text-align: left;
-    width: 100%;
-  }
-  .recent-item:hover { background: var(--bg-hover); }
-  .repo-icon { font-size: 16px; flex-shrink: 0; }
-  .repo-info { flex: 1; min-width: 0; }
-  .repo-name { font-size: var(--font-size-md); font-weight: 500; }
-  .repo-path {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .version {
-    position: fixed;
-    bottom: 12px;
-    font-size: 10px;
-    color: var(--text-muted);
-    opacity: 0.4;
-  }
-</style>
