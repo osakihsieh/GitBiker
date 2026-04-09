@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
   import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, detectShells, listAiModels, setGitDisableAutoCrlf, setGitIgnoreEol } from '$lib/git/commands';
@@ -86,7 +87,7 @@
     try {
       remotes = await gitRemoteList(app.repoPath);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       loadingRemotes = false;
     }
@@ -102,7 +103,7 @@
       showAddForm = false;
       await loadRemotes();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -113,7 +114,7 @@
       app.addToast(`已移除 remote: ${name}`, 'success');
       await loadRemotes();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -130,7 +131,7 @@
       renamingRemote = null;
       await loadRemotes();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -150,7 +151,7 @@
       );
     } catch (e: unknown) {
       aiModels = [];
-      modelsError = String(e);
+      modelsError = extractErrorMessage(e);
     } finally {
       loadingModels = false;
     }
@@ -503,7 +504,7 @@
               }
             }
           } catch (e) {
-            app.addToast(String(e), 'error');
+            app.addToast(extractErrorMessage(e), 'error');
           }
         }}
       >

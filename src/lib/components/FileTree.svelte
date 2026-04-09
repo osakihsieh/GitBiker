@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { gitStage, gitUnstage, gitCommit, gitIgnore, gitCheckoutFile, openInEditor, gitStashPushFiles, generateCommitMessage } from '$lib/git/commands';
   import type { FileStatus } from '$lib/git/types';
@@ -40,7 +41,7 @@
       }
       await app.refreshStatus();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -52,7 +53,7 @@
       await gitStage(app.repoPath, paths);
       await app.refreshStatus();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -64,7 +65,7 @@
       await gitUnstage(app.repoPath, paths);
       await app.refreshStatus();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -86,7 +87,7 @@
       commitType = 'auto';
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       committing = false;
     }
@@ -124,7 +125,7 @@
       }
       app.addToast('AI 已生成 commit message', 'success');
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       generating = false;
     }
@@ -281,7 +282,7 @@
           break;
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 </script>

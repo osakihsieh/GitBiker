@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { invoke } from '@tauri-apps/api/core';
   import { app } from '$lib/stores/app.svelte';
 
@@ -28,7 +29,7 @@
       app.addToast('Clone 完成', 'success');
       onCloned(destPath.trim());
     } catch (e: unknown) {
-      const msg = String(e);
+      const msg = extractErrorMessage(e);
       if (msg.includes('Authentication') || msg.includes('could not read Username')) {
         error = '認證失敗 — 請確認 URL 和 credential helper 設定';
       } else if (msg.includes('not found') || msg.includes('Repository not found')) {

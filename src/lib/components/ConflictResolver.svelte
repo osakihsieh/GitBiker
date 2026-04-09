@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import {
     gitResolveConflictContent,
@@ -123,7 +124,7 @@
 
       app.addToast(`已解決 ${fileName(file)}`, 'success');
     } catch (e: unknown) {
-      const msg = String(e);
+      const msg = extractErrorMessage(e);
       if (msg.includes('外部修改')) {
         // Reload content
         await app.selectConflictFile(file);
@@ -145,7 +146,7 @@
       app.exitConflictMode();
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       completing = false;
     }
@@ -162,7 +163,7 @@
       app.exitConflictMode();
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       aborting = false;
     }
@@ -174,7 +175,7 @@
     try {
       await openInEditor(path, app.preferredEditor ?? undefined);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 </script>

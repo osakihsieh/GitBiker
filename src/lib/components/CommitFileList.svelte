@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { gitShowFiles, gitShowFileDiff } from '$lib/git/commands';
   import type { FileStatus, DiffResult } from '$lib/git/types';
@@ -48,7 +49,7 @@
         files = result;
       })
       .catch((e) => {
-        app.addToast(String(e), 'error');
+        app.addToast(extractErrorMessage(e), 'error');
         files = [];
       })
       .finally(() => { loading = false; });
@@ -74,7 +75,7 @@
       cacheSet(diffCache, diffKey, diff);
       app.currentDiff = diff;
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import {
     gitBranches,
@@ -100,7 +101,7 @@
       app.addToast(`已建立並切換到 ${slugPreview}`, 'success');
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       creating = false;
     }
@@ -120,7 +121,7 @@
       app.addToast(`已刪除 ${name}`, 'success');
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       deleting = false;
     }
@@ -135,7 +136,7 @@
       confirmDelete = null;
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       deleting = false;
     }
@@ -171,7 +172,7 @@
       renamingBranch = null;
       await app.refreshAll();
     } catch (e: unknown) {
-      renameError = String(e);
+      renameError = extractErrorMessage(e);
     }
   }
 
@@ -183,7 +184,7 @@
       app.addToast(`已 checkout ${localName}`, 'success');
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -196,7 +197,7 @@
       onClose();
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -212,7 +213,7 @@
         app.addToast(result.message, 'error', false);
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       pushingBranch = null;
     }
@@ -246,7 +247,7 @@
         await gitDeleteBranch(app.repoPath!, mergedStale[i]);
         deleted++;
       } catch (e: unknown) {
-        failures.push(`${mergedStale[i]}: ${String(e)}`);
+        failures.push(`${mergedStale[i]}: ${extractErrorMessage(e)}`);
       }
     }
     batchCleaning = false;
@@ -283,7 +284,7 @@
       // Step 2: Execute merge (no conflicts predicted, or dry-run skipped)
       await executeMerge(name);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
       mergingBranch = null;
     }
   }
@@ -308,7 +309,7 @@
       }
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       mergingBranch = null;
     }
@@ -323,7 +324,7 @@
       app.addToast('已取消 merge', 'info');
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 

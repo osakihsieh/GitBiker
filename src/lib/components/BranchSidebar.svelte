@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import {
     gitSwitchBranch,
@@ -88,7 +89,7 @@
     try {
       stashes = await gitStashList(app.repoPath);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       loadingStashes = false;
     }
@@ -123,7 +124,7 @@
       await gitSwitchBranch(app.repoPath, branchName);
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -147,7 +148,7 @@
       const raw = await gitStashShow(app.repoPath, index);
       app.stashDiff = raw;
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -162,7 +163,7 @@
       showPushForm = false;
       await Promise.all([loadStashes(), app.refreshStatus()]);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       pushing = false;
     }
@@ -176,7 +177,7 @@
       if (selectedStashIndex === index) { app.stashDiff = null; selectedStashIndex = null; }
       await Promise.all([loadStashes(), app.refreshAll()]);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -187,7 +188,7 @@
       app.addToast('已 apply stash', 'success');
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -199,7 +200,7 @@
       if (selectedStashIndex === index) { app.stashDiff = null; selectedStashIndex = null; }
       await loadStashes();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -254,7 +255,7 @@
         }
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -267,7 +268,7 @@
       app.addToast(`已建立 tag: ${tagName.trim()}`, 'success');
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -281,7 +282,7 @@
         app.addToast(result.message, 'error', false);
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -322,7 +323,7 @@
         }
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -356,7 +357,7 @@
         }
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 

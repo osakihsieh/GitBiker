@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { gitStageHunk, gitUnstageHunk, gitStashHunk } from '$lib/git/commands';
   import type { DiffHunk } from '$lib/git/types';
@@ -59,7 +60,7 @@
         await app.loadDiff(app.selectedFile);
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -74,7 +75,7 @@
         await app.loadDiff(app.selectedFile);
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -89,7 +90,7 @@
         await app.loadDiff(app.selectedFile);
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 </script>

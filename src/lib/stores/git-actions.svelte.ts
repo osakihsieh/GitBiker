@@ -1,3 +1,4 @@
+import { extractErrorMessage } from '$lib/utils/error';
 import type { FileStatus, Commit, DiffResult, Branch, LogFilter, TagInfo } from '$lib/git/types';
 import { gitStatus, gitLog, gitBranches, gitDiff, gitTags, startWatching, stopWatching } from '$lib/git/commands';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
@@ -74,7 +75,7 @@ export async function refreshStatus(state: GitActionableState): Promise<void> {
     tab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
     tab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
   } catch (e: unknown) {
-    state.addToast(String(e), 'error');
+    state.addToast(extractErrorMessage(e), 'error');
   }
 }
 
@@ -95,7 +96,7 @@ export async function refreshAll(state: GitActionableState): Promise<void> {
     tab.state.tags = tags;
     tab.state.currentBranch = branches.find((b) => b.is_current)?.name || tab.state.currentBranch;
   } catch (e: unknown) {
-    state.addToast(String(e), 'error');
+    state.addToast(extractErrorMessage(e), 'error');
   }
 }
 
@@ -107,7 +108,7 @@ export async function loadDiff(state: GitActionableState, filePath: string): Pro
   try {
     state.currentDiff = await gitDiff(tab.path, filePath);
   } catch (e: unknown) {
-    state.addToast(String(e), 'error');
+    state.addToast(extractErrorMessage(e), 'error');
   }
 }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { gitLogSearch, gitTagCreate, gitTagDelete, gitTagDeleteRemote, gitPushTag, gitRevert, gitResetSoft, gitResetHard, gitCherryPick } from '$lib/git/commands';
   import type { Commit } from '$lib/git/types';
@@ -302,7 +303,7 @@
     try {
       searchResults = await gitLogSearch(app.repoPath, searchQuery.trim(), searchType, 200);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
       searchResults = null;
     } finally {
       searching = false;
@@ -421,7 +422,7 @@
         }
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -473,7 +474,7 @@
         }
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 

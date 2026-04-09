@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import {
     gitStashList,
@@ -29,7 +30,7 @@
     try {
       stashes = await gitStashList(app.repoPath);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       loading = false;
     }
@@ -50,7 +51,7 @@
       showPushForm = false;
       await Promise.all([loadStashes(), app.refreshStatus()]);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       pushing = false;
     }
@@ -63,7 +64,7 @@
       app.addToast('已 pop stash', 'success');
       await Promise.all([loadStashes(), app.refreshAll()]);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -74,7 +75,7 @@
       app.addToast('已 apply stash', 'success');
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -85,7 +86,7 @@
       app.addToast('已刪除 stash', 'success');
       await loadStashes();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 </script>

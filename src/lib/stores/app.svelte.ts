@@ -1,3 +1,4 @@
+import { extractErrorMessage } from '$lib/utils/error';
 import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent, LogFilter, BranchCompareResult, TagInfo } from '$lib/git/types';
 import { gitGetConflictFiles, gitGetConflictContent, gitBranchCompare } from '$lib/git/commands';
 import {
@@ -343,7 +344,7 @@ class AppState {
       try {
         tab.state.branchCompareResult = await gitBranchCompare(this.repoPath, base, compare);
       } catch (e: unknown) {
-        this.addToast(String(e), 'error');
+        this.addToast(extractErrorMessage(e), 'error');
       }
     }
   }
@@ -372,7 +373,7 @@ class AppState {
         await this.selectConflictFile(files[0].path);
       }
     } catch (e: unknown) {
-      this.addToast(String(e), 'error');
+      this.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -400,7 +401,7 @@ class AppState {
       tab.state.conflictContent = content;
     } catch (e: unknown) {
       tab.state.conflictContent = null;
-      this.addToast(String(e), 'error');
+      this.addToast(extractErrorMessage(e), 'error');
     }
   }
 
@@ -461,7 +462,7 @@ class AppState {
         if (this.activeTabId === tabId) {
           this.activeTabId = this.tabs.length > 0 ? this.tabs[this.tabs.length - 1].id : null;
         }
-        this.addToast(String(e), 'error');
+        this.addToast(extractErrorMessage(e), 'error');
       } finally {
         this.loading = false;
       }

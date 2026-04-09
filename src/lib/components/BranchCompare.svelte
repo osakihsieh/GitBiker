@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import type { Commit, FileStatus } from '$lib/git/types';
   import { gitDiff } from '$lib/git/commands';
@@ -19,7 +20,7 @@
       // We'll use a new command git_show_file_diff(path, file, base, compare)
       // Actually, for simplicity in MVP, let's just use the file status.
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 

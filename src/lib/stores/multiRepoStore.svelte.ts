@@ -1,3 +1,4 @@
+import { extractErrorMessage } from '$lib/utils/error';
 import { gitStatus, gitBranches, gitFetch, gitPull, gitPush, scanGitRepos } from '$lib/git/commands';
 import { repoNameFromPath } from './app.svelte';
 import {
@@ -221,7 +222,7 @@ class MultiRepoStore {
         ahead: 0,
         behind: 0,
         loading: false,
-        error: String(e),
+        error: extractErrorMessage(e),
         scanPath,
       };
     }
@@ -297,7 +298,7 @@ class MultiRepoStore {
       this.repos = this.repos.map((r) => (r.path === repoPath ? updated : r));
       await this.persistCache();
     } catch (e: unknown) {
-      repo.error = String(e);
+      repo.error = extractErrorMessage(e);
       repo.loading = false;
     }
   }
@@ -312,7 +313,7 @@ class MultiRepoStore {
       this.repos = this.repos.map((r) => (r.path === repoPath ? updated : r));
       await this.persistCache();
     } catch (e: unknown) {
-      repo.error = String(e);
+      repo.error = extractErrorMessage(e);
       repo.loading = false;
     }
   }
@@ -327,7 +328,7 @@ class MultiRepoStore {
       this.repos = this.repos.map((r) => (r.path === repoPath ? updated : r));
       await this.persistCache();
     } catch (e: unknown) {
-      repo.error = String(e);
+      repo.error = extractErrorMessage(e);
       repo.loading = false;
     }
   }

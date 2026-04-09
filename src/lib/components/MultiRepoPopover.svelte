@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { multiRepo, type RepoInfo } from '$lib/stores/multiRepoStore.svelte';
   import { openInEditor } from '$lib/git/commands';
@@ -121,7 +122,7 @@
         }
       }
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 

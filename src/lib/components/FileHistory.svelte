@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { gitFileLog, gitShowFileDiff } from '$lib/git/commands';
   import type { Commit, DiffResult } from '$lib/git/types';
@@ -32,7 +33,7 @@
     try {
       commits = await gitFileLog(app.repoPath, filePath);
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
       commits = [];
     } finally {
       loading = false;
@@ -46,7 +47,7 @@
       const diff: DiffResult = await gitShowFileDiff(app.repoPath, commit.id, filePath);
       app.currentDiff = diff;
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 

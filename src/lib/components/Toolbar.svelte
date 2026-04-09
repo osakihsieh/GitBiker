@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
   import { gitPush, gitPushTags, gitPull, gitFetch, gitBranches, gitSwitchBranch, openInFolder, openInEditor, openInTerminal } from '$lib/git/commands';
@@ -21,19 +22,19 @@
   async function handleOpenFolder() {
     if (!app.repoPath) return;
     try { await openInFolder(app.repoPath); }
-    catch (e: unknown) { app.addToast(String(e), 'error'); }
+    catch (e: unknown) { app.addToast(extractErrorMessage(e), 'error'); }
   }
 
   async function handleOpenEditor() {
     if (!app.repoPath) return;
     try { await openInEditor(app.repoPath, app.preferredEditor ?? undefined); }
-    catch (e: unknown) { app.addToast(String(e), 'error'); }
+    catch (e: unknown) { app.addToast(extractErrorMessage(e), 'error'); }
   }
 
   async function handleOpenTerminal() {
     if (!app.repoPath) return;
     try { await openInTerminal(app.repoPath); }
-    catch (e: unknown) { app.addToast(String(e), 'error'); }
+    catch (e: unknown) { app.addToast(extractErrorMessage(e), 'error'); }
   }
 
   async function handlePush() {
@@ -48,7 +49,7 @@
       }
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error', false);
+      app.addToast(extractErrorMessage(e), 'error', false);
     } finally {
       pushing = false;
     }
@@ -66,7 +67,7 @@
       }
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error', false);
+      app.addToast(extractErrorMessage(e), 'error', false);
     } finally {
       pushingTags = false;
     }
@@ -89,7 +90,7 @@
       }
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error', false);
+      app.addToast(extractErrorMessage(e), 'error', false);
     } finally {
       pulling = false;
     }
@@ -103,7 +104,7 @@
       await app.refreshAll();
       app.addToast('Fetch 完成', 'success');
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     } finally {
       fetching = false;
     }
@@ -118,7 +119,7 @@
       app.addToast(`已切換到 ${name}`, 'success');
       await app.refreshAll();
     } catch (e: unknown) {
-      app.addToast(String(e), 'error');
+      app.addToast(extractErrorMessage(e), 'error');
     }
   }
 
