@@ -88,17 +88,31 @@ pub fn git_merge_branch(
 ) -> Result<MergeResult, GitError> {
     state.git.merge_branch(&PathBuf::from(&path), &branch_name)
 }
-
+/// Git Rebase
 #[tauri::command]
-  pub fn git_rebase(
+pub fn git_rebase(
     state: State<GitState>,
     path: String,
     branch: String,
     onto: String,
-  ) -> Result<crate::git::types::RebaseResult, GitError> {
+) -> Result<crate::git::types::RebaseResult, GitError> {
     state.git.rebase(&PathBuf::from(&path), &branch, &onto)
-  }
+}
 
+/// Git Interactive Rebase
+#[tauri::command]
+pub fn git_rebase_interactive(
+    state: State<GitState>,
+    path: String,
+    onto: String,
+    commits: Vec<RebaseCommit>,
+) -> Result<RebaseResult, GitError> {
+    state
+        .git
+        .rebase_interactive(&PathBuf::from(&path), &onto, commits)
+}
+
+/// Git Merge Abort
 #[tauri::command]
 pub fn git_merge_abort(state: State<GitState>, path: String) -> Result<(), GitError> {
     state.git.merge_abort(&PathBuf::from(&path))

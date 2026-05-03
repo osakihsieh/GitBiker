@@ -60,6 +60,39 @@ pub enum ResolveChoice {
     Theirs,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RebaseResult {
+    pub success: bool,
+    pub message: String,
+    pub conflicts: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum RebaseAction {
+    Pick,
+    Reword,
+    Edit,
+    Squash,
+    Fixup,
+    Exec,
+    Drop,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RebaseCommit {
+    pub action: RebaseAction,
+    pub id: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitEnvInfo {
+    pub is_available: bool,
+    pub version: String,
+    pub path: String,
+    pub is_bundled: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", content = "value")]
 pub enum LogFilter {

@@ -9,6 +9,8 @@ import type {
   LogFilter,
   BranchCompareResult,
   TagInfo,
+  RebaseResult,
+  RebaseCommit,
 } from '$lib/git/types';
 import { gitBranchCompare } from '$lib/git/commands';
 import {
@@ -51,7 +53,8 @@ export type ViewMode =
   | 'commit-detail'
   | 'conflict-resolution'
   | 'file-history'
-  | 'branch-compare';
+  | 'branch-compare'
+  | 'rebase-editor';
 
 export interface RepoState {
   stagedFiles: FileStatus[];
@@ -74,6 +77,9 @@ export interface RepoState {
   logFilter: LogFilter;
   // Branch compare
   branchCompareResult: BranchCompareResult | null;
+  // Rebase
+  rebaseBase: string | null;
+  rebaseCommits: RebaseCommit[];
 }
 export interface RepoTab {
   id: string;
@@ -106,6 +112,8 @@ export function createEmptyState(): RepoState {
     fileHistoryTarget: null,
     logFilter: { type: 'Head' },
     branchCompareResult: null,
+    rebaseBase: null,
+    rebaseCommits: [],
   };
 }
 
@@ -357,6 +365,37 @@ class AppState {
 
   get branchCompareResult(): BranchCompareResult | null {
     return this.activeTab?.state.branchCompareResult ?? null;
+  }
+
+  async openRebaseEditor(onto: string): Promise<void> {
+    if (!this.repoPath) return;
+    const tab = this.activeTab;
+    if (!tab) return;
+
+    try {
+      this.loading = true;
+      // Get commits between current HEAD and onto
+      const compare = await gitBranchCompare(this.repoPath, onto, 'HEAD');
+      tab.state.rebaseBase = onto;
+      tab.state.rebaseCommits = [...compare.commits].reverse().map((c) => ({
+        action: 'Pick',
+        id: c.id,
+        message: c.message,
+      }));
+      this.viewMode = 'rebase-editor';
+    } catch (e: unknown) {
+      this.addToast(extractErrorMessage(e), 'error');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  get rebaseCommits(): RebaseCommit[] {
+    return this.activeTab?.state.rebaseCommits ?? [];
+  }
+
+  get rebaseBase(): string | null {
+    return this.activeTab?.state.rebaseBase ?? null;
   }
 
   // ── Tab CRUD ──

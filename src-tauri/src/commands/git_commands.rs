@@ -386,6 +386,11 @@ pub fn git_file_log(
 }
 
 #[tauri::command]
+pub fn check_git_env() -> GitEnvInfo {
+    LocalGit::check_git_env()
+}
+
+#[tauri::command]
 pub fn check_git_version() -> Result<String, GitError> {
     let output = LocalGit::git_command()
         .args(["--version"])

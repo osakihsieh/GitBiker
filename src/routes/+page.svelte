@@ -29,7 +29,21 @@
   import FileHistory from '$lib/components/FileHistory.svelte';
   import BranchCompare from '$lib/components/BranchCompare.svelte';
   import MultiRepoPopover from '$lib/components/MultiRepoPopover.svelte';
+  import RebaseEditor from '$lib/components/RebaseEditor.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
+  import { checkGitEnv } from '$lib/git/commands';
+
+  let gitEnv = $state<GitEnvInfo | null>(null);
+
+  // 初始化環境檢查
+  $effect(() => {
+    checkGitEnv().then(info => {
+      gitEnv = info;
+      if (!info.is_available) {
+        app.addToast('系統找不到 Git 指令，部分高級功能可能受限', 'error');
+      }
+    });
+  });
 
   let showCloneDialog = $state(false);
   let showSettings = $state(false);
@@ -274,6 +288,8 @@
         </div>
       {:else if app.viewMode === 'branch-compare'}
         <BranchCompare />
+      {:else if app.viewMode === 'rebase-editor'}
+        <RebaseEditor />
       {:else}
         <div class="sidebar" style:width="{sidebarWidth}px">
           <BranchSidebar />
@@ -361,6 +377,7 @@
       <button class="settings-btn" onclick={() => (showSettings = true)}>⚙</button>
     </div>
     <Welcome
+      gitEnv={gitEnv}
       onOpenRepo={(path) => app.openRepo(path)}
       onClone={handleClone}
       onOpenMultiRepo={async (scanPath) => {

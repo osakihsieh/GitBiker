@@ -19,6 +19,9 @@ import type {
   LogFilter,
   BranchCompareResult,
   TagInfo,
+  RebaseResult,
+  RebaseCommit,
+  GitEnvInfo,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
@@ -111,6 +114,14 @@ export async function gitMergeBranch(path: string, branchName: string): Promise<
 
 export async function gitRebase(path: string, branch: string, onto: string): Promise<MergeResult> {
   return invoke('git_rebase', { path, branch, onto });
+}
+
+export async function gitRebaseInteractive(
+  path: string,
+  onto: string,
+  commits: RebaseCommit[],
+): Promise<RebaseResult> {
+  return invoke('git_rebase_interactive', { path, onto, commits });
 }
 
 export async function gitMergeAbort(path: string): Promise<void> {
@@ -277,6 +288,10 @@ export async function gitPushTags(path: string, remote?: string): Promise<PushRe
 
 export async function gitFetch(path: string, remote?: string): Promise<string> {
   return invoke('git_fetch', { path, remote });
+}
+
+export async function checkGitEnv(): Promise<GitEnvInfo> {
+  return invoke('check_git_env');
 }
 
 // ── File Operations ───────────────────────────────────

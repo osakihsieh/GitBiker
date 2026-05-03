@@ -28,5 +28,11 @@ pub trait GitOperations: Send + Sync {
         compare: &str,
     ) -> Result<BranchCompareResult, GitError>;
     fn rebase(&self, path: &Path, branch: &str, onto: &str) -> Result<RebaseResult, GitError>;
+    fn rebase_interactive(
+        &self,
+        path: &Path,
+        onto: &str,
+        commits: Vec<RebaseCommit>,
+    ) -> Result<RebaseResult, GitError>;
     fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError>;
 }

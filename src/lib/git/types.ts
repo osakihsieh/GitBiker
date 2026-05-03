@@ -180,3 +180,26 @@ export interface MergeCompleteResult {
 }
 
 export type ResolveChoice = 'Ours' | 'Theirs';
+
+// ── Rebase Types ──────────────────────────────────────
+
+export interface RebaseResult {
+  success: boolean;
+  message: string;
+  conflicts: string[];
+}
+
+export type RebaseAction = 'Pick' | 'Reword' | 'Edit' | 'Squash' | 'Fixup' | 'Exec' | 'Drop';
+
+export interface RebaseCommit {
+  action: RebaseAction;
+  id: string;
+  message: string;
+}
+
+export interface GitEnvInfo {
+  is_available: boolean;
+  version: string;
+  path: string;
+  is_bundled: boolean;
+}

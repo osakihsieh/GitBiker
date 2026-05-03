@@ -194,6 +194,81 @@ impl LocalGit {
         }
     }
 
+    pub fn rebase_interactive(
+        &self,
+        path: &Path,
+        onto: &str,
+        commits: Vec<RebaseCommit>,
+    ) -> Result<RebaseResult, GitError> {
+        Self::check_index_lock(path)?;
+
+        // 1. Prepare the TODO list
+        let mut todo_content = String::new();
+        for c in &commits {
+            let action_str = match c.action {
+                RebaseAction::Pick => "pick",
+                RebaseAction::Reword => "reword",
+                RebaseAction::Edit => "edit",
+                RebaseAction::Squash => "squash",
+                RebaseAction::Fixup => "fixup",
+                RebaseAction::Exec => "exec",
+                RebaseAction::Drop => "drop",
+            };
+            todo_content.push_str(&action_str);
+            todo_content.push(' ');
+            todo_content.push_str(&c.id);
+            todo_content.push(' ');
+            todo_content.push_str(&c.message.split('\n').next().unwrap_or(""));
+            todo_content.push('\n');
+        }
+
+        // 2. Write to a temporary file
+        let temp_dir = std::env::temp_dir();
+        let random_id = format!("{:x}", std::collections::hash_map::DefaultHasher::new().finish()); // Simple fallback for random
+        let todo_file_path = temp_dir.join(format!("gitbiker-rebase-todo-{}", random_id));
+        
+        std::fs::write(&todo_file_path, todo_content)
+            .map_err(|e| GitError::OperationFailed(format!("無法建立 Rebase TODO 檔: {e}")))?;
+
+        // 3. Execute rebase -i
+        // We use 'cp' as the sequence editor to overwrite git's generated TODO with ours
+        let editor_cmd = format!("cp {}", todo_file_path.display());
+        
+        let output = Self::git_command()
+            .env("GIT_SEQUENCE_EDITOR", &editor_cmd)
+            .args(["rebase", "-i", onto])
+            .current_dir(path)
+            .output()
+            .map_err(|e| GitError::OperationFailed(format!("執行 Rebase 失敗: {e}")))?;
+
+        // Clean up
+        let _ = std::fs::remove_file(todo_file_path);
+
+        if output.status.success() {
+            Ok(RebaseResult {
+                success: true,
+                message: String::from_utf8_lossy(&output.stdout).to_string(),
+                conflicts: Vec::new(),
+            })
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            if stderr.contains("CONFLICT") || stderr.contains("Automatic rebase failed") {
+                let conflicts: Vec<String> = stderr
+                    .lines()
+                    .filter(|l| l.contains("CONFLICT"))
+                    .map(|l| l.to_string())
+                    .collect();
+                Ok(RebaseResult {
+                    success: false,
+                    message: stderr,
+                    conflicts,
+                })
+            } else {
+                Err(GitError::OperationFailed(stderr))
+            }
+        }
+    }
+
     pub fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError> {
         Self::check_index_lock(path)?;
         match Self::run_git(path, &["cherry-pick", commit_id]) {
@@ -471,7 +546,40 @@ impl LocalGit {
         false
     }
 
-    /// Get list of conflicted files from git status.
+    pub fn check_git_env() -> GitEnvInfo {
+        let output = Self::git_command().arg("--version").output();
+
+        match output {
+            Ok(out) if out.status.success() => {
+                let version = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                // Get path
+                let path_output = if cfg!(target_os = "windows") {
+                    Command::new("where").arg("git").output()
+                } else {
+                    Command::new("which").arg("git").output()
+                };
+
+                let path = path_output
+                    .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                    .unwrap_or_else(|_| "unknown".to_string());
+
+                GitEnvInfo {
+                    is_available: true,
+                    version,
+                    path,
+                    is_bundled: false, // Future sidecar logic goes here
+                }
+            }
+            _ => GitEnvInfo {
+                is_available: false,
+                version: "none".to_string(),
+                path: "none".to_string(),
+                is_bundled: false,
+            },
+        }
+    }
+}
+
     pub fn get_conflict_files(&self, path: &Path) -> Result<Vec<ConflictFile>, GitError> {
         // Check MERGE_HEAD exists
         let merge_head = path.join(".git/MERGE_HEAD");

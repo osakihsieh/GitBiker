@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mockStore, mockGitCommands } from '../../tests/mocks/tauri';
+import { createEmptyState } from './app.svelte';
 
 // 必須在 import app 之前設定 mock
 import '../../tests/mocks/tauri';
@@ -53,7 +54,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -88,7 +89,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -119,7 +120,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
         {
@@ -141,7 +142,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -173,7 +174,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -206,7 +207,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
         {
@@ -228,7 +229,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
         {
@@ -250,7 +251,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -282,7 +283,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -317,7 +318,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -345,7 +346,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
         {
@@ -367,7 +368,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -397,7 +398,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
         {
@@ -419,7 +420,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -564,6 +565,7 @@ describe('AppState', () => {
       path: '/test/repo',
       name: 'repo',
       state: {
+        ...createEmptyState(),
         stagedFiles: [] as any[],
         unstagedFiles: [] as any[],
         commits: [] as any[],
@@ -578,7 +580,7 @@ describe('AppState', () => {
         fileHistoryTarget: null,
         tags: [],
         logFilter: { type: "Head" } as const,
-        branchCompareResult: null,
+        branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
       },
     });
 
@@ -678,7 +680,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -724,7 +726,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -765,7 +767,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -827,7 +829,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -888,7 +890,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -924,7 +926,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -969,7 +971,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
         {
@@ -991,7 +993,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -1037,7 +1039,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];
@@ -1068,7 +1070,7 @@ describe('AppState', () => {
             fileHistoryTarget: null,
             tags: [],
             logFilter: { type: "Head" } as const,
-            branchCompareResult: null,
+            branchCompareResult: null, rebaseBase: null, rebaseCommits: [],
           },
         },
       ];

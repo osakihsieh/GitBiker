@@ -249,14 +249,8 @@
           }
           break;
         case 'rebase':
-          if (confirm(`確定要將當前分支 Rebase 到 ${source.id.substring(0, 7)}？`)) {
-            const result = await gitRebase(app.repoPath, app.currentBranch, source.id);
-            if (result.success) {
-              app.addToast('Rebase 成功', 'success');
-            } else if (result.conflicts && result.conflicts.length > 0) {
-              app.addToast('Rebase 衝突，請手動解決', 'error');
-            }
-            await app.refreshAll();
+          if (confirm(`確定要進入互動式 Rebase 到 ${source.id.substring(0, 7)}？`)) {
+            await app.openRebaseEditor(source.id);
           }
           break;
         case 'cherry-pick':
@@ -449,6 +443,7 @@
       { id: '_sep2', label: '', separator: true },
       { id: 'revert', label: '撤回此 Commit (Revert)' },
       { id: 'cherryPick', label: 'Cherry-pick 此 Commit' },
+      { id: 'rebaseInteractive', label: '互動式 Rebase 到此處' },
     ];
 
     const currentBranch = app.branches.find((b) => b.is_current);
@@ -533,6 +528,10 @@
             }
             await app.refreshAll();
           }
+          break;
+        }
+        case 'rebaseInteractive': {
+          await app.openRebaseEditor(commit.id);
           break;
         }
       }
