@@ -110,6 +110,11 @@
     return id.substring(0, 7);
   }
 
+  const lfsFiles = $derived(new Set(app.lfsStatus?.files.map((f) => f.path) ?? []));
+  function isLfs(path: string): boolean {
+    return lfsFiles.has(path);
+  }
+
   let fileContextMenu = $state<{ file: FileStatus; x: number; y: number } | null>(null);
 
   const fileContextMenuItems: MenuItem[] = [
@@ -189,6 +194,9 @@
         >
           <span class="status {statusClass(file.kind)}">{statusLabel(file.kind)}</span>
           <span class="filename" title={file.path}>{fileName(file.path)}</span>
+          {#if isLfs(file.path)}
+            <span class="lfs-badge">LFS</span>
+          {/if}
         </button>
       {:else}
         <div class="empty-state">No files in this commit</div>
@@ -325,6 +333,17 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+  }
+  .lfs-badge {
+    font-size: 9px;
+    padding: 1px 3px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 3px;
+    font-weight: 600;
+    margin-left: var(--space-xs);
+    flex-shrink: 0;
   }
   .empty-state {
     padding: var(--space-md);

@@ -294,6 +294,18 @@ export async function checkGitEnv(): Promise<GitEnvInfo> {
   return invoke('check_git_env');
 }
 
+export async function gitLfsStatus(path: string): Promise<GitLfsStatus> {
+  return invoke('git_lfs_status', { path });
+}
+
+export async function gitLfsTrack(path: string, pattern: string): Promise<void> {
+  return invoke('git_lfs_track', { path, pattern });
+}
+
+export async function gitLfsUntrack(path: string, pattern: string): Promise<void> {
+  return invoke('git_lfs_untrack', { path, pattern });
+}
+
 // ── File Operations ───────────────────────────────────
 
 export async function gitIgnore(path: string, pattern: string): Promise<void> {

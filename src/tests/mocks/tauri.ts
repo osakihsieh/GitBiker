@@ -58,6 +58,10 @@ const mockGitCommands = {
   gitResolveConflictChoice: vi.fn().mockResolvedValue(undefined),
   gitCompleteMerge: vi.fn().mockResolvedValue({ commit_hash: 'abc1234' }),
   gitTags: vi.fn().mockResolvedValue([]),
+  gitLfsStatus: vi.fn().mockResolvedValue({ is_installed: true, version: '', files: [] }),
+  gitLfsTrack: vi.fn().mockResolvedValue(undefined),
+  gitLfsUntrack: vi.fn().mockResolvedValue(undefined),
+  checkGitEnv: vi.fn().mockResolvedValue({ is_available: true, version: '', path: '', is_bundled: false }),
 };
 
 vi.mock('$lib/git/commands', () => mockGitCommands);

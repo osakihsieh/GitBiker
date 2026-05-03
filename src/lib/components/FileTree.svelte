@@ -208,6 +208,11 @@
     return slash > 0 ? normalized.substring(0, slash) + '/' : null;
   }
 
+  const lfsFiles = $derived(new Set(app.lfsStatus?.files.map((f) => f.path) ?? []));
+  function isLfs(path: string): boolean {
+    return lfsFiles.has(path);
+  }
+
   function handleFileContextMenu(e: MouseEvent, file: FileStatus) {
     e.preventDefault();
     contextMenu = { file, x: e.clientX, y: e.clientY };
@@ -245,6 +250,16 @@
     items.push({ id: 'stash-file', label: 'Stash 這個檔案' });
 
     items.push({ id: '_sep3', label: '', separator: true });
+
+    // LFS options
+    if (app.lfsStatus?.is_installed) {
+      if (isLfs(file.path)) {
+        items.push({ id: 'lfs-untrack', label: '停止 LFS 追蹤' });
+      } else {
+        items.push({ id: 'lfs-track', label: '使用 LFS 追蹤' });
+      }
+      items.push({ id: '_sep4', label: '', separator: true });
+    }
 
     // Utilities
     items.push({ id: 'copy-path', label: '複製路徑' });
@@ -308,6 +323,12 @@
         case 'file-history':
           app.showFileHistory(file.path);
           break;
+        case 'lfs-track':
+          await app.lfsTrack(file.path);
+          break;
+        case 'lfs-untrack':
+          await app.lfsUntrack(file.path);
+          break;
       }
     } catch (e: unknown) {
       app.addToast(extractErrorMessage(e), 'error');
@@ -353,6 +374,9 @@
         >
         <span class="status {statusClass(file.kind)}">{statusLabel(file.kind)}</span>
         <span class="filename" title={file.path}>{fileName(file.path)}</span>
+        {#if isLfs(file.path)}
+          <span class="lfs-badge">LFS</span>
+        {/if}
       </button>
     {:else}
       <div class="empty-section">No staged changes</div>
@@ -387,6 +411,9 @@
         ></span>
         <span class="status {statusClass(file.kind)}">{statusLabel(file.kind)}</span>
         <span class="filename" title={file.path}>{fileName(file.path)}</span>
+        {#if isLfs(file.path)}
+          <span class="lfs-badge">LFS</span>
+        {/if}
       </button>
     {:else}
       <div class="empty-section">No unstaged changes</div>
@@ -586,14 +613,25 @@
   .status-c {
     color: var(--error);
     font-weight: bold;
-  }
   .filename {
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 1;
+    font-size: 13px;
   }
-  .empty-section {
+  .lfs-badge {
+    font-size: 9px;
+    padding: 1px 3px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 3px;
+    font-weight: 600;
+    margin-left: var(--space-xs);
+    flex-shrink: 0;
+  }
+
     padding: var(--space-md);
     color: var(--text-muted);
     font-size: var(--font-size-sm);

@@ -391,6 +391,25 @@ pub fn check_git_env() -> GitEnvInfo {
 }
 
 #[tauri::command]
+pub fn git_lfs_status(state: State<GitState>, path: String) -> Result<GitLfsStatus, GitError> {
+    state.git.lfs_status(&PathBuf::from(&path))
+}
+
+#[tauri::command]
+pub fn git_lfs_track(state: State<GitState>, path: String, pattern: String) -> Result<(), GitError> {
+    state.git.lfs_track(&PathBuf::from(&path), &pattern)
+}
+
+#[tauri::command]
+pub fn git_lfs_untrack(
+    state: State<GitState>,
+    path: String,
+    pattern: String,
+) -> Result<(), GitError> {
+    state.git.lfs_untrack(&PathBuf::from(&path), &pattern)
+}
+
+#[tauri::command]
 pub fn check_git_version() -> Result<String, GitError> {
     let output = LocalGit::git_command()
         .args(["--version"])

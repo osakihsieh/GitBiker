@@ -34,5 +34,8 @@ pub trait GitOperations: Send + Sync {
         onto: &str,
         commits: Vec<RebaseCommit>,
     ) -> Result<RebaseResult, GitError>;
+    fn lfs_status(&self, path: &Path) -> Result<GitLfsStatus, GitError>;
+    fn lfs_track(&self, path: &Path, pattern: &str) -> Result<(), GitError>;
+    fn lfs_untrack(&self, path: &Path, pattern: &str) -> Result<(), GitError>;
     fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError>;
 }

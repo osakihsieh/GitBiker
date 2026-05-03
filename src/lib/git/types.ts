@@ -203,3 +203,19 @@ export interface GitEnvInfo {
   path: string;
   is_bundled: boolean;
 }
+
+// ── LFS Types ─────────────────────────────────────────
+
+export interface LfsFile {
+  path: string;
+  size: number;
+  oid: string;
+  is_locked: boolean;
+  lock_owner: string | null;
+}
+
+export interface GitLfsStatus {
+  is_installed: boolean;
+  version: string;
+  files: LfsFile[];
+}

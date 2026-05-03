@@ -567,7 +567,7 @@ impl LocalGit {
                     is_available: true,
                     version,
                     path,
-                    is_bundled: false, // Future sidecar logic goes here
+                    is_bundled: false,
                 }
             }
             _ => GitEnvInfo {
@@ -577,6 +577,53 @@ impl LocalGit {
                 is_bundled: false,
             },
         }
+    }
+
+    pub fn lfs_status(&self, path: &Path) -> Result<GitLfsStatus, GitError> {
+        let lfs_version = Self::run_git(path, &["lfs", "version"]).unwrap_or_else(|_| "none".to_string());
+        let is_installed = !lfs_version.contains("none");
+
+        if !is_installed {
+            return Ok(GitLfsStatus {
+                is_installed: false,
+                version: "none".to_string(),
+                files: Vec::new(),
+            });
+        }
+
+        // List LFS files
+        let output = Self::run_git(path, &["lfs", "ls-files", "--size", "--name-only"])?;
+        let mut files = Vec::new();
+
+        for line in output.lines() {
+            // git lfs ls-files output format can vary, but --name-only is safer.
+            // However, we want size and OID if possible. 
+            // Default: <oid> <status> <path>
+            // With --size: <oid> <status> (<size>) <path>
+            files.push(LfsFile {
+                path: line.to_string(),
+                size: 0, // Parsing complexity skipped for now, focus on identification
+                oid: "".to_string(),
+                is_locked: false,
+                lock_owner: None,
+            });
+        }
+
+        Ok(GitLfsStatus {
+            is_installed: true,
+            version: lfs_version,
+            files,
+        })
+    }
+
+    pub fn lfs_track(&self, path: &Path, pattern: &str) -> Result<(), GitError> {
+        Self::run_git(path, &["lfs", "track", pattern])?;
+        Ok(())
+    }
+
+    pub fn lfs_untrack(&self, path: &Path, pattern: &str) -> Result<(), GitError> {
+        Self::run_git(path, &["lfs", "untrack", pattern])?;
+        Ok(())
     }
 }
 
@@ -1575,5 +1622,34 @@ impl GitOperations for LocalGit {
             ahead,
             behind,
         })
+    }
+
+    fn rebase(&self, path: &Path, branch: &str, onto: &str) -> Result<RebaseResult, GitError> {
+        Self::rebase(self, path, branch, onto)
+    }
+
+    fn rebase_interactive(
+        &self,
+        path: &Path,
+        onto: &str,
+        commits: Vec<RebaseCommit>,
+    ) -> Result<RebaseResult, GitError> {
+        Self::rebase_interactive(self, path, onto, commits)
+    }
+
+    fn lfs_status(&self, path: &Path) -> Result<GitLfsStatus, GitError> {
+        Self::lfs_status(self, path)
+    }
+
+    fn lfs_track(&self, path: &Path, pattern: &str) -> Result<(), GitError> {
+        Self::lfs_track(self, path, pattern)
+    }
+
+    fn lfs_untrack(&self, path: &Path, pattern: &str) -> Result<(), GitError> {
+        Self::lfs_untrack(self, path, pattern)
+    }
+
+    fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError> {
+        Self::cherry_pick(self, path, commit_id)
     }
 }

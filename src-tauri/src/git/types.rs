@@ -93,6 +93,22 @@ pub struct GitEnvInfo {
     pub is_bundled: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitLfsStatus {
+    pub is_installed: bool,
+    pub version: String,
+    pub files: Vec<LfsFile>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LfsFile {
+    pub path: String,
+    pub size: u64,
+    pub oid: String,
+    pub is_locked: bool,
+    pub lock_owner: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", content = "value")]
 pub enum LogFilter {

@@ -80,6 +80,8 @@ export interface RepoState {
   // Rebase
   rebaseBase: string | null;
   rebaseCommits: RebaseCommit[];
+  // LFS
+  lfsStatus: GitLfsStatus | null;
 }
 export interface RepoTab {
   id: string;
@@ -114,6 +116,7 @@ export function createEmptyState(): RepoState {
     branchCompareResult: null,
     rebaseBase: null,
     rebaseCommits: [],
+    lfsStatus: null,
   };
 }
 
@@ -548,6 +551,33 @@ class AppState {
   async togglePin(path: string) {
     return _togglePin(this, path);
   }
+
+  // ── LFS ──
+
+  async lfsTrack(pattern: string): Promise<void> {
+    if (!this.repoPath) return;
+    try {
+      const { gitLfsTrack } = await import('$lib/git/commands');
+      await gitLfsTrack(this.repoPath, pattern);
+      this.addToast(`已開始追蹤 LFS: ${pattern}`, 'success');
+      await _refreshAll(this);
+    } catch (e: unknown) {
+      this.addToast(extractErrorMessage(e), 'error');
+    }
+  }
+
+  async lfsUntrack(pattern: string): Promise<void> {
+    if (!this.repoPath) return;
+    try {
+      const { gitLfsUntrack } = await import('$lib/git/commands');
+      await gitLfsUntrack(this.repoPath, pattern);
+      this.addToast(`已停止追蹤 LFS: ${pattern}`, 'success');
+      await _refreshAll(this);
+    } catch (e: unknown) {
+      this.addToast(extractErrorMessage(e), 'error');
+    }
+  }
+
   async savePreferredEditor(editor: string | null) {
     return _savePreferredEditor(this, editor);
   }
