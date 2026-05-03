@@ -84,6 +84,11 @@ pub trait AiProvider: Send + Sync {
         hunk: &ConflictHunk,
         language: &str,
     ) -> Result<String, AiError>;
+    async fn review_code(
+        &self,
+        diff_summary: &str,
+        language: &str,
+    ) -> Result<String, AiError>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

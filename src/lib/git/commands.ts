@@ -509,6 +509,24 @@ export async function aiResolveConflict(params: {
   });
 }
 
+export async function aiReviewStaged(params: {
+  path: string;
+  provider: string;
+  apiKey: string;
+  model: string;
+  language: string;
+  ollamaEndpoint?: string;
+}): Promise<string> {
+  return invoke('ai_review_staged', {
+    path: params.path,
+    provider: params.provider,
+    apiKey: params.apiKey,
+    model: params.model,
+    language: params.language,
+    ollamaEndpoint: params.ollamaEndpoint ?? null,
+  });
+}
+
 // ── Git CRLF Settings ──────────────────────────────────
 
 export async function setGitDisableAutoCrlf(disabled: boolean): Promise<void> {

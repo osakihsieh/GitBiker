@@ -315,4 +315,57 @@ impl AiProvider for GeminiProvider {
 
         Ok(message)
     }
+
+    async fn review_code(
+        &self,
+        diff_summary: &str,
+        language: &str,
+    ) -> Result<String, AiError> {
+        if self.api_key.is_empty() {
+            return Err(AiError::NoApiKey);
+        }
+
+        let mut system_prompt = String::new();
+        system_prompt.push_str("You are an elite code reviewer. Your mission is to perform a pre-commit check.\n");
+        system_prompt.push_str("Identify potential bugs, performance bottlenecks, security risks, and style issues in the provided diff.\n");
+        system_prompt.push_str("Be critical but constructive. Suggest specific improvements.\n");
+
+        match language {
+            "zh-TW" => system_prompt.push_str("使用繁體中文回答，使用 Markdown 格式，條列式說明建議。保持專業且精簡。\n"),
+            _ => system_prompt.push_str("Respond in English using Markdown. Use bullet points for suggestions. Be professional and concise.\n"),
+        }
+
+        let request = GeminiRequest {
+            contents: vec![GeminiContent {
+                parts: vec![GeminiPart { text: diff_summary.to_string() }],
+                role: Some("user".to_string()),
+            }],
+            system_instruction: Some(GeminiContent {
+                parts: vec![GeminiPart {
+                    text: system_prompt,
+                }],
+                role: None,
+            }),
+        };
+
+        let url = format!(
+            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+            self.model, self.api_key
+        );
+
+        let response = http_client().post(&url).json(&request).send().await?;
+        let body = response.text().await?;
+        let parsed: GeminiResponse =
+            serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+        let message = parsed
+            .candidates
+            .and_then(|c| c.into_iter().next())
+            .and_then(|c| c.content)
+            .and_then(|c| c.parts.into_iter().next())
+            .map(|p| p.text.trim().to_string())
+            .unwrap_or_default();
+
+        Ok(message)
+    }
 }

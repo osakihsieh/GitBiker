@@ -411,6 +411,61 @@ impl AiProvider for OpenAiCompatibleProvider {
 
         Ok(message)
     }
+
+    async fn review_code(
+        &self,
+        diff_summary: &str,
+        language: &str,
+    ) -> Result<String, AiError> {
+        if self.requires_auth && self.api_key.is_empty() {
+            return Err(AiError::NoApiKey);
+        }
+
+        let mut system_prompt = String::new();
+        system_prompt.push_str("You are an elite code reviewer. Your mission is to perform a pre-commit check.\n");
+        system_prompt.push_str("Identify potential bugs, performance bottlenecks, security risks, and style issues in the provided diff.\n");
+        system_prompt.push_str("Be critical but constructive. Suggest specific improvements.\n");
+
+        match language {
+            "zh-TW" => system_prompt.push_str("使用繁體中文回答，使用 Markdown 格式，條列式說明建議。保持專業且精簡。\n"),
+            _ => system_prompt.push_str("Respond in English using Markdown. Use bullet points for suggestions. Be professional and concise.\n"),
+        }
+
+        let request = ChatRequest {
+            model: self.model.clone(),
+            messages: vec![
+                ChatMessage {
+                    role: "system".to_string(),
+                    content: system_prompt,
+                },
+                ChatMessage {
+                    role: "user".to_string(),
+                    content: diff_summary.to_string(),
+                },
+            ],
+            temperature: 0.3,
+        };
+
+        let mut req_builder = http_client().post(&self.endpoint).json(&request);
+        if self.requires_auth && !self.api_key.is_empty() {
+            req_builder = req_builder.bearer_auth(&self.api_key);
+        }
+
+        let response = req_builder.send().await?;
+        let body = response.text().await?;
+        let parsed: ChatResponse =
+            serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+        let message = parsed
+            .choices
+            .and_then(|c| c.into_iter().next())
+            .and_then(|c| c.message)
+            .and_then(|m| m.content)
+            .map(|s| s.trim().to_string())
+            .unwrap_or_default();
+
+        Ok(message)
+    }
 }
 
 // ── Helper trait for conditional auth ────────────────

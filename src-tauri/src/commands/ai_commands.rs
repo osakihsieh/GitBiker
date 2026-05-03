@@ -165,3 +165,42 @@ pub async fn ai_resolve_conflict(
 
     Ok(resolved)
 }
+
+#[tauri::command]
+pub async fn ai_review_staged(
+    state: State<'_, GitState>,
+    path: String,
+    provider: String,
+    api_key: String,
+    model: String,
+    language: String,
+    ollama_endpoint: Option<String>,
+) -> Result<String, GitError> {
+    let repo_path = PathBuf::from(&path);
+
+    // 1. Get staged diff
+    let (file_summaries, file_diffs) = state.git.staged_diff_all(&repo_path)?;
+    if file_summaries.is_empty() {
+        return Err(GitError::OperationFailed("沒有已暫存的檔案可供審查".to_string()));
+    }
+
+    // 2. Build diff summary
+    let diff_summary = ai::truncate_diff(&file_summaries, &file_diffs);
+
+    // 3. Create provider and generate
+    let config = ProviderConfig {
+        api_key,
+        model,
+        endpoint: ollama_endpoint,
+    };
+
+    let ai_provider = ai::create_provider(&provider, config)
+        .map_err(|e| GitError::OperationFailed(e.to_string()))?;
+
+    let review = ai_provider
+        .review_code(&diff_summary, &language)
+        .await
+        .map_err(|e| GitError::OperationFailed(e.to_string()))?;
+
+    Ok(review)
+}

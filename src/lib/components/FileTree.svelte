@@ -10,6 +10,7 @@
     openInEditor,
     gitStashPushFiles,
     generateCommitMessage,
+    aiReviewStaged,
   } from '$lib/git/commands';
   import type { FileStatus } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
@@ -18,6 +19,7 @@
   let commitBody = $state('');
   let committing = $state(false);
   let generating = $state(false);
+  let reviewing = $state(false);
   let commitType = $state('auto');
 
   const COMMIT_TYPES = [
@@ -156,6 +158,36 @@
       app.addToast(extractErrorMessage(e), 'error');
     } finally {
       generating = false;
+    }
+  }
+
+  async function handleAiReview() {
+    if (!app.repoPath || app.stagedFiles.length === 0 || reviewing) return;
+
+    if (app.aiProvider !== 'ollama' && !app.aiApiKey.trim()) {
+      app.addToast('請先在設定中填入 API Key', 'error');
+      return;
+    }
+
+    reviewing = true;
+    try {
+      const review = await aiReviewStaged({
+        path: app.repoPath,
+        provider: app.aiProvider,
+        apiKey: app.aiApiKey,
+        model: app.aiModel,
+        language: app.aiLanguage,
+        ollamaEndpoint: app.aiProvider === 'ollama' ? app.aiOllamaEndpoint : undefined,
+      });
+      
+      // Use app global state to show explanation/review (recycling AiExplanationDialog if possible)
+      // Or just a toast for now? No, a review needs a dialog.
+      app.stashDiff = review; // Reuse stashDiff or similar to display in a fixed area
+      app.addToast('AI 代碼審查完成', 'success');
+    } catch (e: unknown) {
+      app.addToast(extractErrorMessage(e), 'error');
+    } finally {
+      reviewing = false;
     }
   }
 
@@ -454,10 +486,22 @@
       >
         {#if generating}
           <span class="spinner"></span> 生成中...
-        {:else}
-          AI 生成
-        {/if}
-      </button>
+          {:else}
+            AI 生成
+          {/if}
+        </button>
+        <button
+          class="ai-gen-btn review-btn"
+          onclick={handleAiReview}
+          disabled={app.stagedFiles.length === 0 || reviewing || committing}
+        >
+          {#if reviewing}
+            <span class="spinning">↻</span> 審查中...
+          {:else}
+            ✨ AI 預檢
+          {/if}
+        </button>
+      </div>
       <button
         class="commit-btn"
         onclick={handleCommit}
@@ -468,20 +512,19 @@
         {/if}
         Commit ({app.stagedFiles.length} files)
       </button>
-    </div>
     <div class="shortcut-hint">Ctrl+Enter</div>
   </div>
-</div>
 
-{#if contextMenu}
-  <ContextMenu
-    x={contextMenu.x}
-    y={contextMenu.y}
-    items={buildContextMenuItems(contextMenu.file)}
-    onSelect={handleContextSelect}
-    onClose={() => (contextMenu = null)}
-  />
-{/if}
+  {#if contextMenu}
+    <ContextMenu
+      x={contextMenu.x}
+      y={contextMenu.y}
+      items={buildContextMenuItems(contextMenu.file)}
+      onSelect={handleContextSelect}
+      onClose={() => (contextMenu = null)}
+    />
+  {/if}
+</div>
 
 <style>
   .file-tree {
@@ -733,6 +776,27 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  .review-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+
+  .review-btn:hover:not(:disabled) {
+    background: rgba(0, 123, 255, 0.1);
+  }
+
+  .spinning {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
   .commit-btn {
     flex: 1;
     background: var(--accent);
