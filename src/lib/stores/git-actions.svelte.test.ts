@@ -24,7 +24,7 @@ function createMockState(overrides?: Partial<GitActionableState>): GitActionable
         branches: [],
         tags: [],
         currentBranch: 'main',
-        logFilter: { all: false },
+        logFilter: { type: 'Head' },
       },
     },
     tabs: [],
@@ -165,7 +165,7 @@ describe('git-actions', () => {
             branches: [],
             tags: [],
             currentBranch: '',
-            logFilter: { all: false },
+            logFilter: { type: "Head" },
           },
         },
       ];

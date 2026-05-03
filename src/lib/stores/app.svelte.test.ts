@@ -51,6 +51,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -83,6 +86,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -111,6 +117,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
         {
@@ -130,6 +139,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -159,6 +171,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -189,6 +204,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
         {
@@ -208,6 +226,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
         {
@@ -227,6 +248,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -256,6 +280,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -288,6 +315,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -313,6 +343,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
         {
@@ -332,6 +365,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -359,6 +395,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
         {
@@ -378,6 +417,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -534,6 +576,9 @@ describe('AppState', () => {
         conflictContent: null,
         hunkChoices: {},
         fileHistoryTarget: null,
+        tags: [],
+        logFilter: { type: "Head" } as const,
+        branchCompareResult: null,
       },
     });
 
@@ -631,6 +676,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -674,6 +722,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -712,6 +763,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -771,6 +825,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -829,6 +886,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -862,6 +922,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -904,6 +967,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
         {
@@ -923,6 +989,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -966,6 +1035,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];
@@ -994,6 +1066,9 @@ describe('AppState', () => {
             conflictContent: null,
             hunkChoices: {},
             fileHistoryTarget: null,
+            tags: [],
+            logFilter: { type: "Head" } as const,
+            branchCompareResult: null,
           },
         },
       ];

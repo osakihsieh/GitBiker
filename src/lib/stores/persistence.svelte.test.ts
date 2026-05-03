@@ -15,7 +15,7 @@ import {
 } from './persistence.svelte';
 
 function createMockState(): PersistableState {
-  return { recentRepos: [], pinnedRepos: [], preferredEditor: null };
+  return { recentRepos: [], pinnedRepos: [], preferredEditor: null, aiProvider: "gemini", aiApiKey: "", aiModel: "", aiCustomPrompt: "", aiLanguage: "zh-TW", aiOllamaEndpoint: "http://localhost:11434", disableAutoCrlf: true, ignoreEol: false, terminalShell: null, useSystemNotification: false };
 }
 
 describe('persistence', () => {

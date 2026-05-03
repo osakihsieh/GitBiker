@@ -317,6 +317,27 @@ class AppState {
     return this.activeTab?.state.logFilter ?? { type: 'Head' };
   }
 
+  get isInConflictMode(): boolean {
+    return this.viewMode === 'conflict-resolution';
+  }
+
+  async enterConflictMode(): Promise<void> {
+    if (!this.repoPath) return;
+    this.viewMode = 'conflict-resolution';
+    await _refreshStatus(this);
+  }
+
+  exitConflictMode(): void {
+    this.viewMode = 'worktree';
+  }
+
+  selectConflictFile(path: string): void {
+    const tab = this.activeTab;
+    if (tab) {
+      tab.state.activeConflictFile = path;
+    }
+  }
+
   get fileHistoryTarget(): string | null {
     return this.activeTab?.state.fileHistoryTarget ?? null;
   }

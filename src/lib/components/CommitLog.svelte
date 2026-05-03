@@ -28,6 +28,14 @@
   const ROW_HEIGHT = 44;
   const BUFFER = 10;
 
+  const displayCommits = $derived.by(() => {
+    const base = searchResults ?? app.commits;
+    if (!authorFilter) return base;
+    return base.filter((c) => c.author === authorFilter);
+  });
+
+  const hasWip = $derived(!searchResults && app.stagedFiles.length + app.unstagedFiles.length > 0);
+
   const visibleRange = $derived.by(() => {
     const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
     const end = Math.min(
@@ -66,14 +74,6 @@
     const authors = new Set(commits.map((c) => c.author));
     return [...authors].sort();
   });
-
-  const displayCommits = $derived.by(() => {
-    const base = searchResults ?? app.commits;
-    if (!authorFilter) return base;
-    return base.filter((c) => c.author === authorFilter);
-  });
-
-  const hasWip = $derived(!searchResults && app.stagedFiles.length + app.unstagedFiles.length > 0);
 
   // ── Commit Graph ──
 
