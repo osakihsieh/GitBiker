@@ -161,7 +161,9 @@
       }
       if (result.stderr) {
         const color = result.exit_code === 0 ? '33' : '31'; // yellow for warnings, red for errors
-        terminal?.write(`\x1b[${color}m${result.stderr.trimEnd().replace(/\n/g, '\r\n')}\x1b[0m\r\n`);
+        terminal?.write(
+          `\x1b[${color}m${result.stderr.trimEnd().replace(/\n/g, '\r\n')}\x1b[0m\r\n`,
+        );
       }
 
       // Auto refresh git status after git commands
@@ -307,7 +309,10 @@
     padding: 2px 6px;
     border-radius: 3px;
   }
-  .terminal-close:hover { color: #cdd6f4; background: rgba(255, 255, 255, 0.05); }
+  .terminal-close:hover {
+    color: #cdd6f4;
+    background: rgba(255, 255, 255, 0.05);
+  }
   .terminal-body {
     flex: 1;
     padding: var(--space-xs);

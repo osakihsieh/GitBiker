@@ -16,12 +16,17 @@
   let selectedIndex = $state(-1);
 
   // Repo status cache: { path: { branch, dirtyCount, lastActivity } }
-  let repoStatusCache = $state<Record<string, {
-    branch: string;
-    dirtyCount: number;
-    lastActivity: string;
-    loading: boolean;
-  }>>({});
+  let repoStatusCache = $state<
+    Record<
+      string,
+      {
+        branch: string;
+        dirtyCount: number;
+        lastActivity: string;
+        loading: boolean;
+      }
+    >
+  >({});
 
   // Combined list: pinned first, then recent (excluding pinned)
   const allRepos = $derived(() => {
@@ -89,7 +94,9 @@
         gitLog(path, 1),
       ]);
 
-      const dirtyCount = status.filter((f) => f.staging === 'Staged' || f.staging === 'Unstaged').length;
+      const dirtyCount = status.filter(
+        (f) => f.staging === 'Staged' || f.staging === 'Unstaged',
+      ).length;
       const branch = branches.find((b) => b.is_current)?.name || 'main';
       const lastActivity = commits.length > 0 ? timeAgo(commits[0].timestamp) : '';
 
@@ -219,12 +226,7 @@
 
 {#if open}
   <div class="popover-overlay" onclick={onClose}></div>
-  <div
-    class="popover"
-    role="dialog"
-    aria-label="Repo switcher"
-    onkeydown={handleKeydown}
-  >
+  <div class="popover" role="dialog" aria-label="Repo switcher" onkeydown={handleKeydown}>
     <div class="popover-search">
       <span class="search-icon">🔍</span>
       <input
@@ -236,7 +238,13 @@
     </div>
 
     <div class="popover-actions">
-      <button class="popover-action" onclick={() => { onClone(); onClose(); }}>
+      <button
+        class="popover-action"
+        onclick={() => {
+          onClone();
+          onClose();
+        }}
+      >
         <span>⇣</span> Clone
       </button>
       <button class="popover-action" onclick={handleOpenLocal}>
@@ -269,8 +277,8 @@
                 class="pin-icon pinned"
                 role="button"
                 aria-label="Unpin"
-                onclick={(e) => handlePinClick(e, path)}
-              >★</span>
+                onclick={(e) => handlePinClick(e, path)}>★</span
+              >
               <span class="repo-name">{@html highlightName(repoNameFromPath(path))}</span>
               <span class="repo-branch">{status?.branch ?? '...'}</span>
               {#if status && !status.loading}
@@ -308,8 +316,8 @@
                 class="pin-icon"
                 role="button"
                 aria-label="Pin"
-                onclick={(e) => handlePinClick(e, path)}
-              >☆</span>
+                onclick={(e) => handlePinClick(e, path)}>☆</span
+              >
               <span class="repo-name">{@html highlightName(repoNameFromPath(path))}</span>
               <span class="repo-branch">{status?.branch ?? '...'}</span>
               {#if status && !status.loading}
@@ -355,7 +363,7 @@
     background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -363,8 +371,14 @@
     animation: popover-enter 0.15s ease-out;
   }
   @keyframes popover-enter {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   @media (max-width: 899px) {
     .popover {
@@ -379,7 +393,10 @@
     padding: var(--space-sm) var(--space-md);
     border-bottom: 1px solid var(--border);
   }
-  .search-icon { font-size: 14px; color: var(--text-muted); }
+  .search-icon {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
   .popover-search input {
     flex: 1;
     background: none;
@@ -389,7 +406,9 @@
     font-family: var(--font-ui);
     outline: none;
   }
-  .popover-search input::placeholder { color: var(--text-muted); }
+  .popover-search input::placeholder {
+    color: var(--text-muted);
+  }
   .popover-actions {
     display: flex;
     gap: var(--space-xs);
@@ -411,7 +430,10 @@
     flex: 1;
     justify-content: center;
   }
-  .popover-action:hover { background: var(--bg-hover); border-color: var(--accent); }
+  .popover-action:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+  }
   .popover-scrollable {
     overflow-y: auto;
     flex: 1;
@@ -442,8 +464,12 @@
     text-align: left;
   }
   .popover-repo:hover,
-  .popover-repo.selected { background: var(--bg-hover); }
-  .popover-repo.dragging { opacity: 0.4; }
+  .popover-repo.selected {
+    background: var(--bg-hover);
+  }
+  .popover-repo.dragging {
+    opacity: 0.4;
+  }
   .popover-repo.drag-over {
     border-top: 2px solid var(--accent);
     margin-top: -2px;
@@ -457,8 +483,12 @@
     cursor: pointer;
     padding: 2px;
   }
-  .pin-icon.pinned { color: var(--accent); }
-  .pin-icon:hover { color: var(--accent); }
+  .pin-icon.pinned {
+    color: var(--accent);
+  }
+  .pin-icon:hover {
+    color: var(--accent);
+  }
   .repo-name {
     font-size: 12px;
     font-family: var(--font-mono);
@@ -484,7 +514,9 @@
     min-width: 36px;
     text-align: right;
   }
-  .repo-status.dirty { color: var(--warning); }
+  .repo-status.dirty {
+    color: var(--warning);
+  }
   .repo-time {
     font-size: 10px;
     color: var(--text-muted);

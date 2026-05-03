@@ -65,8 +65,8 @@
       <div class="section-title">Changed Files ({result?.files.length})</div>
       <div class="scroll-area">
         {#each result?.files ?? [] as file}
-          <button 
-            class="file-item" 
+          <button
+            class="file-item"
             class:selected={selectedFile?.path === file.path}
             onclick={() => handleFileClick(file)}
           >
@@ -117,21 +117,28 @@
     color: var(--accent);
     font-family: var(--font-mono);
   }
-  .compare-sep { color: var(--text-muted); }
+  .compare-sep {
+    color: var(--text-muted);
+  }
   .stats {
     display: flex;
     gap: var(--space-md);
     font-size: 12px;
   }
-  .stat.ahead { color: var(--success); }
-  .stat.behind { color: var(--error); }
+  .stat.ahead {
+    color: var(--success);
+  }
+  .stat.behind {
+    color: var(--error);
+  }
 
   .compare-content {
     display: flex;
     flex: 1;
     overflow: hidden;
   }
-  .commits-list, .files-list {
+  .commits-list,
+  .files-list {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -166,7 +173,9 @@
     display: flex;
     gap: 8px;
   }
-  .hash { font-family: var(--font-mono); }
+  .hash {
+    font-family: var(--font-mono);
+  }
 
   .file-item {
     display: flex;
@@ -180,8 +189,12 @@
     color: var(--text-primary);
     cursor: pointer;
   }
-  .file-item:hover { background: var(--bg-hover); }
-  .file-item.selected { background: var(--bg-surface); }
+  .file-item:hover {
+    background: var(--bg-hover);
+  }
+  .file-item.selected {
+    background: var(--bg-surface);
+  }
   .status-icon {
     width: 16px;
     height: 16px;
@@ -192,9 +205,15 @@
     justify-content: center;
     border-radius: 2px;
   }
-  .status-added { color: var(--success); }
-  .status-deleted { color: var(--error); }
-  .status-modified { color: var(--accent); }
+  .status-added {
+    color: var(--success);
+  }
+  .status-deleted {
+    color: var(--error);
+  }
+  .status-modified {
+    color: var(--accent);
+  }
   .file-path {
     font-size: 13px;
     white-space: nowrap;

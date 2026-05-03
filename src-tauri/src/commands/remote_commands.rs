@@ -16,7 +16,10 @@ pub fn git_remote_list(path: String) -> Result<Vec<RemoteInfo>, GitError> {
         if parts.len() >= 2 {
             let name = parts[0].to_string();
             if seen.insert(name.clone()) {
-                remotes.push(RemoteInfo { name, url: parts[1].to_string() });
+                remotes.push(RemoteInfo {
+                    name,
+                    url: parts[1].to_string(),
+                });
             }
         }
     }
@@ -26,8 +29,14 @@ pub fn git_remote_list(path: String) -> Result<Vec<RemoteInfo>, GitError> {
 
 #[tauri::command]
 pub fn git_remote_add(path: String, name: String, url: String) -> Result<(), GitError> {
-    if !url.starts_with("https://") && !url.starts_with("http://") && !url.starts_with("git@") && !url.starts_with("ssh://") {
-        return Err(GitError::OperationFailed("Remote URL 格式不正確，請使用 https:// 或 git@ 格式。".to_string()));
+    if !url.starts_with("https://")
+        && !url.starts_with("http://")
+        && !url.starts_with("git@")
+        && !url.starts_with("ssh://")
+    {
+        return Err(GitError::OperationFailed(
+            "Remote URL 格式不正確，請使用 https:// 或 git@ 格式。".to_string(),
+        ));
     }
     let repo_path = PathBuf::from(&path);
     LocalGit::run_git(&repo_path, &["remote", "add", "--", &name, &url])?;
@@ -44,7 +53,10 @@ pub fn git_remote_remove(path: String, name: String) -> Result<(), GitError> {
 #[tauri::command]
 pub fn git_remote_rename(path: String, old_name: String, new_name: String) -> Result<(), GitError> {
     let repo_path = PathBuf::from(&path);
-    LocalGit::run_git(&repo_path, &["remote", "rename", "--", &old_name, &new_name])?;
+    LocalGit::run_git(
+        &repo_path,
+        &["remote", "rename", "--", &old_name, &new_name],
+    )?;
     Ok(())
 }
 
@@ -69,7 +81,10 @@ pub fn git_tags(path: String) -> Result<Vec<TagInfo>, GitError> {
             TagInfo {
                 name: parts.first().unwrap_or(&"").to_string(),
                 commit_id: parts.get(1).unwrap_or(&"").to_string(),
-                message: parts.get(2).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+                message: parts
+                    .get(2)
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_string()),
                 timestamp: parts.get(3).and_then(|s| s.trim().parse::<i64>().ok()),
             }
         })
@@ -79,7 +94,11 @@ pub fn git_tags(path: String) -> Result<Vec<TagInfo>, GitError> {
 }
 
 #[tauri::command]
-pub fn git_tag_create(path: String, name: String, commit_id: Option<String>) -> Result<(), GitError> {
+pub fn git_tag_create(
+    path: String,
+    name: String,
+    commit_id: Option<String>,
+) -> Result<(), GitError> {
     let repo_path = PathBuf::from(&path);
     let mut args = vec!["tag", "--", &name];
     let cid;
@@ -99,7 +118,11 @@ pub fn git_tag_delete(path: String, name: String) -> Result<(), GitError> {
 }
 
 #[tauri::command]
-pub fn git_tag_delete_remote(path: String, name: String, remote: Option<String>) -> Result<PushResult, GitError> {
+pub fn git_tag_delete_remote(
+    path: String,
+    name: String,
+    remote: Option<String>,
+) -> Result<PushResult, GitError> {
     let repo_path = PathBuf::from(&path);
     let remote_name = remote.unwrap_or_else(|| "origin".to_string());
     let refspec = format!(":refs/tags/{}", name);
@@ -120,10 +143,17 @@ pub fn git_tag_delete_remote(path: String, name: String, remote: Option<String>)
 }
 
 #[tauri::command]
-pub fn git_push_tag(path: String, name: String, remote: Option<String>) -> Result<PushResult, GitError> {
+pub fn git_push_tag(
+    path: String,
+    name: String,
+    remote: Option<String>,
+) -> Result<PushResult, GitError> {
     let repo_path = PathBuf::from(&path);
     let remote_name = remote.unwrap_or_else(|| "origin".to_string());
-    match LocalGit::run_git(&repo_path, &["push", &remote_name, &format!("refs/tags/{}", name)]) {
+    match LocalGit::run_git(
+        &repo_path,
+        &["push", &remote_name, &format!("refs/tags/{}", name)],
+    ) {
         Ok(output) => Ok(PushResult {
             remote: remote_name,
             branch: name,

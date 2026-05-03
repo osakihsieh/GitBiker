@@ -14,17 +14,33 @@
   $effect(() => {
     let cleanup: (() => void) | undefined;
 
-    appWindow.isMaximized().then((v) => { maximized = v; });
-    appWindow.onResized(() => {
-      appWindow.isMaximized().then((v) => { maximized = v; });
-    }).then((unlisten) => { cleanup = unlisten; });
+    appWindow.isMaximized().then((v) => {
+      maximized = v;
+    });
+    appWindow
+      .onResized(() => {
+        appWindow.isMaximized().then((v) => {
+          maximized = v;
+        });
+      })
+      .then((unlisten) => {
+        cleanup = unlisten;
+      });
 
-    return () => { cleanup?.(); };
+    return () => {
+      cleanup?.();
+    };
   });
 
-  function minimize() { appWindow.minimize(); }
-  function toggleMaximize() { appWindow.toggleMaximize(); }
-  function close() { appWindow.close(); }
+  function minimize() {
+    appWindow.minimize();
+  }
+  function toggleMaximize() {
+    appWindow.toggleMaximize();
+  }
+  function close() {
+    appWindow.close();
+  }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -40,24 +56,57 @@
 
   <div class="titlebar-controls">
     <button class="control-btn" onclick={minimize} aria-label="Minimize">
-      <svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="6" width="8" height="1" fill="currentColor"/></svg>
+      <svg width="12" height="12" viewBox="0 0 12 12"
+        ><rect x="2" y="6" width="8" height="1" fill="currentColor" /></svg
+      >
     </button>
-    <button class="control-btn" onclick={toggleMaximize} aria-label={maximized ? 'Restore' : 'Maximize'}>
+    <button
+      class="control-btn"
+      onclick={toggleMaximize}
+      aria-label={maximized ? 'Restore' : 'Maximize'}
+    >
       {#if maximized}
         <svg width="12" height="12" viewBox="0 0 12 12">
-          <rect x="3" y="1" width="8" height="8" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect x="1" y="3" width="8" height="8" rx="0.5" fill="var(--bg-secondary)" stroke="currentColor" stroke-width="1"/>
+          <rect
+            x="3"
+            y="1"
+            width="8"
+            height="8"
+            rx="0.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+          />
+          <rect
+            x="1"
+            y="3"
+            width="8"
+            height="8"
+            rx="0.5"
+            fill="var(--bg-secondary)"
+            stroke="currentColor"
+            stroke-width="1"
+          />
         </svg>
       {:else}
         <svg width="12" height="12" viewBox="0 0 12 12">
-          <rect x="1.5" y="1.5" width="9" height="9" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect
+            x="1.5"
+            y="1.5"
+            width="9"
+            height="9"
+            rx="0.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+          />
         </svg>
       {/if}
     </button>
     <button class="control-btn close-btn" onclick={close} aria-label="Close">
       <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.2"/>
-        <line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.2"/>
+        <line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.2" />
+        <line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.2" />
       </svg>
     </button>
   </div>

@@ -23,4 +23,5 @@
 - Hard reset 需要二次確認「此操作不可撤銷」
 
 ## 優先級：P1 | 工作量：M（中）
+
 ## 依賴：CommitLog ahead/behind 資訊（已完成）

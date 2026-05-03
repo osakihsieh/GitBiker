@@ -22,4 +22,5 @@
 - 衝突時複用現有 conflict resolution 流程
 
 ## 優先級：P1 | 工作量：M（中）
+
 ## 依賴：ConflictResolver（已完成）

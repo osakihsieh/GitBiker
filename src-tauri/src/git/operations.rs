@@ -5,7 +5,12 @@ use crate::git::types::*;
 
 pub trait GitOperations: Send + Sync {
     fn status(&self, path: &Path) -> Result<Vec<FileStatus>, GitError>;
-    fn log(&self, path: &Path, limit: usize, filter: Option<LogFilter>) -> Result<Vec<Commit>, GitError>;
+    fn log(
+        &self,
+        path: &Path,
+        limit: usize,
+        filter: Option<LogFilter>,
+    ) -> Result<Vec<Commit>, GitError>;
     fn diff(&self, path: &Path, file: &Path) -> Result<DiffResult, GitError>;
     fn stage(&self, path: &Path, files: &[PathBuf]) -> Result<(), GitError>;
     fn unstage(&self, path: &Path, files: &[PathBuf]) -> Result<(), GitError>;
@@ -16,5 +21,12 @@ pub trait GitOperations: Send + Sync {
     fn switch_branch(&self, path: &Path, name: &str) -> Result<(), GitError>;
     fn create_branch(&self, path: &Path, name: &str) -> Result<(), GitError>;
     fn delete_branch(&self, path: &Path, name: &str) -> Result<(), GitError>;
-    fn branch_compare(&self, path: &Path, base: &str, compare: &str) -> Result<BranchCompareResult, GitError>;
+    fn branch_compare(
+        &self,
+        path: &Path,
+        base: &str,
+        compare: &str,
+    ) -> Result<BranchCompareResult, GitError>;
+    fn rebase(&self, path: &Path, branch: &str, onto: &str) -> Result<RebaseResult, GitError>;
+    fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError>;
 }

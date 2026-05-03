@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{build_system_prompt, http_client, AiError, AiProvider, CommitContext, ModelInfo, ProviderConfig};
+use super::{
+    build_system_prompt, http_client, AiError, AiProvider, CommitContext, ModelInfo, ProviderConfig,
+};
 
 // ── List Models ─────────────────────────────────────
 
@@ -52,7 +54,10 @@ pub async fn list_models(api_key: &str) -> Result<Vec<ModelInfo>, AiError> {
         .filter_map(|m| {
             let full_name = m.name?;
             // "models/gemini-2.0-flash" → "gemini-2.0-flash"
-            let id = full_name.strip_prefix("models/").unwrap_or(&full_name).to_string();
+            let id = full_name
+                .strip_prefix("models/")
+                .unwrap_or(&full_name)
+                .to_string();
             let name = m.display_name.unwrap_or_else(|| id.clone());
             Some(ModelInfo { id, name })
         })
@@ -133,9 +138,7 @@ impl AiProvider for GeminiProvider {
 
         let request = GeminiRequest {
             contents: vec![GeminiContent {
-                parts: vec![GeminiPart {
-                    text: user_message,
-                }],
+                parts: vec![GeminiPart { text: user_message }],
                 role: Some("user".to_string()),
             }],
             system_instruction: Some(GeminiContent {

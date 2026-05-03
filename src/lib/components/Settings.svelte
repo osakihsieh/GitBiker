@@ -2,7 +2,17 @@
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
-  import { gitRemoteList, gitRemoteAdd, gitRemoteRemove, gitRemoteRename, detectEditors, detectShells, listAiModels, setGitDisableAutoCrlf, setGitIgnoreEol } from '$lib/git/commands';
+  import {
+    gitRemoteList,
+    gitRemoteAdd,
+    gitRemoteRemove,
+    gitRemoteRename,
+    detectEditors,
+    detectShells,
+    listAiModels,
+    setGitDisableAutoCrlf,
+    setGitIgnoreEol,
+  } from '$lib/git/commands';
   import type { EditorInfo, ShellInfo, AiModelInfo } from '$lib/git/commands';
   import type { RemoteInfo } from '$lib/git/types';
 
@@ -224,11 +234,7 @@
           </span>
         </div>
         <div class="theme-segmented" role="radiogroup" aria-label="Theme">
-          {#each [
-            { value: 'system' as const, label: '⚙ System' },
-            { value: 'dark' as const, label: '☽ Dark' },
-            { value: 'light' as const, label: '☀ Light' },
-          ] as option}
+          {#each [{ value: 'system' as const, label: '⚙ System' }, { value: 'dark' as const, label: '☽ Dark' }, { value: 'light' as const, label: '☀ Light' }] as option}
             <button
               class="theme-option"
               class:active={app.theme === option.value}
@@ -246,7 +252,9 @@
         <div class="setting-info">
           <span class="setting-label">通知方式</span>
           <span class="setting-desc">
-            {app.useSystemNotification ? '使用 OS 系統通知，不遮擋操作介面' : '使用應用程式內通知（右下角）'}
+            {app.useSystemNotification
+              ? '使用 OS 系統通知，不遮擋操作介面'
+              : '使用應用程式內通知（右下角）'}
           </span>
         </div>
         <button
@@ -259,7 +267,7 @@
             await app.saveUseSystemNotification();
             app.addToast(
               app.useSystemNotification ? '已切換為系統通知' : '已切換為應用內通知',
-              'success'
+              'success',
             );
           }}
         >
@@ -283,7 +291,8 @@
             {:else if editorSelectValue === CUSTOM_VALUE}
               自訂指令：{app.preferredEditor}
             {:else}
-              已選擇 {detectedEditors.find((e) => e.command === app.preferredEditor)?.name ?? app.preferredEditor}
+              已選擇 {detectedEditors.find((e) => e.command === app.preferredEditor)?.name ??
+                app.preferredEditor}
             {/if}
           </span>
         </div>
@@ -312,8 +321,8 @@
           <button
             class="remote-action-btn primary"
             onclick={handleCustomEditorSave}
-            disabled={!customEditorCommand.trim()}
-          >儲存</button>
+            disabled={!customEditorCommand.trim()}>儲存</button
+          >
         </div>
       {/if}
     </div>
@@ -443,7 +452,9 @@
             app.terminalShell = val || null;
             await app.saveTerminalShell();
             app.addToast(
-              val ? `已切換終端機為 ${detectedShells.find((s) => s.id === val)?.name ?? val}` : '已切換為僅 Git 命令模式',
+              val
+                ? `已切換終端機為 ${detectedShells.find((s) => s.id === val)?.name ?? val}`
+                : '已切換為僅 Git 命令模式',
               'success',
             );
           }}
@@ -465,7 +476,9 @@
         {#each multiRepo.scanPaths as scanPath}
           <div class="setting-row">
             <div class="setting-info">
-              <span class="setting-label" style="font-family: var(--font-mono); font-size: 12px;">{scanPath}</span>
+              <span class="setting-label" style="font-family: var(--font-mono); font-size: 12px;"
+                >{scanPath}</span
+              >
               <span class="setting-desc">
                 {multiRepo.repos.filter((r) => r.scanPath === scanPath).length} repos
               </span>
@@ -483,7 +496,10 @@
           </div>
         {/each}
       {:else}
-        <div class="setting-desc" style="padding: var(--space-md) 0; text-align: center; color: var(--text-muted);">
+        <div
+          class="setting-desc"
+          style="padding: var(--space-md) 0; text-align: center; color: var(--text-muted);"
+        >
           尚未設定掃描目錄
         </div>
       {/if}
@@ -493,7 +509,10 @@
         onclick={async () => {
           try {
             const { open: openDialog } = await import('@tauri-apps/plugin-dialog');
-            const selected = await openDialog({ directory: true, title: '選擇包含 Git Repos 的資料夾' });
+            const selected = await openDialog({
+              directory: true,
+              title: '選擇包含 Git Repos 的資料夾',
+            });
             if (selected) {
               await multiRepo.addScanPath(selected, app.repoPath);
               const count = multiRepo.repos.filter((r) => r.scanPath === selected).length;
@@ -546,7 +565,9 @@
             {:else if aiModels.length > 0}
               共 {aiModels.length} 個可用模型
             {:else}
-              {app.aiProvider === 'ollama' ? '請確認 Ollama 服務已啟動' : '請先填入 API Key 以載入模型'}
+              {app.aiProvider === 'ollama'
+                ? '請確認 Ollama 服務已啟動'
+                : '請先填入 API Key 以載入模型'}
             {/if}
           </span>
         </div>
@@ -675,55 +696,84 @@
     </div>
 
     {#if app.hasRepo}
-    <div class="section">
-      <div class="section-title">Repository — Remotes</div>
-      {#if loadingRemotes}
-        <div class="remote-loading">Loading...</div>
-      {:else}
-        <div class="remote-list">
-          {#each remotes as remote (remote.name)}
-            <div class="remote-item">
-              {#if renamingRemote === remote.name}
-                <div class="remote-rename-form">
-                  <input
-                    type="text"
-                    class="remote-input"
-                    bind:value={renameValue}
-                    onkeydown={(e) => e.key === 'Enter' && handleRenameRemote()}
-                  />
-                  <button class="remote-action-btn" onclick={handleRenameRemote}>Save</button>
-                  <button class="remote-action-btn" onclick={() => renamingRemote = null}>Cancel</button>
-                </div>
-              {:else}
-                <div class="remote-info">
-                  <span class="remote-name">{remote.name}</span>
-                  <span class="remote-url">{remote.url}</span>
-                </div>
-                <div class="remote-actions">
-                  <button class="remote-action-btn" onclick={() => startRename(remote.name)}>Rename</button>
-                  <button class="remote-action-btn danger" onclick={() => handleRemoveRemote(remote.name)}>Remove</button>
-                </div>
-              {/if}
+      <div class="section">
+        <div class="section-title">Repository — Remotes</div>
+        {#if loadingRemotes}
+          <div class="remote-loading">Loading...</div>
+        {:else}
+          <div class="remote-list">
+            {#each remotes as remote (remote.name)}
+              <div class="remote-item">
+                {#if renamingRemote === remote.name}
+                  <div class="remote-rename-form">
+                    <input
+                      type="text"
+                      class="remote-input"
+                      bind:value={renameValue}
+                      onkeydown={(e) => e.key === 'Enter' && handleRenameRemote()}
+                    />
+                    <button class="remote-action-btn" onclick={handleRenameRemote}>Save</button>
+                    <button class="remote-action-btn" onclick={() => (renamingRemote = null)}
+                      >Cancel</button
+                    >
+                  </div>
+                {:else}
+                  <div class="remote-info">
+                    <span class="remote-name">{remote.name}</span>
+                    <span class="remote-url">{remote.url}</span>
+                  </div>
+                  <div class="remote-actions">
+                    <button class="remote-action-btn" onclick={() => startRename(remote.name)}
+                      >Rename</button
+                    >
+                    <button
+                      class="remote-action-btn danger"
+                      onclick={() => handleRemoveRemote(remote.name)}>Remove</button
+                    >
+                  </div>
+                {/if}
+              </div>
+            {:else}
+              <div class="remote-empty">No remotes configured. Add one to push and pull.</div>
+            {/each}
+          </div>
+
+          {#if showAddForm}
+            <div class="add-remote-form">
+              <input
+                type="text"
+                class="remote-input"
+                placeholder="Name (e.g. origin)"
+                bind:value={newRemoteName}
+              />
+              <input
+                type="text"
+                class="remote-input"
+                placeholder="URL (https:// or git@...)"
+                bind:value={newRemoteUrl}
+              />
+              <div class="add-remote-actions">
+                <button
+                  class="remote-action-btn"
+                  onclick={() => {
+                    showAddForm = false;
+                    newRemoteName = '';
+                    newRemoteUrl = '';
+                  }}>Cancel</button
+                >
+                <button
+                  class="remote-action-btn primary"
+                  onclick={handleAddRemote}
+                  disabled={!newRemoteName.trim() || !newRemoteUrl.trim()}>Add</button
+                >
+              </div>
             </div>
           {:else}
-            <div class="remote-empty">No remotes configured. Add one to push and pull.</div>
-          {/each}
-        </div>
-
-        {#if showAddForm}
-          <div class="add-remote-form">
-            <input type="text" class="remote-input" placeholder="Name (e.g. origin)" bind:value={newRemoteName} />
-            <input type="text" class="remote-input" placeholder="URL (https:// or git@...)" bind:value={newRemoteUrl} />
-            <div class="add-remote-actions">
-              <button class="remote-action-btn" onclick={() => { showAddForm = false; newRemoteName = ''; newRemoteUrl = ''; }}>Cancel</button>
-              <button class="remote-action-btn primary" onclick={handleAddRemote} disabled={!newRemoteName.trim() || !newRemoteUrl.trim()}>Add</button>
-            </div>
-          </div>
-        {:else}
-          <button class="add-remote-btn" onclick={() => showAddForm = true}>+ Add Remote</button>
+            <button class="add-remote-btn" onclick={() => (showAddForm = true)}>+ Add Remote</button
+            >
+          {/if}
         {/if}
-      {/if}
-    </div>
+      </div>
     {/if}
 
     <div class="section">
@@ -743,7 +793,13 @@
         </div>
         <div class="about-row">
           <span class="about-label">Copyright</span>
-          <span class="about-value">&copy; 2026 <a href="https://github.com/osakihsieh" target="_blank" rel="noopener noreferrer">osakihsieh</a></span>
+          <span class="about-value"
+            >&copy; 2026 <a
+              href="https://github.com/osakihsieh"
+              target="_blank"
+              rel="noopener noreferrer">osakihsieh</a
+            ></span
+          >
         </div>
       </div>
     </div>
@@ -774,7 +830,9 @@
     font-family: var(--font-ui);
     font-size: var(--font-size-md);
   }
-  .back-btn:hover { text-decoration: underline; }
+  .back-btn:hover {
+    text-decoration: underline;
+  }
   .settings-title {
     font-size: var(--font-size-lg);
     font-weight: 600;
@@ -811,8 +869,13 @@
     flex-direction: column;
     gap: 2px;
   }
-  .setting-label { font-size: var(--font-size-md); }
-  .setting-desc { font-size: 11px; color: var(--text-muted); }
+  .setting-label {
+    font-size: var(--font-size-md);
+  }
+  .setting-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
   .theme-segmented {
     display: flex;
     background: var(--bg-surface);
@@ -877,8 +940,13 @@
     justify-content: space-between;
     font-size: var(--font-size-sm);
   }
-  .about-label { color: var(--text-secondary); }
-  .about-value { color: var(--text-primary); font-family: var(--font-mono); }
+  .about-label {
+    color: var(--text-secondary);
+  }
+  .about-value {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+  }
 
   /* Remote Management */
   .remote-loading {
@@ -935,15 +1003,26 @@
     padding: 2px 6px;
     border-radius: var(--radius-sm);
   }
-  .remote-action-btn:hover { background: var(--bg-hover); }
-  .remote-action-btn.danger { color: var(--error); }
-  .remote-action-btn.danger:hover { background: rgba(255, 107, 107, 0.1); }
+  .remote-action-btn:hover {
+    background: var(--bg-hover);
+  }
+  .remote-action-btn.danger {
+    color: var(--error);
+  }
+  .remote-action-btn.danger:hover {
+    background: rgba(255, 107, 107, 0.1);
+  }
   .remote-action-btn.primary {
     background: var(--accent);
     color: var(--bg-primary);
   }
-  .remote-action-btn.primary:hover { filter: brightness(1.1); }
-  .remote-action-btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .remote-action-btn.primary:hover {
+    filter: brightness(1.1);
+  }
+  .remote-action-btn.primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .remote-rename-form {
     display: flex;
     align-items: center;
@@ -961,8 +1040,12 @@
     padding: var(--space-xs) var(--space-sm);
     outline: none;
   }
-  .remote-input:focus { border-color: var(--accent); }
-  .remote-input::placeholder { color: var(--text-muted); }
+  .remote-input:focus {
+    border-color: var(--accent);
+  }
+  .remote-input::placeholder {
+    color: var(--text-muted);
+  }
   .remote-empty {
     color: var(--text-muted);
     font-size: var(--font-size-sm);
@@ -995,7 +1078,10 @@
     cursor: pointer;
     font-family: var(--font-ui);
   }
-  .add-remote-btn:hover { border-color: var(--accent); background: var(--bg-hover); }
+  .add-remote-btn:hover {
+    border-color: var(--accent);
+    background: var(--bg-hover);
+  }
 
   /* Editor Settings */
   .editor-select {
@@ -1009,8 +1095,13 @@
     cursor: pointer;
     outline: none;
   }
-  .editor-select:focus { border-color: var(--accent); }
-  .editor-select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .editor-select:focus {
+    border-color: var(--accent);
+  }
+  .editor-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .custom-editor-row {
     display: flex;
     align-items: center;
@@ -1067,8 +1158,12 @@
     padding: var(--space-xs) var(--space-sm);
     outline: none;
   }
-  .ai-prompt-textarea:focus { border-color: var(--accent); }
-  .ai-prompt-textarea::placeholder { color: var(--text-muted); }
+  .ai-prompt-textarea:focus {
+    border-color: var(--accent);
+  }
+  .ai-prompt-textarea::placeholder {
+    color: var(--text-muted);
+  }
 
   /* Toggle Switch */
   .toggle-btn {
@@ -1086,7 +1181,9 @@
     background: var(--bg-surface);
     border: 1px solid var(--border);
     position: relative;
-    transition: background 0.2s, border-color 0.2s;
+    transition:
+      background 0.2s,
+      border-color 0.2s;
   }
   .toggle-btn.active .toggle-track {
     background: var(--accent);
@@ -1101,7 +1198,9 @@
     position: absolute;
     top: 2px;
     left: 2px;
-    transition: transform 0.2s, background 0.2s;
+    transition:
+      transform 0.2s,
+      background 0.2s;
   }
   .toggle-btn.active .toggle-thumb {
     transform: translateX(18px);

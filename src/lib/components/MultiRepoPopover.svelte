@@ -154,7 +154,12 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="popover-overlay" onclick={onClose} onkeydown={handleKeydown}></div>
   <!-- svelte-ignore a11y_interactive_supports_focus -->
-  <div class="multi-repo-popover" role="dialog" aria-label="Multi-repo manager" onkeydown={handleKeydown}>
+  <div
+    class="multi-repo-popover"
+    role="dialog"
+    aria-label="Multi-repo manager"
+    onkeydown={handleKeydown}
+  >
     <div class="popover-header">
       <input
         bind:this={searchInput}
@@ -216,7 +221,11 @@
           {#if multiRepo.useGrouping && group.scanPath}
             <div class="group-header">
               <span class="group-path">{dirName(group.scanPath)} ({group.repos.length})</span>
-              <button class="group-remove" onclick={(e) => handleRemoveScanPath(e, group.scanPath)} title="移除此目錄">
+              <button
+                class="group-remove"
+                onclick={(e) => handleRemoveScanPath(e, group.scanPath)}
+                title="移除此目錄"
+              >
                 ×
               </button>
             </div>
@@ -232,7 +241,8 @@
               role="option"
               aria-selected={flatIdx === selectedIndex}
             >
-              <span class="dirty-dot" class:dirty={repo.dirty > 0} class:error={!!repo.error}></span>
+              <span class="dirty-dot" class:dirty={repo.dirty > 0} class:error={!!repo.error}
+              ></span>
               <span class="repo-name">{repo.name}</span>
               <span class="repo-branch">({repo.branch})</span>
               <span class="repo-stats">
@@ -254,10 +264,22 @@
                 {#if repo.loading}
                   <span class="spinner-sm"></span>
                 {:else}
-                  <button class="action-icon" onclick={(e) => handleRepoFetch(e, repo)} title="Fetch">↻</button>
-                  <button class="action-icon" onclick={(e) => handleRepoPull(e, repo)} title="Pull">↓</button>
-                  <button class="action-icon" onclick={(e) => handleRepoPush(e, repo)} title="Push">↑</button>
-                  <button class="action-icon" onclick={(e) => handleRepoEditor(e, repo)} title="Open in Editor">📝</button>
+                  <button
+                    class="action-icon"
+                    onclick={(e) => handleRepoFetch(e, repo)}
+                    title="Fetch">↻</button
+                  >
+                  <button class="action-icon" onclick={(e) => handleRepoPull(e, repo)} title="Pull"
+                    >↓</button
+                  >
+                  <button class="action-icon" onclick={(e) => handleRepoPush(e, repo)} title="Push"
+                    >↑</button
+                  >
+                  <button
+                    class="action-icon"
+                    onclick={(e) => handleRepoEditor(e, repo)}
+                    title="Open in Editor">📝</button
+                  >
                 {/if}
               </span>
             </div>
@@ -267,9 +289,7 @@
     </div>
 
     <div class="popover-footer">
-      <button class="add-dir-btn" onclick={handleAddDirectory}>
-        + 新增目錄
-      </button>
+      <button class="add-dir-btn" onclick={handleAddDirectory}> + 新增目錄 </button>
     </div>
   </div>
 {/if}
@@ -298,8 +318,14 @@
     animation: popover-in 0.15s ease-out;
   }
   @keyframes popover-in {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .popover-header {
@@ -320,9 +346,13 @@
     outline: none;
     padding: var(--space-xs) 0;
   }
-  .search-input::placeholder { color: var(--text-muted); }
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
 
-  .bulk-wrapper { position: relative; }
+  .bulk-wrapper {
+    position: relative;
+  }
   .bulk-btn {
     display: flex;
     align-items: center;
@@ -337,9 +367,19 @@
     cursor: pointer;
     white-space: nowrap;
   }
-  .bulk-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .bulk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .bulk-overlay { position: fixed; inset: 0; z-index: 101; }
+  .bulk-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .bulk-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .bulk-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 101;
+  }
   .bulk-dropdown {
     position: absolute;
     top: 100%;
@@ -364,8 +404,13 @@
     cursor: pointer;
     text-align: left;
   }
-  .bulk-item:hover { background: var(--bg-hover); }
-  .bulk-item:disabled { opacity: 0.5; cursor: not-allowed; }
+  .bulk-item:hover {
+    background: var(--bg-hover);
+  }
+  .bulk-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   .repo-list {
     flex: 1;
@@ -398,8 +443,12 @@
     opacity: 0;
     transition: opacity 0.1s;
   }
-  .group-header:hover .group-remove { opacity: 1; }
-  .group-remove:hover { color: var(--error); }
+  .group-header:hover .group-remove {
+    opacity: 1;
+  }
+  .group-remove:hover {
+    color: var(--error);
+  }
 
   .repo-row {
     display: flex;
@@ -415,9 +464,15 @@
     text-align: left;
     height: 32px;
   }
-  .repo-row:hover { background: var(--bg-hover); }
-  .repo-row.selected { background: var(--bg-hover); }
-  .repo-row.has-error { opacity: 0.7; }
+  .repo-row:hover {
+    background: var(--bg-hover);
+  }
+  .repo-row.selected {
+    background: var(--bg-hover);
+  }
+  .repo-row.has-error {
+    opacity: 0.7;
+  }
 
   .dirty-dot {
     width: 6px;
@@ -426,8 +481,12 @@
     flex-shrink: 0;
     background: transparent;
   }
-  .dirty-dot.dirty { background: var(--warning); }
-  .dirty-dot.error { background: var(--error); }
+  .dirty-dot.dirty {
+    background: var(--warning);
+  }
+  .dirty-dot.error {
+    background: var(--error);
+  }
 
   .repo-name {
     font-size: 12px;
@@ -451,11 +510,22 @@
     font-size: 10px;
     font-family: var(--font-mono);
   }
-  .stat-dirty { color: var(--warning); }
-  .stat-clean { color: var(--success); opacity: 0.6; }
-  .stat-ahead { color: var(--diff-add-text); }
-  .stat-behind { color: var(--diff-del-text); }
-  .stat-error { color: var(--error); }
+  .stat-dirty {
+    color: var(--warning);
+  }
+  .stat-clean {
+    color: var(--success);
+    opacity: 0.6;
+  }
+  .stat-ahead {
+    color: var(--diff-add-text);
+  }
+  .stat-behind {
+    color: var(--diff-del-text);
+  }
+  .stat-error {
+    color: var(--error);
+  }
 
   .repo-actions {
     display: flex;
@@ -464,7 +534,9 @@
     opacity: 0;
     transition: opacity 0.1s;
   }
-  .repo-row:hover .repo-actions { opacity: 1; }
+  .repo-row:hover .repo-actions {
+    opacity: 1;
+  }
   .action-icon {
     background: none;
     border: none;
@@ -474,7 +546,10 @@
     padding: 2px 4px;
     border-radius: var(--radius-sm);
   }
-  .action-icon:hover { color: var(--accent); background: var(--bg-hover); }
+  .action-icon:hover {
+    color: var(--accent);
+    background: var(--bg-hover);
+  }
 
   .popover-footer {
     padding: var(--space-sm) var(--space-md);
@@ -490,7 +565,9 @@
     font-family: var(--font-ui);
     padding: var(--space-xs) 0;
   }
-  .add-dir-btn:hover { text-decoration: underline; }
+  .add-dir-btn:hover {
+    text-decoration: underline;
+  }
 
   .empty-state {
     display: flex;
@@ -500,8 +577,13 @@
     padding: var(--space-lg) var(--space-md);
     color: var(--text-muted);
   }
-  .empty-icon { font-size: 24px; }
-  .empty-text { font-size: 12px; text-align: center; }
+  .empty-icon {
+    font-size: 24px;
+  }
+  .empty-text {
+    font-size: 12px;
+    text-align: center;
+  }
 
   .skeleton-row {
     display: flex;
@@ -525,20 +607,37 @@
     animation: pulse 1.2s ease-in-out infinite;
   }
   @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.8; }
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.8;
+    }
   }
 
-  .spinner, .spinner-sm {
+  .spinner,
+  .spinner-sm {
     display: inline-block;
     border: 2px solid var(--text-muted);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
-  .spinner { width: 12px; height: 12px; }
-  .spinner-sm { width: 10px; height: 10px; border-width: 1.5px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 12px;
+    height: 12px;
+  }
+  .spinner-sm {
+    width: 10px;
+    height: 10px;
+    border-width: 1.5px;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 
   @media (max-width: 900px) {
     .multi-repo-popover {

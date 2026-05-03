@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{build_system_prompt, http_client, AiError, AiProvider, CommitContext, ModelInfo, ProviderConfig};
+use super::{
+    build_system_prompt, http_client, AiError, AiProvider, CommitContext, ModelInfo, ProviderConfig,
+};
 
 // ── List Models ─────────────────────────────────────
 
@@ -40,7 +42,10 @@ pub async fn list_openai_models(api_key: &str) -> Result<Vec<ModelInfo>, AiError
         .into_iter()
         .filter(|m| {
             let id = &m.id;
-            id.starts_with("gpt-") || id.starts_with("o1") || id.starts_with("o3") || id.starts_with("o4")
+            id.starts_with("gpt-")
+                || id.starts_with("o1")
+                || id.starts_with("o3")
+                || id.starts_with("o4")
         })
         .map(|m| ModelInfo {
             name: m.id.clone(),

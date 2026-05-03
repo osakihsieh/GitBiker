@@ -24,8 +24,10 @@
   const variants: Record<Variant, string> = {
     default: 'bg-[var(--accent)] text-[var(--bg-primary)] hover:brightness-110',
     destructive: 'bg-[var(--error)] text-white hover:brightness-110',
-    outline: 'border border-[var(--border)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
-    secondary: 'bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] border border-[var(--border)]',
+    outline:
+      'border border-[var(--border)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
+    secondary:
+      'bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] border border-[var(--border)]',
     ghost: 'bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
     link: 'text-[var(--accent)] underline-offset-4 hover:underline bg-transparent',
   };
@@ -46,13 +48,15 @@
     'cursor-pointer font-[var(--font-ui)]',
     variants[variant],
     sizes[size],
-    className
+    className,
   )}
   disabled={disabled || loading}
   {...rest}
 >
   {#if loading}
-    <span class="inline-block h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin"></span>
+    <span
+      class="inline-block h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin"
+    ></span>
   {/if}
   {@render children?.()}
 </button>

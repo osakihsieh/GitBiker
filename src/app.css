@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "tailwindcss-animate";
 
 /* shadcn-svelte CSS variables (mapped to Monokai Pro) */
@@ -25,7 +25,7 @@
     --ring: 191 70% 69%;
     --radius: 0.25rem;
   }
-  [data-theme="light"] {
+  [data-theme='light'] {
     --background: 0 0% 98%;
     --foreground: 0 0% 10%;
     --card: 0 0% 100%;
@@ -74,8 +74,8 @@
   --warning: #ffd866;
 
   /* Diff */
-  --diff-add-bg: rgba(169, 220, 118, 0.30);
-  --diff-del-bg: rgba(255, 97, 136, 0.30);
+  --diff-add-bg: rgba(169, 220, 118, 0.3);
+  --diff-del-bg: rgba(255, 97, 136, 0.3);
   --diff-add-text: #a9dc76;
   --diff-del-text: #ff6188;
 
@@ -100,7 +100,7 @@
   --radius-md: 4px;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --bg-primary: #2d2a2e;
   --bg-secondary: #221f22;
   --bg-surface: #403e41;
@@ -112,14 +112,14 @@
   --error: #ff6188;
   --success: #a9dc76;
   --warning: #ffd866;
-  --diff-add-bg: rgba(169, 220, 118, 0.30);
-  --diff-del-bg: rgba(255, 97, 136, 0.30);
+  --diff-add-bg: rgba(169, 220, 118, 0.3);
+  --diff-del-bg: rgba(255, 97, 136, 0.3);
   --diff-add-text: #a9dc76;
   --diff-del-text: #ff6188;
   --border: #403e41;
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
   --bg-primary: #fafafa;
   --bg-secondary: #f0f0f0;
   --bg-surface: #ffffff;
@@ -147,7 +147,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   overflow: hidden;
 }

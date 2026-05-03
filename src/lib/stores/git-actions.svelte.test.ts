@@ -22,7 +22,9 @@ function createMockState(overrides?: Partial<GitActionableState>): GitActionable
         unstagedFiles: [],
         commits: [],
         branches: [],
+        tags: [],
         currentBranch: 'main',
+        logFilter: { all: false },
       },
     },
     tabs: [],
@@ -64,7 +66,7 @@ describe('git-actions', () => {
       mockGitCommands.gitStatus.mockRejectedValueOnce(new Error('git error'));
 
       await refreshStatus(state);
-      expect(state.addToast).toHaveBeenCalledWith('Error: git error', 'error');
+      expect(state.addToast).toHaveBeenCalledWith('git error', 'error');
     });
   });
 
@@ -72,13 +74,19 @@ describe('git-actions', () => {
     it('呼叫 gitStatus + gitLog + gitBranches', async () => {
       const state = createMockState();
       mockGitCommands.gitStatus.mockResolvedValueOnce([]);
-      mockGitCommands.gitLog.mockResolvedValueOnce([{ id: '123', message: 'test', author: 'A', email: '', timestamp: 0, parents: [] }]);
-      mockGitCommands.gitBranches.mockResolvedValueOnce([{ name: 'main', is_current: true, is_remote: false, upstream: null, commit_id: '123' }]);
+      mockGitCommands.gitLog.mockResolvedValueOnce([
+        { id: '123', message: 'test', author: 'A', email: '', timestamp: 0, parents: [] },
+      ]);
+      mockGitCommands.gitBranches.mockResolvedValueOnce([
+        { name: 'main', is_current: true, is_remote: false, upstream: null, commit_id: '123' },
+      ]);
+      mockGitCommands.gitTags.mockResolvedValueOnce([]);
 
       await refreshAll(state);
       expect(mockGitCommands.gitStatus).toHaveBeenCalled();
       expect(mockGitCommands.gitLog).toHaveBeenCalled();
       expect(mockGitCommands.gitBranches).toHaveBeenCalled();
+      expect(mockGitCommands.gitTags).toHaveBeenCalled();
       expect(state.activeTab!.state.commits).toHaveLength(1);
       expect(state.activeTab!.state.currentBranch).toBe('main');
     });
@@ -97,6 +105,7 @@ describe('git-actions', () => {
       mockGitCommands.gitBranches.mockResolvedValueOnce([
         { name: 'feat', is_current: false, is_remote: false, upstream: null, commit_id: '123' },
       ]);
+      mockGitCommands.gitTags.mockResolvedValueOnce([]);
 
       await refreshAll(state);
       expect(state.activeTab!.state.currentBranch).toBe('old-branch');
@@ -107,14 +116,20 @@ describe('git-actions', () => {
       mockGitCommands.gitStatus.mockRejectedValueOnce(new Error('fetch error'));
 
       await refreshAll(state);
-      expect(state.addToast).toHaveBeenCalledWith('Error: fetch error', 'error');
+      expect(state.addToast).toHaveBeenCalledWith('fetch error', 'error');
     });
   });
 
   describe('loadDiff', () => {
     it('呼叫 gitDiff 並設定 currentDiff', async () => {
       const state = createMockState();
-      const fakeDiff = { file_path: 'a.ts', hunks: [], stats: { additions: 1, deletions: 0 }, is_binary: false, is_truncated: false };
+      const fakeDiff = {
+        file_path: 'a.ts',
+        hunks: [],
+        stats: { additions: 1, deletions: 0 },
+        is_binary: false,
+        is_truncated: false,
+      };
       mockGitCommands.gitDiff.mockResolvedValueOnce(fakeDiff);
 
       await loadDiff(state, 'a.ts');
@@ -132,7 +147,7 @@ describe('git-actions', () => {
       mockGitCommands.gitDiff.mockRejectedValueOnce(new Error('diff failed'));
 
       await loadDiff(state, 'a.ts');
-      expect(state.addToast).toHaveBeenCalledWith('Error: diff failed', 'error');
+      expect(state.addToast).toHaveBeenCalledWith('diff failed', 'error');
       expect(state.currentDiff).toBeNull();
     });
   });
@@ -140,13 +155,29 @@ describe('git-actions', () => {
   describe('loadRepoData', () => {
     it('正確分類 staged/unstaged 並填入 tab', async () => {
       const state = createMockState();
-      state.tabs = [{ id: 'tab-1', state: { stagedFiles: [], unstagedFiles: [], commits: [], branches: [], currentBranch: '' } }];
+      state.tabs = [
+        {
+          id: 'tab-1',
+          state: {
+            stagedFiles: [],
+            unstagedFiles: [],
+            commits: [],
+            branches: [],
+            tags: [],
+            currentBranch: '',
+            logFilter: { all: false },
+          },
+        },
+      ];
       mockGitCommands.gitStatus.mockResolvedValueOnce([
         { path: 'staged.ts', kind: 'Added', staging: 'Staged' },
         { path: 'unstaged.ts', kind: 'Modified', staging: 'Unstaged' },
       ]);
       mockGitCommands.gitLog.mockResolvedValueOnce([]);
-      mockGitCommands.gitBranches.mockResolvedValueOnce([{ name: 'dev', is_current: true, is_remote: false, upstream: null, commit_id: null }]);
+      mockGitCommands.gitBranches.mockResolvedValueOnce([
+        { name: 'dev', is_current: true, is_remote: false, upstream: null, commit_id: null },
+      ]);
+      mockGitCommands.gitTags.mockResolvedValueOnce([]);
 
       await loadRepoData(state, 'tab-1', '/test/repo');
       expect(state.tabs[0].state.stagedFiles).toHaveLength(1);

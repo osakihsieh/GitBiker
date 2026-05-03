@@ -67,14 +67,15 @@
   }
 </script>
 
-<UiDialog bind:open onOpenChange={handleOpenChange} title="Clone Repository" description="從 URL 複製 Git repository">
+<UiDialog
+  bind:open
+  onOpenChange={handleOpenChange}
+  title="Clone Repository"
+  description="從 URL 複製 Git repository"
+>
   {#snippet footer()}
     <UiButton variant="secondary" onclick={onClose} disabled={cloning}>Cancel</UiButton>
-    <UiButton
-      onclick={handleClone}
-      disabled={!url.trim() || !destPath.trim()}
-      loading={cloning}
-    >
+    <UiButton onclick={handleClone} disabled={!url.trim() || !destPath.trim()} loading={cloning}>
       {cloning ? 'Cloning...' : 'Clone'}
     </UiButton>
   {/snippet}
@@ -105,9 +106,25 @@
     </div>
 
     {#if error}
-      <div class="flex items-start gap-2 rounded-sm border border-[var(--error)]/30 bg-[var(--error)]/10 px-3 py-2.5 text-xs text-[var(--error)]">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mt-0.5 shrink-0">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      <div
+        class="flex items-start gap-2 rounded-sm border border-[var(--error)]/30 bg-[var(--error)]/10 px-3 py-2.5 text-xs text-[var(--error)]"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          class="mt-0.5 shrink-0"
+        >
+          <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line
+            x1="12"
+            y1="16"
+            x2="12.01"
+            y2="16"
+          />
         </svg>
         {error}
       </div>
@@ -116,7 +133,9 @@
     {#if cloning}
       <div class="flex flex-col gap-1.5">
         <div class="h-1 w-full overflow-hidden rounded-full bg-[var(--bg-surface)]">
-          <div class="h-full w-2/5 animate-[indeterminate_1.5s_ease-in-out_infinite] rounded-full bg-[var(--accent)]"></div>
+          <div
+            class="h-full w-2/5 animate-[indeterminate_1.5s_ease-in-out_infinite] rounded-full bg-[var(--accent)]"
+          ></div>
         </div>
         <span class="text-[10px] text-[var(--text-muted)]">{progress}</span>
       </div>
@@ -126,7 +145,11 @@
 
 <style>
   @keyframes indeterminate {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(350%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(350%);
+    }
   }
 </style>

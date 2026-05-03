@@ -20,7 +20,7 @@
     'focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]',
     'disabled:opacity-50 disabled:cursor-not-allowed',
     error && 'border-[var(--error)]',
-    className
+    className,
   )}
   {...rest}
 />

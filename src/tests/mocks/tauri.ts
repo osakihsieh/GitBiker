@@ -32,7 +32,9 @@ const mockGitCommands = {
   gitLog: vi.fn().mockResolvedValue([]),
   gitBranches: vi.fn().mockResolvedValue([]),
   gitDiff: vi.fn().mockResolvedValue(null),
-  gitMergeBranch: vi.fn().mockResolvedValue({ branch: '', success: true, message: '', conflicts: [] }),
+  gitMergeBranch: vi
+    .fn()
+    .mockResolvedValue({ branch: '', success: true, message: '', conflicts: [] }),
   gitMergeAbort: vi.fn().mockResolvedValue(undefined),
   gitStashList: vi.fn().mockResolvedValue([]),
   gitStashPush: vi.fn().mockResolvedValue(''),
@@ -41,12 +43,21 @@ const mockGitCommands = {
   gitStashDrop: vi.fn().mockResolvedValue(''),
   startWatching: vi.fn().mockResolvedValue(undefined),
   stopWatching: vi.fn().mockResolvedValue(undefined),
-  gitMergeDryRun: vi.fn().mockResolvedValue({ has_conflicts: false, conflict_files: [], method: 'merge-tree' }),
+  gitMergeDryRun: vi
+    .fn()
+    .mockResolvedValue({ has_conflicts: false, conflict_files: [], method: 'merge-tree' }),
   gitGetConflictFiles: vi.fn().mockResolvedValue([]),
-  gitGetConflictContent: vi.fn().mockResolvedValue({ path: '', segments: [], hunk_count: 0, content_hash: '', parse_error: null }),
+  gitGetConflictContent: vi.fn().mockResolvedValue({
+    path: '',
+    segments: [],
+    hunk_count: 0,
+    content_hash: '',
+    parse_error: null,
+  }),
   gitResolveConflictContent: vi.fn().mockResolvedValue(undefined),
   gitResolveConflictChoice: vi.fn().mockResolvedValue(undefined),
   gitCompleteMerge: vi.fn().mockResolvedValue({ commit_hash: 'abc1234' }),
+  gitTags: vi.fn().mockResolvedValue([]),
 };
 
 vi.mock('$lib/git/commands', () => mockGitCommands);

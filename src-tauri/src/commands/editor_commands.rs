@@ -65,12 +65,13 @@ fn find_editor_command(candidate: &EditorCandidate) -> Option<String> {
     {
         if let Ok(local_app) = std::env::var("LOCALAPPDATA") {
             let extra_paths: Vec<PathBuf> = match candidate.id {
-                "vscode" => vec![
-                    PathBuf::from(&local_app).join("Programs/Microsoft VS Code/bin/code.cmd"),
-                ],
-                "cursor" => vec![
-                    PathBuf::from(&local_app).join("Programs/cursor/resources/app/bin/cursor.cmd"),
-                ],
+                "vscode" => {
+                    vec![PathBuf::from(&local_app).join("Programs/Microsoft VS Code/bin/code.cmd")]
+                }
+                "cursor" => {
+                    vec![PathBuf::from(&local_app)
+                        .join("Programs/cursor/resources/app/bin/cursor.cmd")]
+                }
                 _ => vec![],
             };
             for p in &extra_paths {

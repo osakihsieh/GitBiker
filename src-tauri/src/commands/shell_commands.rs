@@ -167,9 +167,7 @@ pub fn run_shell_command(
         let shell_info = detect_shells()
             .into_iter()
             .find(|s| s.id == *shell_id)
-            .ok_or_else(|| {
-                GitError::OperationFailed(format!("找不到指定的 Shell: {shell_id}"))
-            })?;
+            .ok_or_else(|| GitError::OperationFailed(format!("找不到指定的 Shell: {shell_id}")))?;
 
         build_shell_command(shell_id, &shell_info.command, cmd_trimmed, &cwd)
             .output()

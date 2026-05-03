@@ -110,14 +110,23 @@
           autofocus
           onkeydown={(e) => {
             if (e.key === 'Enter') handlePush();
-            if (e.key === 'Escape') { showPushForm = false; pushMessage = ''; }
+            if (e.key === 'Escape') {
+              showPushForm = false;
+              pushMessage = '';
+            }
           }}
         />
         <div class="push-actions">
           <button class="btn-create" onclick={handlePush} disabled={pushing}>
             {#if pushing}<span class="spinner"></span>{:else}Stash{/if}
           </button>
-          <button class="btn-text" onclick={() => { showPushForm = false; pushMessage = ''; }}>取消</button>
+          <button
+            class="btn-text"
+            onclick={() => {
+              showPushForm = false;
+              pushMessage = '';
+            }}>取消</button
+          >
         </div>
       </div>
     {/if}
@@ -135,9 +144,21 @@
               <span class="stash-message">{stash.message}</span>
             </div>
             <div class="stash-actions">
-              <button class="action-btn" title="Pop (apply + drop)" onclick={() => handlePop(stash.index)}>Pop</button>
-              <button class="action-btn" title="Apply (keep stash)" onclick={() => handleApply(stash.index)}>Apply</button>
-              <button class="action-btn delete-btn" title="Drop" onclick={() => handleDrop(stash.index)}>×</button>
+              <button
+                class="action-btn"
+                title="Pop (apply + drop)"
+                onclick={() => handlePop(stash.index)}>Pop</button
+              >
+              <button
+                class="action-btn"
+                title="Apply (keep stash)"
+                onclick={() => handleApply(stash.index)}>Apply</button
+              >
+              <button
+                class="action-btn delete-btn"
+                title="Drop"
+                onclick={() => handleDrop(stash.index)}>×</button
+              >
             </div>
           </div>
         {/each}
@@ -165,8 +186,14 @@
   }
 
   @keyframes popoverIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .stash-header {
@@ -189,7 +216,9 @@
     font-family: var(--font-ui);
     cursor: pointer;
   }
-  .btn-stash-push:hover { text-decoration: underline; }
+  .btn-stash-push:hover {
+    text-decoration: underline;
+  }
 
   .push-form {
     padding: var(--space-sm) var(--space-md);
@@ -209,8 +238,14 @@
     font-family: var(--font-mono);
     outline: none;
   }
-  .push-input:focus { border-color: var(--accent); }
-  .push-actions { display: flex; gap: var(--space-xs); align-items: center; }
+  .push-input:focus {
+    border-color: var(--accent);
+  }
+  .push-actions {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+  }
   .btn-create {
     background: var(--accent);
     color: var(--bg-primary);
@@ -225,7 +260,10 @@
     align-items: center;
     gap: var(--space-xs);
   }
-  .btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-create:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .btn-text {
     background: none;
     border: none;
@@ -233,7 +271,9 @@
     font-size: var(--font-size-sm);
     cursor: pointer;
   }
-  .btn-text:hover { color: var(--text-primary); }
+  .btn-text:hover {
+    color: var(--text-primary);
+  }
 
   .stash-list {
     overflow-y: auto;
@@ -246,10 +286,14 @@
     align-items: center;
     padding: var(--space-sm) var(--space-md);
     gap: var(--space-sm);
-    border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
+    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
   }
-  .stash-item:hover { background: var(--bg-hover); }
-  .stash-item:hover .stash-actions { opacity: 1; }
+  .stash-item:hover {
+    background: var(--bg-hover);
+  }
+  .stash-item:hover .stash-actions {
+    opacity: 1;
+  }
 
   .stash-info {
     flex: 1;
@@ -287,8 +331,13 @@
     padding: 2px 6px;
     border-radius: var(--radius-sm);
   }
-  .action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-  .delete-btn:hover { color: var(--error); }
+  .action-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .delete-btn:hover {
+    color: var(--error);
+  }
 
   .empty-state {
     padding: var(--space-lg) var(--space-md);
@@ -306,5 +355,9 @@
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 </style>

@@ -1,11 +1,17 @@
 # TODOs
 
 ## (已完成) 測試基礎設施 ✅
+
 ## (已完成) git_commands.rs 拆分 ✅
+
 ## (已完成) Merge Branch Into Current ✅
+
 ## (已完成) Stash 操作 ✅
+
 ## (已完成) Command Palette ✅
+
 ## (已完成) Inline Terminal ✅
+
 ## (已完成) Popover drag-to-reorder pinned repos ✅
 
 ---
@@ -18,41 +24,41 @@
 
 ### Sprint 1：核心 Git 操作補齊（P1）
 
-| # | User Story | 工作量 | 依賴 |
-|---|-----------|--------|------|
-| US-001 | [Git Init](user-stories/US-001-git-init.md) | S | 無 ✅ |
-| US-002 | [Revert Commit](user-stories/US-002-revert-commit.md) | M | ConflictResolver ✅ |
-| US-003 | [Undo Un-pushed Commits](user-stories/US-003-undo-unpushed-commits.md) | M | CommitLog ✅ |
-| US-004 | [File History](user-stories/US-004-file-history.md) | M | CommitLog + DiffViewer ✅ |
+| #      | User Story                                                             | 工作量 | 依賴                      |
+| ------ | ---------------------------------------------------------------------- | ------ | ------------------------- |
+| US-001 | [Git Init](user-stories/US-001-git-init.md)                            | S      | 無 ✅                     |
+| US-002 | [Revert Commit](user-stories/US-002-revert-commit.md)                  | M      | ConflictResolver ✅       |
+| US-003 | [Undo Un-pushed Commits](user-stories/US-003-undo-unpushed-commits.md) | M      | CommitLog ✅              |
+| US-004 | [File History](user-stories/US-004-file-history.md)                    | M      | CommitLog + DiffViewer ✅ |
 
 ### Sprint 2：進階使用者體驗（P2）
 
-| # | User Story | 工作量 | 依賴 |
-|---|-----------|--------|------|
-| US-008 | [Commit Filter by Branch](user-stories/US-008-commit-filter-by-branch.md) | S | CommitLog ✅ ✅ |
-| US-005 | [Branch Compare](user-stories/US-005-branch-compare.md) | M | BranchManager ✅ ✅ |
-| US-006 | [Partial Stash](user-stories/US-006-partial-stash.md) | M | StashManager ✅ ✅ |
-| US-007 | [Code History Search](user-stories/US-007-code-history-search.md) | M | CommitLog ✅ ✅ |
+| #      | User Story                                                                | 工作量 | 依賴                |
+| ------ | ------------------------------------------------------------------------- | ------ | ------------------- |
+| US-008 | [Commit Filter by Branch](user-stories/US-008-commit-filter-by-branch.md) | S      | CommitLog ✅ ✅     |
+| US-005 | [Branch Compare](user-stories/US-005-branch-compare.md)                   | M      | BranchManager ✅ ✅ |
+| US-006 | [Partial Stash](user-stories/US-006-partial-stash.md)                     | M      | StashManager ✅ ✅  |
+| US-007 | [Code History Search](user-stories/US-007-code-history-search.md)         | M      | CommitLog ✅ ✅     |
 
 ### Sprint 3：GitFiend 對標補全（P1-P3）
 
-| # | 功能 | 工作量 | 狀態 |
-|---|------|--------|------|
-| US-011 | Cherry-pick Commit | M | ✅ |
-| US-012 | Hunk/Line-level Staging | L | ✅ |
-| US-009 | Auto Fetch | S | ✅ |
-| US-013 | Filter Commits by Author | S | ✅ |
-| US-014 | Visual Commit Graph | L | ✅ |
-| US-015 | Hunk/Line-level Stash | M | ✅ |
-| US-016 | Branch 名稱搜尋 | S | ✅ |
-| US-017 | 衝突解決 Custom Edit (行重排) | M | ✅ |
-| US-018 | Multi-Repo 視圖 + 批量操作 | L | ✅ |
+| #      | 功能                          | 工作量 | 狀態 |
+| ------ | ----------------------------- | ------ | ---- |
+| US-011 | Cherry-pick Commit            | M      | ✅   |
+| US-012 | Hunk/Line-level Staging       | L      | ✅   |
+| US-009 | Auto Fetch                    | S      | ✅   |
+| US-013 | Filter Commits by Author      | S      | ✅   |
+| US-014 | Visual Commit Graph           | L      | ✅   |
+| US-015 | Hunk/Line-level Stash         | M      | ✅   |
+| US-016 | Branch 名稱搜尋               | S      | ✅   |
+| US-017 | 衝突解決 Custom Edit (行重排) | M      | ✅   |
+| US-018 | Multi-Repo 視圖 + 批量操作    | L      | ✅   |
 
 ### Sprint 4：品質提升（P3）
 
-| # | User Story | 工作量 | 依賴 |
-|---|-----------|--------|------|
-| US-010 | [Pre-commit Hook 支援](user-stories/US-010-pre-commit-hook-support.md) | S | Commit ✅ |
+| #      | User Story                                                             | 工作量 | 依賴      |
+| ------ | ---------------------------------------------------------------------- | ------ | --------- |
+| US-010 | [Pre-commit Hook 支援](user-stories/US-010-pre-commit-hook-support.md) | S      | Commit ✅ |
 
 ---
 

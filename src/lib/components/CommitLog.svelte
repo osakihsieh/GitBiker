@@ -11,6 +11,8 @@
     gitResetSoft,
     gitResetHard,
     gitCherryPick,
+    gitMergeBranch,
+    gitRebase,
   } from '$lib/git/commands';
   import type { Commit } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
@@ -47,6 +49,7 @@
   const totalGraphHeight = $derived(totalHeight);
 
   let contextMenu = $state<{ commit: Commit; x: number; y: number } | null>(null);
+  let dragMenu = $state<{ source: Commit; target: Commit; x: number; y: number } | null>(null);
   let tagContextMenu = $state<{ tagName: string; x: number; y: number } | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -173,63 +176,111 @@
     return lane * LANE_WIDTH + LANE_WIDTH / 2 + 4;
   }
 
-  // ── DOM measurement for single-SVG overlay ──
 
-  let listInnerEl: HTMLElement | undefined = $state();
-  let rowMids: number[] = $state([]);
-  let totalGraphHeight: number = $state(0);
+  // ── Drag & Drop ──
+  let draggingCommit = $state<Commit | null>(null);
+  let dragOverCommit = $state<Commit | null>(null);
 
-  function measureRows() {
-    const el = listInnerEl;
-    if (!el) return;
-    const items = el.querySelectorAll('.commit-item');
-    if (items.length === 0) return;
-    const mids: number[] = [];
-    let maxBottom = 0;
-    for (const item of items) {
-      const htmlEl = item as HTMLElement;
-      mids.push(htmlEl.offsetTop + htmlEl.offsetHeight / 2);
-      const bottom = htmlEl.offsetTop + htmlEl.offsetHeight;
-      if (bottom > maxBottom) maxBottom = bottom;
+  function handleDragStart(e: DragEvent, commit: Commit) {
+    draggingCommit = commit;
+    if (e.dataTransfer) {
+      e.dataTransfer.setData('text/plain', commit.id);
+      e.dataTransfer.effectAllowed = 'copyMove';
     }
-    rowMids = mids;
-    totalGraphHeight = maxBottom;
   }
 
-  // Measure after DOM updates when commits change
-  $effect(() => {
-    const el = listInnerEl;
-    const commitCount = displayCommits.length;
-    const wip = hasWip;
-    if (!el || commitCount === 0) {
-      rowMids = [];
-      totalGraphHeight = 0;
+  function handleDragOver(e: DragEvent, commit: Commit) {
+    if (!draggingCommit || draggingCommit.id === commit.id) return;
+    e.preventDefault();
+    dragOverCommit = commit;
+  }
+
+  function handleDrop(e: DragEvent, target: Commit) {
+    e.preventDefault();
+    const source = draggingCommit;
+    if (!source || source.id === target.id) {
+      draggingCommit = null;
+      dragOverCommit = null;
       return;
     }
-    const tid = setTimeout(() => {
-      try {
-        measureRows();
-      } catch {
-        /* safe */
-      }
-    }, 50);
-    return () => clearTimeout(tid);
+
+    dragMenu = {
+      source,
+      target,
+      x: e.clientX,
+      y: e.clientY,
+    };
+
+    draggingCommit = null;
+    dragOverCommit = null;
+  }
+
+  const dragMenuItems: MenuItem[] = $derived.by(() => {
+    if (!dragMenu) return [];
+    const { source, target } = dragMenu;
+    const sourceShort = source.id.substring(0, 7);
+    const targetShort = target.id.substring(0, 7);
+
+    return [
+      { id: 'merge', label: `Merge ${sourceShort} into ${targetShort}` },
+      { id: 'rebase', label: `Rebase ${targetShort} onto ${sourceShort}` },
+      { id: 'cherry-pick', label: `Cherry-pick ${sourceShort} onto ${targetShort}` },
+    ];
   });
 
-  // ResizeObserver for dynamic row height changes
-  $effect(() => {
-    const el = listInnerEl;
-    if (!el) return;
-    const observer = new ResizeObserver(() => {
-      try {
-        measureRows();
-      } catch {
-        /* safe */
+    async function handleDragMenuSelect(actionId: string) {
+    if (!dragMenu || !app.repoPath) return;
+    const { source, target } = dragMenu;
+
+    try {
+      switch (actionId) {
+        case 'merge':
+          if (
+            confirm(`確定要將 ${source.id.substring(0, 7)} 合併到 ${target.id.substring(0, 7)}？`)
+          ) {
+            const result = await gitMergeBranch(app.repoPath, source.id);
+            if (result.success) {
+              app.addToast('Merge 成功', 'success');
+            } else if (result.conflicts && result.conflicts.length > 0) {
+              app.addToast('Merge 衝突，已進入衝突解決模式', 'error');
+              await app.enterConflictMode();
+            }
+            await app.refreshAll();
+          }
+          break;
+        case 'rebase':
+          if (confirm(`確定要將當前分支 Rebase 到 ${source.id.substring(0, 7)}？`)) {
+            const result = await gitRebase(app.repoPath, app.currentBranch, source.id);
+            if (result.success) {
+              app.addToast('Rebase 成功', 'success');
+            } else if (result.conflicts && result.conflicts.length > 0) {
+              app.addToast('Rebase 衝突，請手動解決', 'error');
+            }
+            await app.refreshAll();
+          }
+          break;
+        case 'cherry-pick':
+          if (
+            confirm(
+              `確定要將 ${source.id.substring(0, 7)} Cherry-pick 到 ${target.id.substring(0, 7)}？`,
+            )
+          ) {
+            const result = await gitCherryPick(app.repoPath, source.id);
+            if (result.success) {
+              app.addToast('Cherry-pick 成功', 'success');
+            } else if (result.conflicts && result.conflicts.length > 0) {
+              app.addToast('Cherry-pick 衝突', 'error');
+            }
+            await app.refreshAll();
+          }
+          break;
       }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  });
+    } catch (e: unknown) {
+      app.addToast(extractErrorMessage(e), 'error');
+    } finally {
+      dragMenu = null;
+    }
+  }
 
   // ── SVG path computation ──
 
@@ -715,6 +766,11 @@
             <button
               class="commit-item"
               class:selected={app.selectedCommit?.id === commit.id}
+              class:drag-over={dragOverCommit?.id === commit.id}
+              draggable="true"
+              ondragstart={(e) => handleDragStart(e, commit)}
+              ondragover={(e) => handleDragOver(e, commit)}
+              ondrop={(e) => handleDrop(e, commit)}
               onclick={() => handleCommitClick(commit)}
               oncontextmenu={(e) => handleContextMenu(e, commit)}
               style="height: {ROW_HEIGHT}px;"
@@ -764,6 +820,16 @@
     {/if}
   </div>
 </div>
+
+{#if dragMenu}
+  <ContextMenu
+    x={dragMenu.x}
+    y={dragMenu.y}
+    items={dragMenuItems}
+    onSelect={handleDragMenuSelect}
+    onClose={() => (dragMenu = null)}
+  />
+{/if}
 
 {#if contextMenu}
   <ContextMenu
@@ -927,6 +993,10 @@
   .commit-item.selected {
     background: var(--bg-surface);
     border-left-color: var(--accent);
+  }
+  .commit-item.drag-over {
+    background: var(--bg-hover);
+    border: 2px dashed var(--accent) !important;
   }
 
   .commit-info {

@@ -51,7 +51,9 @@ pub fn git_rename_branch(
     old_name: String,
     new_name: String,
 ) -> Result<(), GitError> {
-    state.git.rename_branch(&PathBuf::from(&path), &old_name, &new_name)
+    state
+        .git
+        .rename_branch(&PathBuf::from(&path), &old_name, &new_name)
 }
 
 #[tauri::command]
@@ -60,7 +62,9 @@ pub fn git_checkout_remote_branch(
     path: String,
     remote_branch: String,
 ) -> Result<String, GitError> {
-    state.git.checkout_remote_branch(&PathBuf::from(&path), &remote_branch)
+    state
+        .git
+        .checkout_remote_branch(&PathBuf::from(&path), &remote_branch)
 }
 
 #[tauri::command]
@@ -71,7 +75,9 @@ pub fn git_branch_merge_status(
     base: Option<String>,
 ) -> Result<BranchMergeStatus, GitError> {
     let base_branch = base.unwrap_or_else(|| "HEAD".to_string());
-    state.git.branch_merge_status(&PathBuf::from(&path), &branch_name, &base_branch)
+    state
+        .git
+        .branch_merge_status(&PathBuf::from(&path), &branch_name, &base_branch)
 }
 
 #[tauri::command]
@@ -84,10 +90,17 @@ pub fn git_merge_branch(
 }
 
 #[tauri::command]
-pub fn git_merge_abort(
+  pub fn git_rebase(
     state: State<GitState>,
     path: String,
-) -> Result<(), GitError> {
+    branch: String,
+    onto: String,
+  ) -> Result<crate::git::types::RebaseResult, GitError> {
+    state.git.rebase(&PathBuf::from(&path), &branch, &onto)
+  }
+
+#[tauri::command]
+pub fn git_merge_abort(state: State<GitState>, path: String) -> Result<(), GitError> {
     state.git.merge_abort(&PathBuf::from(&path))
 }
 
@@ -98,7 +111,9 @@ pub fn git_branch_compare(
     base: String,
     compare: String,
 ) -> Result<BranchCompareResult, GitError> {
-    state.git.branch_compare(&PathBuf::from(&path), &base, &compare)
+    state
+        .git
+        .branch_compare(&PathBuf::from(&path), &base, &compare)
 }
 
 // ── Conflict Resolution Commands ─────────────────────
@@ -126,7 +141,9 @@ pub fn git_get_conflict_content(
     path: String,
     file_path: String,
 ) -> Result<ConflictContent, GitError> {
-    state.git.get_conflict_content(&PathBuf::from(&path), &file_path)
+    state
+        .git
+        .get_conflict_content(&PathBuf::from(&path), &file_path)
 }
 
 #[tauri::command]
@@ -152,7 +169,9 @@ pub fn git_resolve_conflict_choice(
     file_path: String,
     choice: ResolveChoice,
 ) -> Result<(), GitError> {
-    state.git.resolve_conflict_choice(&PathBuf::from(&path), &file_path, &choice)
+    state
+        .git
+        .resolve_conflict_choice(&PathBuf::from(&path), &file_path, &choice)
 }
 
 #[tauri::command]
@@ -161,16 +180,15 @@ pub fn git_complete_merge(
     path: String,
     message: Option<String>,
 ) -> Result<MergeCompleteResult, GitError> {
-    state.git.complete_merge(&PathBuf::from(&path), &message.unwrap_or_default())
+    state
+        .git
+        .complete_merge(&PathBuf::from(&path), &message.unwrap_or_default())
 }
 
 // ── Stash Commands ──────────────────────────────────
 
 #[tauri::command]
-pub fn git_stash_list(
-    state: State<GitState>,
-    path: String,
-) -> Result<Vec<StashEntry>, GitError> {
+pub fn git_stash_list(state: State<GitState>, path: String) -> Result<Vec<StashEntry>, GitError> {
     state.git.stash_list(&PathBuf::from(&path))
 }
 
@@ -180,7 +198,9 @@ pub fn git_stash_push(
     path: String,
     message: Option<String>,
 ) -> Result<String, GitError> {
-    state.git.stash_push(&PathBuf::from(&path), message.as_deref())
+    state
+        .git
+        .stash_push(&PathBuf::from(&path), message.as_deref())
 }
 
 #[tauri::command]
@@ -189,7 +209,9 @@ pub fn git_stash_pop(
     path: String,
     index: Option<usize>,
 ) -> Result<String, GitError> {
-    state.git.stash_pop(&PathBuf::from(&path), index.unwrap_or(0))
+    state
+        .git
+        .stash_pop(&PathBuf::from(&path), index.unwrap_or(0))
 }
 
 #[tauri::command]
@@ -198,7 +220,9 @@ pub fn git_stash_apply(
     path: String,
     index: Option<usize>,
 ) -> Result<String, GitError> {
-    state.git.stash_apply(&PathBuf::from(&path), index.unwrap_or(0))
+    state
+        .git
+        .stash_apply(&PathBuf::from(&path), index.unwrap_or(0))
 }
 
 #[tauri::command]
@@ -227,5 +251,7 @@ pub fn git_stash_push_files(
     files: Vec<String>,
 ) -> Result<String, GitError> {
     let file_paths: Vec<PathBuf> = files.into_iter().map(PathBuf::from).collect();
-    state.git.stash_push_files(&PathBuf::from(&path), message.as_deref(), &file_paths)
+    state
+        .git
+        .stash_push_files(&PathBuf::from(&path), message.as_deref(), &file_paths)
 }

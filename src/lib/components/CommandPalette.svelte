@@ -34,43 +34,107 @@
   const commands: Command[] = $derived.by(() => {
     const cmds: Command[] = [
       // Git
-      { id: 'push', label: 'Git: Push', shortcut: '', category: 'Git', action: async () => {
-        if (!app.repoPath) return;
-        const result = await gitPush(app.repoPath);
-        app.addToast(result.success ? `Pushed to ${result.remote}/${result.branch}` : result.message, result.success ? 'success' : 'error');
-        await app.refreshAll();
-      }},
-      { id: 'pull', label: 'Git: Pull', shortcut: '', category: 'Git', action: async () => {
-        if (!app.repoPath) return;
-        const result = await gitPull(app.repoPath);
-        app.addToast(result.success ? 'Pull 完成' : result.message, result.success ? 'success' : 'error');
-        await app.refreshAll();
-      }},
-      { id: 'fetch', label: 'Git: Fetch', shortcut: '', category: 'Git', action: async () => {
-        if (!app.repoPath) return;
-        await gitFetch(app.repoPath);
-        await app.refreshAll();
-        app.addToast('Fetch 完成', 'success');
-      }},
-      { id: 'stash', label: 'Git: Stash All', shortcut: '', category: 'Git', action: async () => {
-        if (!app.repoPath) return;
-        await gitStashPush(app.repoPath);
-        app.addToast('已 stash 變更', 'success');
-        await app.refreshStatus();
-      }},
+      {
+        id: 'push',
+        label: 'Git: Push',
+        shortcut: '',
+        category: 'Git',
+        action: async () => {
+          if (!app.repoPath) return;
+          const result = await gitPush(app.repoPath);
+          app.addToast(
+            result.success ? `Pushed to ${result.remote}/${result.branch}` : result.message,
+            result.success ? 'success' : 'error',
+          );
+          await app.refreshAll();
+        },
+      },
+      {
+        id: 'pull',
+        label: 'Git: Pull',
+        shortcut: '',
+        category: 'Git',
+        action: async () => {
+          if (!app.repoPath) return;
+          const result = await gitPull(app.repoPath);
+          app.addToast(
+            result.success ? 'Pull 完成' : result.message,
+            result.success ? 'success' : 'error',
+          );
+          await app.refreshAll();
+        },
+      },
+      {
+        id: 'fetch',
+        label: 'Git: Fetch',
+        shortcut: '',
+        category: 'Git',
+        action: async () => {
+          if (!app.repoPath) return;
+          await gitFetch(app.repoPath);
+          await app.refreshAll();
+          app.addToast('Fetch 完成', 'success');
+        },
+      },
+      {
+        id: 'stash',
+        label: 'Git: Stash All',
+        shortcut: '',
+        category: 'Git',
+        action: async () => {
+          if (!app.repoPath) return;
+          await gitStashPush(app.repoPath);
+          app.addToast('已 stash 變更', 'success');
+          await app.refreshStatus();
+        },
+      },
       // Navigation
-      { id: 'settings', label: 'Open Settings', shortcut: 'Ctrl+,', category: 'App', action: () => { onOpenSettings(); }},
-      { id: 'folder', label: 'Open in File Explorer', shortcut: 'Alt+O', category: 'App', action: () => {
-        if (app.repoPath) openInFolder(app.repoPath);
-      }},
-      { id: 'editor', label: 'Open in Editor', shortcut: 'Alt+E', category: 'App', action: () => {
-        if (app.repoPath) openInEditor(app.repoPath, app.preferredEditor ?? undefined);
-      }},
-      { id: 'terminal', label: 'Open Terminal', shortcut: 'Alt+T', category: 'App', action: () => {
-        if (app.repoPath) openInTerminal(app.repoPath);
-      }},
+      {
+        id: 'settings',
+        label: 'Open Settings',
+        shortcut: 'Ctrl+,',
+        category: 'App',
+        action: () => {
+          onOpenSettings();
+        },
+      },
+      {
+        id: 'folder',
+        label: 'Open in File Explorer',
+        shortcut: 'Alt+O',
+        category: 'App',
+        action: () => {
+          if (app.repoPath) openInFolder(app.repoPath);
+        },
+      },
+      {
+        id: 'editor',
+        label: 'Open in Editor',
+        shortcut: 'Alt+E',
+        category: 'App',
+        action: () => {
+          if (app.repoPath) openInEditor(app.repoPath, app.preferredEditor ?? undefined);
+        },
+      },
+      {
+        id: 'terminal',
+        label: 'Open Terminal',
+        shortcut: 'Alt+T',
+        category: 'App',
+        action: () => {
+          if (app.repoPath) openInTerminal(app.repoPath);
+        },
+      },
       // View
-      { id: 'worktree', label: 'View: Worktree', shortcut: '', category: 'View', action: () => { app.backToWorktree(); }},
+      {
+        id: 'worktree',
+        label: 'View: Worktree',
+        shortcut: '',
+        category: 'View',
+        action: () => {
+          app.backToWorktree();
+        },
+      },
     ];
 
     // Add branch switching
@@ -97,7 +161,9 @@
         label: `Switch to: ${tab.name}`,
         shortcut: '',
         category: 'Tab',
-        action: () => { app.switchTab(tab.id); },
+        action: () => {
+          app.switchTab(tab.id);
+        },
       });
     }
 
@@ -107,8 +173,8 @@
   const filtered = $derived(() => {
     const q = query.toLowerCase().trim();
     if (!q) return commands;
-    return commands.filter((c) =>
-      c.label.toLowerCase().includes(q) || c.category.toLowerCase().includes(q)
+    return commands.filter(
+      (c) => c.label.toLowerCase().includes(q) || c.category.toLowerCase().includes(q),
     );
   });
 
@@ -158,7 +224,12 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="palette-backdrop" onclick={onClose} onkeydown={handleKeydown}>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div class="palette" onclick={(e) => e.stopPropagation()} role="dialog" aria-label="Command Palette">
+    <div
+      class="palette"
+      onclick={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-label="Command Palette"
+    >
       <input
         type="text"
         class="palette-input"
@@ -228,7 +299,9 @@
     font-family: var(--font-ui);
     outline: none;
   }
-  .palette-input::placeholder { color: var(--text-muted); }
+  .palette-input::placeholder {
+    color: var(--text-muted);
+  }
   .palette-list {
     overflow-y: auto;
     flex: 1;
@@ -252,7 +325,9 @@
   .palette-item.selected {
     background: var(--bg-hover);
   }
-  .palette-label { flex: 1; }
+  .palette-label {
+    flex: 1;
+  }
   .palette-shortcut {
     font-size: 11px;
     font-family: var(--font-mono);

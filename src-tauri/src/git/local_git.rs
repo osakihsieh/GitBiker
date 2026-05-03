@@ -165,6 +165,62 @@ impl LocalGit {
             Err(GitError::OperationFailed(stderr))
         }
     }
+    pub fn rebase(&self, path: &Path, branch: &str, onto: &str) -> Result<RebaseResult, GitError> {
+        Self::check_index_lock(path)?;
+        // git rebase <onto> <branch>
+        match Self::run_git(path, &["rebase", onto, branch]) {
+            Ok(output) => Ok(RebaseResult {
+                success: true,
+                message: output,
+                conflicts: Vec::new(),
+            }),
+            Err(GitError::OperationFailed(stderr)) => {
+                if stderr.contains("CONFLICT") || stderr.contains("Automatic rebase failed") {
+                    let conflicts: Vec<String> = stderr
+                        .lines()
+                        .filter(|l| l.contains("CONFLICT"))
+                        .map(|l| l.to_string())
+                        .collect();
+                    Ok(RebaseResult {
+                        success: false,
+                        message: stderr,
+                        conflicts,
+                    })
+                } else {
+                    Err(GitError::OperationFailed(stderr))
+                }
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError> {
+        Self::check_index_lock(path)?;
+        match Self::run_git(path, &["cherry-pick", commit_id]) {
+            Ok(output) => Ok(CherryPickResult {
+                success: true,
+                message: output,
+                conflicts: Vec::new(),
+            }),
+            Err(GitError::OperationFailed(stderr)) => {
+                if stderr.contains("CONFLICT") || stderr.contains("Automatic cherry-pick failed") {
+                    let conflicts: Vec<String> = stderr
+                        .lines()
+                        .filter(|l| l.contains("CONFLICT"))
+                        .map(|l| l.to_string())
+                        .collect();
+                    Ok(CherryPickResult {
+                        success: false,
+                        message: stderr,
+                        conflicts,
+                    })
+                } else {
+                    Err(GitError::OperationFailed(stderr))
+                }
+            }
+            Err(e) => Err(e),
+        }
+    }
 }
 
 // ── EOL check helpers ─────────────────────────────────────
@@ -195,13 +251,22 @@ impl LocalGit {
         Ok(())
     }
 
-    pub fn rename_branch(&self, path: &Path, old_name: &str, new_name: &str) -> Result<(), GitError> {
+    pub fn rename_branch(
+        &self,
+        path: &Path,
+        old_name: &str,
+        new_name: &str,
+    ) -> Result<(), GitError> {
         Self::check_index_lock(path)?;
         Self::run_git(path, &["branch", "-m", old_name, new_name])?;
         Ok(())
     }
 
-    pub fn checkout_remote_branch(&self, path: &Path, remote_branch: &str) -> Result<String, GitError> {
+    pub fn checkout_remote_branch(
+        &self,
+        path: &Path,
+        remote_branch: &str,
+    ) -> Result<String, GitError> {
         Self::check_index_lock(path)?;
         // remote_branch is like "origin/feature-x", extract local name
         let local_name = remote_branch
@@ -210,11 +275,14 @@ impl LocalGit {
             .collect::<Vec<_>>()
             .join("/");
         if local_name.is_empty() {
-            return Err(GitError::OperationFailed(
-                format!("無效的 remote branch 名稱: {remote_branch}"),
-            ));
+            return Err(GitError::OperationFailed(format!(
+                "無效的 remote branch 名稱: {remote_branch}"
+            )));
         }
-        Self::run_git(path, &["checkout", "-b", &local_name, "--track", remote_branch])?;
+        Self::run_git(
+            path,
+            &["checkout", "-b", &local_name, "--track", remote_branch],
+        )?;
         Ok(local_name)
     }
 
@@ -277,7 +345,12 @@ impl LocalGit {
         Self::run_git(path, &args)
     }
 
-    pub fn stash_push_files(&self, path: &Path, message: Option<&str>, files: &[PathBuf]) -> Result<String, GitError> {
+    pub fn stash_push_files(
+        &self,
+        path: &Path,
+        message: Option<&str>,
+        files: &[PathBuf],
+    ) -> Result<String, GitError> {
         let mut args = vec!["stash", "push", "-u"];
         if let Some(msg) = message {
             args.push("-m");
@@ -290,7 +363,6 @@ impl LocalGit {
         }
         Self::run_git(path, &args)
     }
-
 
     pub fn stash_pop(&self, path: &Path, index: usize) -> Result<String, GitError> {
         let stash_ref = format!("stash@{{{index}}}");
@@ -312,7 +384,12 @@ impl LocalGit {
         Self::run_git(path, &["stash", "show", "-p", "--stat", &stash_ref])
     }
 
-    pub fn branch_merge_status(&self, path: &Path, branch_name: &str, base: &str) -> Result<BranchMergeStatus, GitError> {
+    pub fn branch_merge_status(
+        &self,
+        path: &Path,
+        branch_name: &str,
+        base: &str,
+    ) -> Result<BranchMergeStatus, GitError> {
         let range = format!("{base}..{branch_name}");
         let output = Self::run_git(path, &["rev-list", "--count", &range])?;
         let count: usize = output.trim().parse().unwrap_or(0);
@@ -328,7 +405,11 @@ impl LocalGit {
 impl LocalGit {
     /// Dry-run merge using `git merge-tree` (Git >= 2.38).
     /// Falls back to skipping if Git is too old.
-    pub fn merge_dry_run(&self, path: &Path, branch_name: &str) -> Result<MergeDryRunResult, GitError> {
+    pub fn merge_dry_run(
+        &self,
+        path: &Path,
+        branch_name: &str,
+    ) -> Result<MergeDryRunResult, GitError> {
         // Check git version for merge-tree --write-tree support
         let version_output = Self::run_git(path, &["--version"])?;
         let supports_merge_tree = Self::git_version_at_least(&version_output, 2, 38);
@@ -356,9 +437,13 @@ impl LocalGit {
                     .filter_map(|l| {
                         // Extract file path from "CONFLICT (content): Merge conflict in <path>"
                         if l.contains("Merge conflict in ") {
-                            l.split("Merge conflict in ").nth(1).map(|s| s.trim().to_string())
+                            l.split("Merge conflict in ")
+                                .nth(1)
+                                .map(|s| s.trim().to_string())
                         } else if l.contains("CONFLICT (modify/delete)") {
-                            l.split(": ").nth(1).map(|s| s.split(" deleted").next().unwrap_or(s).trim().to_string())
+                            l.split(": ")
+                                .nth(1)
+                                .map(|s| s.split(" deleted").next().unwrap_or(s).trim().to_string())
                         } else {
                             None
                         }
@@ -391,7 +476,9 @@ impl LocalGit {
         // Check MERGE_HEAD exists
         let merge_head = path.join(".git/MERGE_HEAD");
         if !merge_head.exists() {
-            return Err(GitError::OperationFailed("不在 merge 狀態中（MERGE_HEAD 不存在）".to_string()));
+            return Err(GitError::OperationFailed(
+                "不在 merge 狀態中（MERGE_HEAD 不存在）".to_string(),
+            ));
         }
 
         let output = Self::run_git(path, &["status", "--porcelain=v2"])?;
@@ -440,7 +527,11 @@ impl LocalGit {
     }
 
     /// Read and parse conflict markers from a file.
-    pub fn get_conflict_content(&self, path: &Path, file_path: &str) -> Result<ConflictContent, GitError> {
+    pub fn get_conflict_content(
+        &self,
+        path: &Path,
+        file_path: &str,
+    ) -> Result<ConflictContent, GitError> {
         // Validate path is within repo
         let full_path = path.join(file_path);
         let canonical_repo = path.canonicalize().map_err(|e| GitError::Io(e))?;
@@ -484,7 +575,11 @@ impl LocalGit {
     ///   =======
     ///   (theirs content)
     ///   >>>>>>> branch
-    fn parse_conflict_markers(file_path: &str, content: &str, content_hash: String) -> Result<ConflictContent, GitError> {
+    fn parse_conflict_markers(
+        file_path: &str,
+        content: &str,
+        content_hash: String,
+    ) -> Result<ConflictContent, GitError> {
         let lines: Vec<&str> = content.lines().collect();
         let mut segments: Vec<ConflictSegment> = Vec::new();
         let mut hunk_count: usize = 0;
@@ -601,9 +696,9 @@ impl LocalGit {
 
         // Atomic write using tempfile
         use std::io::Write;
-        let dir = full_path.parent().ok_or_else(|| {
-            GitError::OperationFailed("無法取得檔案目錄".to_string())
-        })?;
+        let dir = full_path
+            .parent()
+            .ok_or_else(|| GitError::OperationFailed("無法取得檔案目錄".to_string()))?;
         let mut tmp = tempfile::NamedTempFile::new_in(dir)
             .map_err(|e| GitError::OperationFailed(format!("無法建立暫存檔: {e}")))?;
         tmp.write_all(resolved_content.as_bytes())
@@ -630,7 +725,11 @@ impl LocalGit {
     }
 
     /// Complete the merge by committing.
-    pub fn complete_merge(&self, path: &Path, message: &str) -> Result<MergeCompleteResult, GitError> {
+    pub fn complete_merge(
+        &self,
+        path: &Path,
+        message: &str,
+    ) -> Result<MergeCompleteResult, GitError> {
         Self::check_index_lock(path)?;
 
         // Check no unresolved conflicts remain
@@ -646,9 +745,10 @@ impl LocalGit {
             .filter(|l| l.starts_with("u "))
             .collect();
         if !unresolved.is_empty() {
-            return Err(GitError::OperationFailed(
-                format!("還有 {} 個未解決的衝突", unresolved.len()),
-            ));
+            return Err(GitError::OperationFailed(format!(
+                "還有 {} 個未解決的衝突",
+                unresolved.len()
+            )));
         }
 
         let msg = if message.trim().is_empty() {
@@ -680,16 +780,9 @@ impl LocalGit {
     ) -> Result<(Vec<crate::ai::FileSummary>, Vec<(String, String)>), GitError> {
         let repo = Self::open_repo(path)?;
 
-        let head_tree = repo
-            .head()
-            .ok()
-            .and_then(|r| r.peel_to_tree().ok());
+        let head_tree = repo.head().ok().and_then(|r| r.peel_to_tree().ok());
 
-        let diff = repo.diff_tree_to_index(
-            head_tree.as_ref(),
-            None,
-            None,
-        )?;
+        let diff = repo.diff_tree_to_index(head_tree.as_ref(), None, None)?;
 
         let stats = diff.stats()?;
         let mut file_summaries: Vec<crate::ai::FileSummary> = Vec::new();
@@ -872,7 +965,12 @@ impl GitOperations for LocalGit {
         Ok(result)
     }
 
-    fn log(&self, path: &Path, limit: usize, filter: Option<LogFilter>) -> Result<Vec<Commit>, GitError> {
+    fn log(
+        &self,
+        path: &Path,
+        limit: usize,
+        filter: Option<LogFilter>,
+    ) -> Result<Vec<Commit>, GitError> {
         let repo = Self::open_repo(path)?;
 
         // Build commit_id → refs map from all references
@@ -914,10 +1012,7 @@ impl GitOperations for LocalGit {
                     refs_map
                         .entry(target_oid.to_string())
                         .or_default()
-                        .push(CommitRef {
-                            name,
-                            kind,
-                        });
+                        .push(CommitRef { name, kind });
                 }
             }
         }
@@ -929,7 +1024,7 @@ impl GitOperations for LocalGit {
             }
             Some(LogFilter::Branch(ref b)) => {
                 let mut found = false;
-                
+
                 // Support range syntax like "base..compare"
                 if b.contains("..") {
                     if revwalk.push_range(b).is_ok() {
@@ -965,9 +1060,12 @@ impl GitOperations for LocalGit {
                         }
                     }
                 }
-                
+
                 if !found {
-                    return Err(GitError::OperationFailed(format!("找不到分支或引用: {}", b)));
+                    return Err(GitError::OperationFailed(format!(
+                        "找不到分支或引用: {}",
+                        b
+                    )));
                 }
             }
             _ => {
@@ -1020,9 +1118,7 @@ impl GitOperations for LocalGit {
             if let Some(hunk) = hunk {
                 let header = String::from_utf8_lossy(hunk.header()).to_string();
                 // 新 hunk 開始時檢查是否需要建立新的 DiffHunk
-                if hunks.is_empty()
-                    || hunks.last().map_or(true, |h| h.header != header)
-                {
+                if hunks.is_empty() || hunks.last().map_or(true, |h| h.header != header) {
                     hunks.push(DiffHunk {
                         header,
                         lines: Vec::new(),
@@ -1074,7 +1170,10 @@ impl GitOperations for LocalGit {
                         return Ok(DiffResult {
                             file_path: file.to_path_buf(),
                             hunks: vec![],
-                            stats: DiffStats { additions: 0, deletions: 0 },
+                            stats: DiffStats {
+                                additions: 0,
+                                deletions: 0,
+                            },
                             is_binary: true,
                             is_truncated: false,
                         });
@@ -1233,7 +1332,9 @@ impl GitOperations for LocalGit {
 
             // Compute ahead/behind using git2 if upstream exists
             let (ahead, behind) = if let Some(ref upstream_ref) = upstream_name {
-                if let Ok(upstream_branch) = repo.find_branch(upstream_ref, git2::BranchType::Remote) {
+                if let Ok(upstream_branch) =
+                    repo.find_branch(upstream_ref, git2::BranchType::Remote)
+                {
                     if let (Some(local_oid), Ok(upstream_commit)) = (
                         local_commit.as_ref().map(|c| c.id()),
                         upstream_branch.get().peel_to_commit(),
@@ -1303,35 +1404,53 @@ impl GitOperations for LocalGit {
         Ok(())
     }
 
-    fn branch_compare(&self, path: &Path, base: &str, compare: &str) -> Result<BranchCompareResult, GitError> {
+    fn branch_compare(
+        &self,
+        path: &Path,
+        base: &str,
+        compare: &str,
+    ) -> Result<BranchCompareResult, GitError> {
         let _repo = Self::open_repo(path)?;
-        
+
         // 1. Get Ahead/Behind counts
-        let ahead_out = Self::run_git(path, &["rev-list", "--count", &format!("{}..{}", base, compare)])?;
-        let behind_out = Self::run_git(path, &["rev-list", "--count", &format!("{}..{}", compare, base)])?;
+        let ahead_out = Self::run_git(
+            path,
+            &["rev-list", "--count", &format!("{}..{}", base, compare)],
+        )?;
+        let behind_out = Self::run_git(
+            path,
+            &["rev-list", "--count", &format!("{}..{}", compare, base)],
+        )?;
         let ahead = ahead_out.trim().parse().unwrap_or(0);
         let behind = behind_out.trim().parse().unwrap_or(0);
 
         // 2. Get Commits between them
-        let commits = self.log(path, 100, Some(LogFilter::Branch(format!("{}..{}", base, compare))))?;
+        let commits = self.log(
+            path,
+            100,
+            Some(LogFilter::Branch(format!("{}..{}", base, compare))),
+        )?;
 
         // 3. Get File Differences
         // base...compare (triple dot) shows changes in compare since it diverged from base
-        let diff_out = Self::run_git(path, &["diff", "--name-status", &format!("{}...{}", base, compare)])?;
+        let diff_out = Self::run_git(
+            path,
+            &["diff", "--name-status", &format!("{}...{}", base, compare)],
+        )?;
         let mut files = Vec::new();
         for line in diff_out.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
                 let status_char = parts[0].chars().next().unwrap_or('M');
                 let file_path = parts[1].to_string();
-                
+
                 let kind = match status_char {
                     'A' => FileStatusKind::Added,
                     'D' => FileStatusKind::Deleted,
                     'R' => FileStatusKind::Renamed,
                     _ => FileStatusKind::Modified,
                 };
-                
+
                 files.push(FileStatus {
                     path: PathBuf::from(file_path),
                     kind,
@@ -1350,4 +1469,3 @@ impl GitOperations for LocalGit {
         })
     }
 }
-

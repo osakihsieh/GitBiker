@@ -1,6 +1,7 @@
 <script lang="ts">
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
+  import { conflicts } from '$lib/stores/conflictStore.svelte';
   import {
     gitResolveConflictContent,
     gitResolveConflictChoice,
@@ -19,8 +20,8 @@
   let customEdits = $state<Record<number, string>>({});
 
   // ── Derived ──
-  const files = $derived(app.conflictFiles);
-  const activeFile = $derived(app.activeConflictFile);
+  const files = $derived(conflicts.files);
+  const activeFile = $derived(conflicts.activeFile);
 
   // Reset custom edits when switching files
   $effect(() => {
@@ -28,8 +29,8 @@
       customEdits = {};
     }
   });
-  const content = $derived(app.conflictContent);
-  const choices = $derived(app.hunkChoices);
+  const content = $derived(conflicts.content);
+  const choices = $derived(conflicts.hunkChoices);
 
   const hunks = $derived(() => {
     if (!content?.segments) return [];
@@ -79,7 +80,7 @@
   function startCustomEdit(hunkIndex: number, ours: string, theirs: string) {
     // Pre-fill with both versions for user to edit/reorder
     customEdits = { ...customEdits, [hunkIndex]: ours + '\n' + theirs };
-    app.setHunkChoice(hunkIndex, 'Custom');
+    conflicts.setHunkChoice(hunkIndex, 'Custom');
   }
 
   function updateCustomEdit(hunkIndex: number, value: string) {
@@ -95,7 +96,11 @@
     saving = true;
     try {
       const info = activeFileInfo();
-      if (info?.is_binary || info?.conflict_type === 'DeleteModify' || info?.conflict_type === 'AddAdd') {
+      if (
+        info?.is_binary ||
+        info?.conflict_type === 'DeleteModify' ||
+        info?.conflict_type === 'AddAdd'
+      ) {
         // Binary / delete-modify: use choice command
         const choice = choices[0]; // Only one "hunk" for these types
         if (choice === 'Ours' || choice === 'Theirs') {
@@ -114,12 +119,12 @@
       await gitStage(path, [file]);
 
       // Refresh conflict files list
-      await app.refreshConflictFiles();
+      await conflicts.refreshConflictFiles();
 
       // Auto-jump to next unresolved file
-      const remaining = app.conflictFiles;
+      const remaining = conflicts.files;
       if (remaining.length > 0) {
-        await app.selectConflictFile(remaining[0].path);
+        await conflicts.selectConflictFile(remaining[0].path);
       }
 
       app.addToast(`已解決 ${fileName(file)}`, 'success');
@@ -127,7 +132,7 @@
       const msg = extractErrorMessage(e);
       if (msg.includes('外部修改')) {
         // Reload content
-        await app.selectConflictFile(file);
+        await conflicts.selectConflictFile(file);
       }
       app.addToast(msg, 'error');
     } finally {
@@ -143,7 +148,7 @@
     try {
       const result = await gitCompleteMerge(path);
       app.addToast(`Merge 完成 (${result.commit_hash.slice(0, 7)})`, 'success');
-      app.exitConflictMode();
+      conflicts.exitConflictMode();
       await app.refreshAll();
     } catch (e: unknown) {
       app.addToast(extractErrorMessage(e), 'error');
@@ -160,7 +165,7 @@
     try {
       await gitMergeAbort(path);
       app.addToast('已取消 merge', 'info');
-      app.exitConflictMode();
+      conflicts.exitConflictMode();
       await app.refreshAll();
     } catch (e: unknown) {
       app.addToast(extractErrorMessage(e), 'error');
@@ -193,7 +198,9 @@
         <div class="progress-bar">
           <div
             class="progress-fill"
-            style="width: {files.length === 0 ? 0 : Math.max(0, 100 - (files.length / (files.length + 1)) * 100)}%"
+            style="width: {files.length === 0
+              ? 0
+              : Math.max(0, 100 - (files.length / (files.length + 1)) * 100)}%"
           ></div>
         </div>
         <span class="progress-text">{files.length} 個待解決</span>
@@ -206,7 +213,7 @@
         <button
           class="file-item"
           class:active={activeFile === file.path}
-          onclick={() => app.selectConflictFile(file.path)}
+          onclick={() => conflicts.selectConflictFile(file.path)}
         >
           <span class="file-icon">⚠</span>
           <span class="file-path">{file.path}</span>
@@ -238,13 +245,7 @@
         {#if completing}<span class="spinner"></span>{/if}
         完成 Merge
       </button>
-      <button
-        class="btn-abort"
-        onclick={handleAbort}
-        disabled={aborting}
-      >
-        取消 Merge
-      </button>
+      <button class="btn-abort" onclick={handleAbort} disabled={aborting}> 取消 Merge </button>
     </div>
   </div>
 
@@ -273,11 +274,7 @@
         </span>
         <div class="content-actions">
           <button class="btn-ghost" onclick={handleOpenInEditor}>在編輯器中開啟</button>
-          <button
-            class="btn-save"
-            onclick={handleSaveFile}
-            disabled={!allHunksChosen() || saving}
-          >
+          <button class="btn-save" onclick={handleSaveFile} disabled={!allHunksChosen() || saving}>
             {#if saving}<span class="spinner-sm"></span>{/if}
             儲存
           </button>
@@ -293,13 +290,13 @@
               <button
                 class="btn-ours"
                 class:selected={choices[0] === 'Ours'}
-                onclick={() => app.setHunkChoice(0, 'Ours')}
-              >Accept Ours (HEAD)</button>
+                onclick={() => conflicts.setHunkChoice(0, 'Ours')}>Accept Ours (HEAD)</button
+              >
               <button
                 class="btn-theirs"
                 class:selected={choices[0] === 'Theirs'}
-                onclick={() => app.setHunkChoice(0, 'Theirs')}
-              >Accept Theirs</button>
+                onclick={() => conflicts.setHunkChoice(0, 'Theirs')}>Accept Theirs</button
+              >
             </div>
           </div>
         {:else if activeFileInfo()?.conflict_type === 'DeleteModify'}
@@ -310,13 +307,13 @@
               <button
                 class="btn-ours"
                 class:selected={choices[0] === 'Ours'}
-                onclick={() => app.setHunkChoice(0, 'Ours')}
-              >Accept Ours (HEAD)</button>
+                onclick={() => conflicts.setHunkChoice(0, 'Ours')}>Accept Ours (HEAD)</button
+              >
               <button
                 class="btn-theirs"
                 class:selected={choices[0] === 'Theirs'}
-                onclick={() => app.setHunkChoice(0, 'Theirs')}
-              >Accept Theirs</button>
+                onclick={() => conflicts.setHunkChoice(0, 'Theirs')}>Accept Theirs</button
+              >
             </div>
           </div>
         {:else}
@@ -333,13 +330,18 @@
                 <div class="hunk-label">Conflict {hunk.index + 1}</div>
 
                 <!-- Ours section -->
-                <div class="hunk-section ours" class:selected={choice === 'Ours'} class:dimmed={choice !== undefined && choice !== 'Ours'}>
+                <div
+                  class="hunk-section ours"
+                  class:selected={choice === 'Ours'}
+                  class:dimmed={choice !== undefined && choice !== 'Ours'}
+                >
                   <div class="section-header-row">
                     <span class="section-tag ours-tag">HEAD</span>
                     <button
                       class="btn-accept ours-btn"
-                      onclick={() => app.setHunkChoice(hunk.index, 'Ours')}
-                    >Accept Ours</button>
+                      onclick={() => conflicts.setHunkChoice(hunk.index, 'Ours')}
+                      >Accept Ours</button
+                    >
                   </div>
                   <pre class="code-block">{hunk.ours || '(empty)'}</pre>
                 </div>
@@ -349,23 +351,29 @@
                   <button
                     class="btn-accept-both"
                     class:selected={choice === 'Both'}
-                    onclick={() => app.setHunkChoice(hunk.index, 'Both')}
-                  >Accept Both</button>
+                    onclick={() => conflicts.setHunkChoice(hunk.index, 'Both')}>Accept Both</button
+                  >
                   <button
                     class="btn-accept-both"
                     class:selected={choice === 'Custom'}
                     onclick={() => startCustomEdit(hunk.index, hunk.ours, hunk.theirs)}
-                  >Custom Edit</button>
+                    >Custom Edit</button
+                  >
                 </div>
 
                 <!-- Theirs section -->
-                <div class="hunk-section theirs" class:selected={choice === 'Theirs'} class:dimmed={choice !== undefined && choice !== 'Theirs'}>
+                <div
+                  class="hunk-section theirs"
+                  class:selected={choice === 'Theirs'}
+                  class:dimmed={choice !== undefined && choice !== 'Theirs'}
+                >
                   <div class="section-header-row">
                     <span class="section-tag theirs-tag">THEIRS</span>
                     <button
                       class="btn-accept theirs-btn"
-                      onclick={() => app.setHunkChoice(hunk.index, 'Theirs')}
-                    >Accept Theirs</button>
+                      onclick={() => conflicts.setHunkChoice(hunk.index, 'Theirs')}
+                      >Accept Theirs</button
+                    >
                   </div>
                   <pre class="code-block">{hunk.theirs || '(empty)'}</pre>
                 </div>
@@ -485,13 +493,19 @@
     font-family: var(--font-mono);
   }
 
-  .file-item:hover { background: var(--bg-hover); }
+  .file-item:hover {
+    background: var(--bg-hover);
+  }
   .file-item.active {
     background: var(--bg-surface);
     border-left: 2px solid var(--accent);
   }
 
-  .file-icon { color: var(--warning); font-size: 12px; flex-shrink: 0; }
+  .file-icon {
+    color: var(--warning);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
 
   .file-path {
     flex: 1;
@@ -519,7 +533,9 @@
     align-items: center;
     gap: var(--space-sm);
   }
-  .empty-icon { font-size: 24px; }
+  .empty-icon {
+    font-size: 24px;
+  }
 
   .sidebar-actions {
     padding: var(--space-sm) var(--space-md);
@@ -544,8 +560,13 @@
     justify-content: center;
     gap: var(--space-xs);
   }
-  .btn-complete:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-complete:hover:not(:disabled) { filter: brightness(1.1); }
+  .btn-complete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-complete:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
 
   .btn-abort {
     background: none;
@@ -558,8 +579,13 @@
     cursor: pointer;
     text-align: center;
   }
-  .btn-abort:hover { background: rgba(255, 107, 107, 0.1); }
-  .btn-abort:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-abort:hover {
+    background: rgba(255, 107, 107, 0.1);
+  }
+  .btn-abort:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   /* ── Content ── */
   .conflict-content {
@@ -570,7 +596,8 @@
     min-width: 300px;
   }
 
-  .content-empty, .content-loading {
+  .content-empty,
+  .content-loading {
     flex: 1;
     display: flex;
     align-items: center;
@@ -621,7 +648,9 @@
     cursor: pointer;
     padding: var(--space-xs) var(--space-sm);
   }
-  .btn-ghost:hover { color: var(--text-primary); }
+  .btn-ghost:hover {
+    color: var(--text-primary);
+  }
 
   .btn-save {
     background: var(--accent);
@@ -637,8 +666,13 @@
     align-items: center;
     gap: var(--space-xs);
   }
-  .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-save:hover:not(:disabled) { filter: brightness(1.1); }
+  .btn-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-save:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
 
   .content-body {
     flex: 1;
@@ -687,13 +721,25 @@
     border-bottom: 1px solid var(--border);
   }
 
-  .hunk-section { transition: opacity 0.15s ease; }
-  .hunk-section.dimmed { opacity: 0.4; }
-  .hunk-section.selected { border-left: 2px solid var(--accent); }
+  .hunk-section {
+    transition: opacity 0.15s ease;
+  }
+  .hunk-section.dimmed {
+    opacity: 0.4;
+  }
+  .hunk-section.selected {
+    border-left: 2px solid var(--accent);
+  }
 
-  .hunk-section.ours .code-block { background: var(--diff-add-bg); }
-  .hunk-section.theirs .code-block { background: var(--diff-del-bg); }
-  .hunk-section.base .code-block { background: var(--bg-hover); }
+  .hunk-section.ours .code-block {
+    background: var(--diff-add-bg);
+  }
+  .hunk-section.theirs .code-block {
+    background: var(--diff-del-bg);
+  }
+  .hunk-section.base .code-block {
+    background: var(--bg-hover);
+  }
 
   .section-header-row {
     display: flex;
@@ -710,9 +756,18 @@
     border-radius: var(--radius-sm);
   }
 
-  .ours-tag { color: var(--diff-add-text); background: rgba(46, 160, 67, 0.2); }
-  .theirs-tag { color: var(--diff-del-text); background: rgba(248, 81, 73, 0.2); }
-  .base-tag { color: var(--text-muted); background: var(--bg-hover); }
+  .ours-tag {
+    color: var(--diff-add-text);
+    background: rgba(46, 160, 67, 0.2);
+  }
+  .theirs-tag {
+    color: var(--diff-del-text);
+    background: rgba(248, 81, 73, 0.2);
+  }
+  .base-tag {
+    color: var(--text-muted);
+    background: var(--bg-hover);
+  }
 
   .btn-accept {
     background: none;
@@ -724,9 +779,18 @@
     cursor: pointer;
     color: var(--text-secondary);
   }
-  .btn-accept:hover { background: var(--bg-hover); color: var(--text-primary); }
-  .ours-btn:hover { color: var(--diff-add-text); border-color: var(--diff-add-text); }
-  .theirs-btn:hover { color: var(--diff-del-text); border-color: var(--diff-del-text); }
+  .btn-accept:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .ours-btn:hover {
+    color: var(--diff-add-text);
+    border-color: var(--diff-add-text);
+  }
+  .theirs-btn:hover {
+    color: var(--diff-del-text);
+    border-color: var(--diff-del-text);
+  }
 
   .hunk-divider {
     display: flex;
@@ -746,8 +810,14 @@
     cursor: pointer;
     color: var(--text-muted);
   }
-  .btn-accept-both:hover { color: var(--text-primary); background: var(--bg-hover); }
-  .btn-accept-both.selected { color: var(--accent); border-color: var(--accent); }
+  .btn-accept-both:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+  }
+  .btn-accept-both.selected {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
 
   .custom-edit-section {
     border-top: 1px solid var(--border);
@@ -779,7 +849,9 @@
     box-shadow: inset 0 0 0 1px var(--accent);
   }
 
-  .base-section { margin: 0; }
+  .base-section {
+    margin: 0;
+  }
   .base-toggle {
     font-size: 11px;
     font-family: var(--font-ui);
@@ -788,17 +860,26 @@
     cursor: pointer;
     user-select: none;
   }
-  .base-toggle:hover { color: var(--text-secondary); }
+  .base-toggle:hover {
+    color: var(--text-secondary);
+  }
 
   .binary-conflict {
     padding: var(--space-lg);
     text-align: center;
     color: var(--text-secondary);
   }
-  .binary-conflict p { margin-bottom: var(--space-md); }
-  .binary-actions { display: flex; gap: var(--space-sm); justify-content: center; }
+  .binary-conflict p {
+    margin-bottom: var(--space-md);
+  }
+  .binary-actions {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+  }
 
-  .btn-ours, .btn-theirs {
+  .btn-ours,
+  .btn-theirs {
     background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -808,19 +889,45 @@
     cursor: pointer;
     color: var(--text-primary);
   }
-  .btn-ours:hover { border-color: var(--diff-add-text); color: var(--diff-add-text); }
-  .btn-theirs:hover { border-color: var(--diff-del-text); color: var(--diff-del-text); }
-  .btn-ours.selected { background: var(--diff-add-bg); border-color: var(--diff-add-text); color: var(--diff-add-text); }
-  .btn-theirs.selected { background: var(--diff-del-bg); border-color: var(--diff-del-text); color: var(--diff-del-text); }
+  .btn-ours:hover {
+    border-color: var(--diff-add-text);
+    color: var(--diff-add-text);
+  }
+  .btn-theirs:hover {
+    border-color: var(--diff-del-text);
+    color: var(--diff-del-text);
+  }
+  .btn-ours.selected {
+    background: var(--diff-add-bg);
+    border-color: var(--diff-add-text);
+    color: var(--diff-add-text);
+  }
+  .btn-theirs.selected {
+    background: var(--diff-del-bg);
+    border-color: var(--diff-del-text);
+    color: var(--diff-del-text);
+  }
 
-  .spinner, .spinner-sm {
+  .spinner,
+  .spinner-sm {
     display: inline-block;
     border: 2px solid var(--text-muted);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
-  .spinner { width: 12px; height: 12px; }
-  .spinner-sm { width: 10px; height: 10px; border-width: 1.5px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 12px;
+    height: 12px;
+  }
+  .spinner-sm {
+    width: 10px;
+    height: 10px;
+    border-width: 1.5px;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 </style>

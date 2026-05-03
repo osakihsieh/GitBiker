@@ -2,7 +2,7 @@
 <html lang="zh-TW">
   <head>
     <script>
-      (function() {
+      (function () {
         try {
           var saved = localStorage.getItem('gitbiker-theme') || 'system';
           var resolved = saved;
@@ -10,7 +10,7 @@
             resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           }
           document.documentElement.setAttribute('data-theme', resolved);
-        } catch(e) {
+        } catch (e) {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
       })();

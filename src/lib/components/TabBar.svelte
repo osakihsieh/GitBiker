@@ -103,7 +103,9 @@
   $effect(() => {
     const activeId = app.activeTabId;
     if (!activeId || !scrollContainer) return;
-    const activeEl = scrollContainer.querySelector(`[data-tab-id="${activeId}"]`) as HTMLElement | null;
+    const activeEl = scrollContainer.querySelector(
+      `[data-tab-id="${activeId}"]`,
+    ) as HTMLElement | null;
     activeEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
   });
 </script>
@@ -111,7 +113,9 @@
 {#if app.tabs.length > 0}
   <div class="tab-bar" role="tablist" aria-label="Open repositories">
     {#if showLeftArrow}
-      <button class="scroll-arrow left" onclick={() => scrollBy(-120)} aria-label="Scroll tabs left">◀</button>
+      <button class="scroll-arrow left" onclick={() => scrollBy(-120)} aria-label="Scroll tabs left"
+        >◀</button
+      >
     {/if}
 
     <div class="tabs-scroll" bind:this={scrollContainer}>
@@ -136,14 +140,18 @@
             class="close"
             role="button"
             aria-label="Close {tab.name}"
-            onclick={(e) => handleClose(e, tab.id)}
-          >✕</span>
+            onclick={(e) => handleClose(e, tab.id)}>✕</span
+          >
         </button>
       {/each}
     </div>
 
     {#if showRightArrow}
-      <button class="scroll-arrow right" onclick={() => scrollBy(120)} aria-label="Scroll tabs right">▶</button>
+      <button
+        class="scroll-arrow right"
+        onclick={() => scrollBy(120)}
+        aria-label="Scroll tabs right">▶</button
+      >
     {/if}
 
     <button class="tab-add" onclick={onOpenPopover} aria-label="Open new repository">+</button>
@@ -178,7 +186,9 @@
     flex: 1;
     min-width: 0;
   }
-  .tabs-scroll::-webkit-scrollbar { display: none; }
+  .tabs-scroll::-webkit-scrollbar {
+    display: none;
+  }
   .tab {
     display: flex;
     align-items: center;
@@ -196,7 +206,10 @@
     flex-shrink: 0;
     min-width: 0;
   }
-  .tab:hover { color: var(--text-primary); background: var(--bg-hover); }
+  .tab:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+  }
   .tab.active {
     color: var(--text-primary);
     border-bottom-color: var(--accent);
@@ -207,7 +220,9 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .dot.dirty { background: var(--warning); }
+  .dot.dirty {
+    background: var(--warning);
+  }
   .tab-name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -232,8 +247,13 @@
     align-items: center;
     justify-content: center;
   }
-  .tab:hover .close { opacity: 1; }
-  .close:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .tab:hover .close {
+    opacity: 1;
+  }
+  .close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
   .scroll-arrow {
     display: flex;
     align-items: center;
@@ -247,7 +267,10 @@
     font-size: 10px;
     flex-shrink: 0;
   }
-  .scroll-arrow:hover { color: var(--text-primary); background: var(--bg-hover); }
+  .scroll-arrow:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+  }
   .tab-add {
     display: flex;
     align-items: center;
@@ -263,5 +286,8 @@
     background: none;
     border: none;
   }
-  .tab-add:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .tab-add:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
 </style>

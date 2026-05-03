@@ -52,7 +52,9 @@
         app.addToast(extractErrorMessage(e), 'error');
         files = [];
       })
-      .finally(() => { loading = false; });
+      .finally(() => {
+        loading = false;
+      });
   });
 
   async function handleFileClick(file: FileStatus) {
@@ -67,11 +69,7 @@
     }
 
     try {
-      const diff = await gitShowFileDiff(
-        app.repoPath,
-        app.selectedCommit.id,
-        file.path,
-      );
+      const diff = await gitShowFileDiff(app.repoPath, app.selectedCommit.id, file.path);
       cacheSet(diffCache, diffKey, diff);
       app.currentDiff = diff;
     } catch (e: unknown) {
@@ -81,15 +79,21 @@
 
   function statusLabel(kind: FileStatus['kind']): string {
     const map: Record<string, string> = {
-      Modified: 'M', Added: 'A', Deleted: 'D', Renamed: 'R',
-      Copied: 'C', Unknown: '?'
+      Modified: 'M',
+      Added: 'A',
+      Deleted: 'D',
+      Renamed: 'R',
+      Copied: 'C',
+      Unknown: '?',
     };
     return map[kind] || '?';
   }
 
   function statusClass(kind: FileStatus['kind']): string {
     const map: Record<string, string> = {
-      Modified: 'status-m', Added: 'status-a', Deleted: 'status-d',
+      Modified: 'status-m',
+      Added: 'status-a',
+      Deleted: 'status-d',
     };
     return map[kind] || '';
   }
@@ -199,7 +203,7 @@
     y={fileContextMenu.y}
     items={fileContextMenuItems}
     onSelect={handleFileContextSelect}
-    onClose={() => fileContextMenu = null}
+    onClose={() => (fileContextMenu = null)}
   />
 {/if}
 
@@ -225,8 +229,12 @@
     text-align: left;
     flex-shrink: 0;
   }
-  .back-btn:hover { text-decoration: underline; }
-  .back-arrow { font-size: 14px; }
+  .back-btn:hover {
+    text-decoration: underline;
+  }
+  .back-arrow {
+    font-size: 14px;
+  }
   .commit-info-block {
     padding: var(--space-sm) var(--space-md);
     flex-shrink: 0;
@@ -290,15 +298,28 @@
     width: 100%;
     text-align: left;
   }
-  .file-item:hover { background: var(--bg-hover); }
+  .file-item:hover {
+    background: var(--bg-hover);
+  }
   .file-item.active {
     background: var(--bg-surface);
     border-left-color: var(--accent);
   }
-  .status { font-size: 11px; flex-shrink: 0; width: 12px; text-align: center; }
-  .status-m { color: var(--warning); }
-  .status-a { color: var(--success); }
-  .status-d { color: var(--error); }
+  .status {
+    font-size: 11px;
+    flex-shrink: 0;
+    width: 12px;
+    text-align: center;
+  }
+  .status-m {
+    color: var(--warning);
+  }
+  .status-a {
+    color: var(--success);
+  }
+  .status-d {
+    color: var(--error);
+  }
   .filename {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -329,5 +350,9 @@
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 </style>

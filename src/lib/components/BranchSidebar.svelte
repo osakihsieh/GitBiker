@@ -48,7 +48,7 @@
   const localBranches = $derived(
     app.branches
       .filter((b) => !b.is_remote)
-      .filter((b) => !searchQuery || b.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter((b) => !searchQuery || b.name.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   const remoteGroups = $derived.by(() => {
@@ -64,11 +64,15 @@
   });
 
   const filteredTags = $derived(
-    app.tags.filter((t) => !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    app.tags.filter(
+      (t) => !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    ),
   );
 
   const filteredStashes = $derived(
-    stashes.filter((s) => !searchQuery || s.message.toLowerCase().includes(searchQuery.toLowerCase()))
+    stashes.filter(
+      (s) => !searchQuery || s.message.toLowerCase().includes(searchQuery.toLowerCase()),
+    ),
   );
 
   // ── Section helpers ────────────────────────────────────
@@ -174,7 +178,10 @@
     try {
       await gitStashPop(app.repoPath, index);
       app.addToast('已 pop stash', 'success');
-      if (selectedStashIndex === index) { app.stashDiff = null; selectedStashIndex = null; }
+      if (selectedStashIndex === index) {
+        app.stashDiff = null;
+        selectedStashIndex = null;
+      }
       await Promise.all([loadStashes(), app.refreshAll()]);
     } catch (e: unknown) {
       app.addToast(extractErrorMessage(e), 'error');
@@ -197,7 +204,10 @@
     try {
       await gitStashDrop(app.repoPath, index);
       app.addToast('已刪除 stash', 'success');
-      if (selectedStashIndex === index) { app.stashDiff = null; selectedStashIndex = null; }
+      if (selectedStashIndex === index) {
+        app.stashDiff = null;
+        selectedStashIndex = null;
+      }
       await loadStashes();
     } catch (e: unknown) {
       app.addToast(extractErrorMessage(e), 'error');
@@ -381,9 +391,15 @@
     const { index } = stashMenu;
     stashMenu = null;
     switch (actionId) {
-      case 'pop': await handleStashPop(index); break;
-      case 'apply': await handleStashApply(index); break;
-      case 'drop': await handleStashDrop(index); break;
+      case 'pop':
+        await handleStashPop(index);
+        break;
+      case 'apply':
+        await handleStashApply(index);
+        break;
+      case 'drop':
+        await handleStashDrop(index);
+        break;
     }
   }
 </script>
@@ -398,7 +414,9 @@
       bind:value={searchQuery}
     />
     {#if searchQuery}
-      <button class="search-clear" onclick={() => searchQuery = ''} aria-label="清除搜尋">×</button>
+      <button class="search-clear" onclick={() => (searchQuery = '')} aria-label="清除搜尋"
+        >×</button
+      >
     {/if}
   </div>
 
@@ -467,7 +485,9 @@
     </button>
     <div class="section-actions">
       {#if app.tags.length > 0}
-        <button class="section-action-btn" title="推送所有 Tags" onclick={handlePushAllTags}>↑</button>
+        <button class="section-action-btn" title="推送所有 Tags" onclick={handlePushAllTags}
+          >↑</button
+        >
       {/if}
       <button class="section-action-btn" title="建立 Tag" onclick={handleCreateTag}>+</button>
     </div>
@@ -499,7 +519,11 @@
       <span class="section-count">{filteredStashes.length}</span>
     </button>
     <div class="section-actions">
-      <button class="section-action-btn" title="Stash 所有變更" onclick={() => showPushForm = !showPushForm}>+</button>
+      <button
+        class="section-action-btn"
+        title="Stash 所有變更"
+        onclick={() => (showPushForm = !showPushForm)}>+</button
+      >
     </div>
   </div>
   {#if !isCollapsed('stashes')}
@@ -514,14 +538,23 @@
             autofocus
             onkeydown={(e) => {
               if (e.key === 'Enter') handleStashPush();
-              if (e.key === 'Escape') { showPushForm = false; pushMessage = ''; }
+              if (e.key === 'Escape') {
+                showPushForm = false;
+                pushMessage = '';
+              }
             }}
           />
           <div class="push-actions">
             <button class="btn-create" onclick={handleStashPush} disabled={pushing}>
               {#if pushing}<span class="spinner"></span>{:else}Stash{/if}
             </button>
-            <button class="btn-text" onclick={() => { showPushForm = false; pushMessage = ''; }}>取消</button>
+            <button
+              class="btn-text"
+              onclick={() => {
+                showPushForm = false;
+                pushMessage = '';
+              }}>取消</button
+            >
           </div>
         </div>
       {/if}
@@ -557,7 +590,7 @@
     y={tagContextMenu.y}
     items={tagContextMenuItems}
     onSelect={handleTagContextSelect}
-    onClose={() => tagContextMenu = null}
+    onClose={() => (tagContextMenu = null)}
   />
 {/if}
 
@@ -567,7 +600,7 @@
     y={localBranchMenu.y}
     items={localBranchMenuItems}
     onSelect={handleLocalBranchMenuSelect}
-    onClose={() => localBranchMenu = null}
+    onClose={() => (localBranchMenu = null)}
   />
 {/if}
 
@@ -577,7 +610,7 @@
     y={remoteBranchMenu.y}
     items={remoteBranchMenuItems}
     onSelect={handleRemoteBranchMenuSelect}
-    onClose={() => remoteBranchMenu = null}
+    onClose={() => (remoteBranchMenu = null)}
   />
 {/if}
 
@@ -587,7 +620,7 @@
     y={stashMenu.y}
     items={stashMenuItems}
     onSelect={handleStashMenuSelect}
-    onClose={() => stashMenu = null}
+    onClose={() => (stashMenu = null)}
   />
 {/if}
 
@@ -622,8 +655,12 @@
     outline: none;
     box-sizing: border-box;
   }
-  .search-input:focus { border-color: var(--accent); }
-  .search-input::placeholder { color: var(--text-muted); }
+  .search-input:focus {
+    border-color: var(--accent);
+  }
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
 
   .search-clear {
     position: absolute;
@@ -638,7 +675,9 @@
     line-height: 1;
     padding: 0 2px;
   }
-  .search-clear:hover { color: var(--text-primary); }
+  .search-clear:hover {
+    color: var(--text-primary);
+  }
 
   /* ── Section toggles ── */
 
@@ -660,7 +699,9 @@
     text-align: left;
     font-family: var(--font-ui);
   }
-  .section-toggle:hover { background: var(--bg-hover); }
+  .section-toggle:hover {
+    background: var(--bg-hover);
+  }
 
   .toggle-icon {
     font-size: 10px;
@@ -668,7 +709,9 @@
     flex-shrink: 0;
   }
 
-  .section-label { flex-shrink: 0; }
+  .section-label {
+    flex-shrink: 0;
+  }
 
   .remote-name {
     font-weight: 400;
@@ -708,7 +751,9 @@
     width: 100%;
     text-align: left;
   }
-  .branch-item:hover { background: var(--bg-hover); }
+  .branch-item:hover {
+    background: var(--bg-hover);
+  }
   .branch-item.current {
     border-left-color: var(--accent);
     background: var(--bg-surface);
@@ -730,9 +775,16 @@
     color: var(--accent);
     flex-shrink: 0;
   }
-  .remote-icon { color: var(--text-muted); }
-  .tag-icon { color: var(--warning); }
-  .stash-icon { font-size: 11px; color: var(--text-muted); }
+  .remote-icon {
+    color: var(--text-muted);
+  }
+  .tag-icon {
+    color: var(--warning);
+  }
+  .stash-icon {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
 
   .branch-name {
     overflow: hidden;
@@ -747,8 +799,12 @@
     font-size: 10px;
     flex-shrink: 0;
   }
-  .ahead { color: var(--success); }
-  .behind { color: var(--warning); }
+  .ahead {
+    color: var(--success);
+  }
+  .behind {
+    color: var(--warning);
+  }
 
   /* ── Tags ── */
 
@@ -757,7 +813,9 @@
     align-items: center;
     border-bottom: 1px solid var(--border);
   }
-  .section-header-row:hover { background: var(--bg-hover); }
+  .section-header-row:hover {
+    background: var(--bg-hover);
+  }
 
   .tag-toggle,
   .stash-toggle {
@@ -791,7 +849,9 @@
     color: var(--text-primary);
   }
 
-  .tag-item { align-items: flex-start; }
+  .tag-item {
+    align-items: flex-start;
+  }
 
   .tag-commit {
     font-size: 10px;
@@ -802,7 +862,10 @@
 
   /* ── Stash items ── */
 
-  .stash-item { align-items: flex-start; gap: var(--space-xs); }
+  .stash-item {
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
 
   .stash-info {
     display: flex;
@@ -845,9 +908,15 @@
     outline: none;
     box-sizing: border-box;
   }
-  .push-input:focus { border-color: var(--accent); }
+  .push-input:focus {
+    border-color: var(--accent);
+  }
 
-  .push-actions { display: flex; gap: var(--space-xs); align-items: center; }
+  .push-actions {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+  }
 
   .btn-create {
     background: var(--accent);
@@ -863,7 +932,10 @@
     align-items: center;
     gap: var(--space-xs);
   }
-  .btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-create:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   .btn-text {
     background: none;
@@ -872,7 +944,9 @@
     font-size: var(--font-size-sm);
     cursor: pointer;
   }
-  .btn-text:hover { color: var(--text-primary); }
+  .btn-text:hover {
+    color: var(--text-primary);
+  }
 
   /* ── Misc ── */
 
@@ -892,5 +966,9 @@
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 </style>

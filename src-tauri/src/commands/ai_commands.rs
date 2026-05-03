@@ -42,11 +42,10 @@ pub async fn generate_commit_message(
 
     // 2. Get recent commit messages for style matching
     let recent_messages: Vec<String> = {
-        let commits = state.git.log(
-            &repo_path,
-            5,
-            Some(crate::git::types::LogFilter::Head),
-        ).unwrap_or_default();
+        let commits = state
+            .git
+            .log(&repo_path, 5, Some(crate::git::types::LogFilter::Head))
+            .unwrap_or_default();
         commits.into_iter().map(|c| c.message).collect()
     };
 
@@ -70,8 +69,8 @@ pub async fn generate_commit_message(
         endpoint: ollama_endpoint,
     };
 
-    let ai_provider =
-        ai::create_provider(&provider, config).map_err(|e| GitError::OperationFailed(e.to_string()))?;
+    let ai_provider = ai::create_provider(&provider, config)
+        .map_err(|e| GitError::OperationFailed(e.to_string()))?;
 
     let message = ai_provider
         .generate(&context)

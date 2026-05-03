@@ -23,57 +23,57 @@ Sublime Text 風格。最少的 chrome，最大的內容空間。無裝飾元素
 ```css
 :root {
   /* 背景 */
-  --bg-primary:    #1a1a2e;
-  --bg-secondary:  #16162a;
-  --bg-surface:    #232340;
-  --bg-hover:      #2a2a4a;
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16162a;
+  --bg-surface: #232340;
+  --bg-hover: #2a2a4a;
 
   /* 文字 */
-  --text-primary:  #e0e0e0;
-  --text-secondary:#888888;
-  --text-muted:    #555555;
+  --text-primary: #e0e0e0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
 
   /* 強調色 */
-  --accent:        #4fc1ff;
-  --error:         #ff6b6b;
-  --success:       #51cf66;
-  --warning:       #ffd43b;
+  --accent: #4fc1ff;
+  --error: #ff6b6b;
+  --success: #51cf66;
+  --warning: #ffd43b;
 
   /* Diff */
-  --diff-add-bg:   rgba(46, 160, 67, 0.44);
-  --diff-del-bg:   rgba(248, 81, 73, 0.44);
+  --diff-add-bg: rgba(46, 160, 67, 0.44);
+  --diff-del-bg: rgba(248, 81, 73, 0.44);
   --diff-add-text: #7ee787;
   --diff-del-text: #ffa198;
 
   /* 邊框 */
-  --border:        #2d2d50;
+  --border: #2d2d50;
 }
 ```
 
 ### 色彩 — Light Theme
 
 ```css
-[data-theme="light"] {
-  --bg-primary:    #fafafa;
-  --bg-secondary:  #f0f0f0;
-  --bg-surface:    #ffffff;
-  --bg-hover:      #e8e8e8;
+[data-theme='light'] {
+  --bg-primary: #fafafa;
+  --bg-secondary: #f0f0f0;
+  --bg-surface: #ffffff;
+  --bg-hover: #e8e8e8;
 
-  --text-primary:  #1a1a1a;
-  --text-secondary:#666666;
-  --text-muted:    #999999;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
 
-  --accent:        #0066cc;
-  --error:         #d32f2f;
-  --success:       #2e7d32;
-  --warning:       #f57f17;
+  --accent: #0066cc;
+  --error: #d32f2f;
+  --success: #2e7d32;
+  --warning: #f57f17;
 
-  --diff-add-bg:   rgba(46, 160, 67, 0.15);
-  --diff-del-bg:   rgba(248, 81, 73, 0.15);
+  --diff-add-bg: rgba(46, 160, 67, 0.15);
+  --diff-del-bg: rgba(248, 81, 73, 0.15);
   --diff-add-text: #1a7f37;
   --diff-del-text: #cf222e;
 
-  --border:        #d0d0d0;
+  --border: #d0d0d0;
 }
 ```
 
@@ -81,7 +81,7 @@ Sublime Text 風格。最少的 chrome，最大的內容空間。無裝飾元素
 
 ```css
 :root {
-  --font-ui:   system-ui, -apple-system, sans-serif;
+  --font-ui: system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
 
   --font-size-sm: 12px;
@@ -111,8 +111,8 @@ Sublime Text 風格。最少的 chrome，最大的內容空間。無裝飾元素
 
 ```css
 :root {
-  --radius-sm: 2px;  /* 按鈕、輸入框、checkbox */
-  --radius-md: 4px;  /* dropdown、toast、dialog */
+  --radius-sm: 2px; /* 按鈕、輸入框、checkbox */
+  --radius-md: 4px; /* dropdown、toast、dialog */
 }
 ```
 
@@ -234,27 +234,27 @@ Sublime Text 風格。最少的 chrome，最大的內容空間。無裝飾元素
 
 ## 互動狀態
 
-| Feature | Loading | Empty | Error | Success | Partial |
-|---------|---------|-------|-------|---------|---------|
-| File tree | skeleton | "No changes" + icon | toast | 顯示列表 | virtual scroll 1000+ |
-| Diff viewer | skeleton | "Select a file" | inline 紅色 | 顯示 diff | >10MB 截斷提示 |
-| Commit log | skeleton | "No commits yet" | toast | 顯示歷史 | 分頁載入 |
-| Commit form | 按鈕禁用+spinner | N/A | inline (空訊息) | 綠色 toast 2s | n/m files staged |
-| Branch switcher | dropdown 載入中 | "No branches" | toast (index.lock) | toast 1s | merge 進行中標記 |
-| Clone | 進度條 %+階段 | N/A | inline (URL/網路) | 自動開啟 repo | 進度 % |
-| Push/Pull | toolbar spinner | N/A | toast 5s (auth) | 綠色 toast 2s | conflict 列表 |
+| Feature         | Loading          | Empty               | Error              | Success       | Partial              |
+| --------------- | ---------------- | ------------------- | ------------------ | ------------- | -------------------- |
+| File tree       | skeleton         | "No changes" + icon | toast              | 顯示列表      | virtual scroll 1000+ |
+| Diff viewer     | skeleton         | "Select a file"     | inline 紅色        | 顯示 diff     | >10MB 截斷提示       |
+| Commit log      | skeleton         | "No commits yet"    | toast              | 顯示歷史      | 分頁載入             |
+| Commit form     | 按鈕禁用+spinner | N/A                 | inline (空訊息)    | 綠色 toast 2s | n/m files staged     |
+| Branch switcher | dropdown 載入中  | "No branches"       | toast (index.lock) | toast 1s      | merge 進行中標記     |
+| Clone           | 進度條 %+階段    | N/A                 | inline (URL/網路)  | 自動開啟 repo | 進度 %               |
+| Push/Pull       | toolbar spinner  | N/A                 | toast 5s (auth)    | 綠色 toast 2s | conflict 列表        |
 
 ---
 
 ## 鍵盤快捷鍵 (Phase 1)
 
-| 快捷鍵 | 動作 |
-|--------|------|
-| Ctrl+Enter | Commit |
-| Ctrl+Shift+P | 命令面板 |
-| Ctrl+1 / 2 / 3 | 切換面板焦點 |
-| Tab | 面板間導航 |
-| ↑↓ | 檔案列表 / commit 歷史導航 |
+| 快捷鍵         | 動作                       |
+| -------------- | -------------------------- |
+| Ctrl+Enter     | Commit                     |
+| Ctrl+Shift+P   | 命令面板                   |
+| Ctrl+1 / 2 / 3 | 切換面板焦點               |
+| Tab            | 面板間導航                 |
+| ↑↓             | 檔案列表 / commit 歷史導航 |
 
 ---
 
@@ -269,7 +269,7 @@ Sublime Text 風格。最少的 chrome，最大的內容空間。無裝飾元素
 
 ## Mockups
 
-| 畫面 | 路徑 |
-|------|------|
-| 主工作區 | ~/.gstack/projects/gitbiker/designs/mockups-20260402/main-workspace.html |
-| Welcome 頁 | ~/.gstack/projects/gitbiker/designs/mockups-20260402/welcome-page.html |
+| 畫面       | 路徑                                                                     |
+| ---------- | ------------------------------------------------------------------------ |
+| 主工作區   | ~/.gstack/projects/gitbiker/designs/mockups-20260402/main-workspace.html |
+| Welcome 頁 | ~/.gstack/projects/gitbiker/designs/mockups-20260402/welcome-page.html   |

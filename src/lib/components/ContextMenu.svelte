@@ -59,7 +59,10 @@
 <div
   class="context-overlay"
   onclick={onClose}
-  oncontextmenu={(e) => { e.preventDefault(); onClose(); }}
+  oncontextmenu={(e) => {
+    e.preventDefault();
+    onClose();
+  }}
 ></div>
 
 <div
@@ -99,7 +102,7 @@
     background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     min-width: 180px;
     max-height: 60vh;
     overflow-y: auto;
@@ -120,7 +123,9 @@
     cursor: pointer;
     text-align: left;
   }
-  .context-item:hover:not(.disabled) { background: var(--bg-hover); }
+  .context-item:hover:not(.disabled) {
+    background: var(--bg-hover);
+  }
   .context-item.disabled {
     color: var(--text-muted);
     cursor: default;

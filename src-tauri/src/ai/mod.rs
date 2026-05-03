@@ -105,10 +105,7 @@ pub struct ProviderConfig {
 
 // ── Provider Factory ─────────────────────────────────
 
-pub fn create_provider(
-    name: &str,
-    config: ProviderConfig,
-) -> Result<Box<dyn AiProvider>, AiError> {
+pub fn create_provider(name: &str, config: ProviderConfig) -> Result<Box<dyn AiProvider>, AiError> {
     match name {
         "gemini" => Ok(Box::new(gemini::GeminiProvider::new(config))),
         "openai" => Ok(Box::new(
@@ -151,25 +148,40 @@ pub fn build_system_prompt(context: &CommitContext) -> String {
     let mut prompt = String::new();
 
     prompt.push_str("You are a commit message generator for a Git repository.\n");
-    prompt.push_str("Generate a commit message with a title and body based on the staged changes.\n\n");
+    prompt.push_str(
+        "Generate a commit message with a title and body based on the staged changes.\n\n",
+    );
+
+    prompt.push_str("Guidelines:\n");
+    prompt.push_str("- Be precise and objective. Avoid fluff like 'This commit', 'I updated', or 'Minor changes'.\n");
+    prompt.push_str("- For bug fixes, mention WHAT was broken and HOW it was fixed.\n");
+    prompt.push_str("- For new features, describe the utility from the user's perspective.\n");
+    prompt.push_str("- Use the imperative mood in the title (e.g., 'fix: core loop' instead of 'fixed: core loop').\n\n");
 
     // Format instruction (shared across languages)
     prompt.push_str("Format:\n");
     prompt.push_str("- Line 1: title (type prefix + concise summary, max 72 chars)\n");
     prompt.push_str("- Line 2: blank line\n");
-    prompt.push_str("- Line 3+: body — explain WHAT changed and WHY, use bullet points for multiple changes\n");
+    prompt.push_str(
+        "- Line 3+: body — explain WHAT changed and WHY, use bullet points for multiple changes\n",
+    );
     prompt.push_str("- Output only the commit message, no explanations or markdown fences\n\n");
 
     // Commit type instruction
     match context.commit_type.as_deref() {
         Some("auto") | None => {
             prompt.push_str("Commit type selection:\n");
-            prompt.push_str("- Analyze the staged diff carefully to determine the correct commit type\n");
+            prompt.push_str(
+                "- Analyze the staged diff carefully to determine the correct commit type\n",
+            );
             prompt.push_str("- Do NOT default to 'feat:'. Use 'fix:' for bug fixes, 'refactor:' for code restructuring, 'docs:' for documentation changes, 'test:' for test changes, 'chore:' for maintenance, 'perf:' for performance improvements, 'ci:' for CI changes\n");
             prompt.push_str("- Only use 'feat:' for genuinely new features or capabilities\n\n");
         }
         Some(commit_type) => {
-            prompt.push_str(&format!("Commit type: You MUST use the prefix: {}:\n", commit_type));
+            prompt.push_str(&format!(
+                "Commit type: You MUST use the prefix: {}:\n",
+                commit_type
+            ));
             prompt.push_str(&format!("- Do not use any other prefix. Generate a description that matches the '{}' intent.\n\n", commit_type));
         }
     }
@@ -178,7 +190,9 @@ pub fn build_system_prompt(context: &CommitContext) -> String {
     match context.language.as_str() {
         "zh-TW" => {
             prompt.push_str("語言規則：\n");
-            prompt.push_str("- 標題前綴使用英文（feat:, fix:, refactor:, docs:, test:, chore:, perf:, ci:）\n");
+            prompt.push_str(
+                "- 標題前綴使用英文（feat:, fix:, refactor:, docs:, test:, chore:, perf:, ci:）\n",
+            );
             prompt.push_str("- 標題描述與內文使用繁體中文\n");
         }
         "en" => {
@@ -286,13 +300,11 @@ mod tests {
 
     #[test]
     fn truncate_diff_under_budget() {
-        let files = vec![
-            FileSummary {
-                path: "src/main.rs".to_string(),
-                kind: "Modified".to_string(),
-                stats: Some((5, 2)),
-            },
-        ];
+        let files = vec![FileSummary {
+            path: "src/main.rs".to_string(),
+            kind: "Modified".to_string(),
+            stats: Some((5, 2)),
+        }];
         let diffs = vec![("src/main.rs".to_string(), "+line1\n-line2\n".to_string())];
         let result = truncate_diff(&files, &diffs);
         assert!(result.contains("src/main.rs"));
@@ -341,7 +353,10 @@ mod tests {
         let ctx = CommitContext {
             diff_summary: String::new(),
             staged_files: vec![],
-            recent_messages: vec!["feat: 新增登入功能".to_string(), "fix: 修正 bug".to_string()],
+            recent_messages: vec![
+                "feat: 新增登入功能".to_string(),
+                "fix: 修正 bug".to_string(),
+            ],
             language: "zh-TW".to_string(),
             custom_prompt: Some("保持簡潔".to_string()),
             commit_type: None,

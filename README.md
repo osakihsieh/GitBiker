@@ -12,12 +12,12 @@
 
 現有 Git GUI 工具都有取捨：
 
-| 工具 | 問題 |
-|------|------|
-| GitKraken | Electron 底層，記憶體吃重，WSL2 支援差 |
-| Sourcetree | 無 Linux 支援 |
-| Fork / Sublime Merge | 閉源 |
-| GitButler | Fair Source 授權，側重虛擬分支模式 |
+| 工具                 | 問題                                   |
+| -------------------- | -------------------------------------- |
+| GitKraken            | Electron 底層，記憶體吃重，WSL2 支援差 |
+| Sourcetree           | 無 Linux 支援                          |
+| Fork / Sublime Merge | 閉源                                   |
+| GitButler            | Fair Source 授權，側重虛擬分支模式     |
 
 **GitBiker** 目標是一個**快速、跨平台、開源**的 Git GUI，同時深度整合 AI 能力，讓提交訊息不再是負擔。
 
@@ -34,6 +34,7 @@ GitBiker 內建 AI 提交訊息生成器，支援三種 AI 提供者：
 - **Ollama**（本地離線模型，完全免費）
 
 只需一鍵，AI 會自動：
+
 1. 分析已暫存的 Diff 內容
 2. 參考最近 5 筆提交風格，維持一致性
 3. 套用 Conventional Commits 格式（`feat:` / `fix:` / `refactor:` 等）
@@ -56,6 +57,7 @@ GitBiker 內建 AI 提交訊息生成器，支援三種 AI 提供者：
 ### Hunk 級精細操作
 
 不只能暫存整個檔案，還能：
+
 - **Stage Hunk** — 只暫存某一段程式碼
 - **Unstage Hunk** — 精準移除暫存
 - **Stash Hunk** — 臨時保存單一改動區塊
@@ -102,32 +104,32 @@ GitBiker 內建 AI 提交訊息生成器，支援三種 AI 提供者：
 
 ## 功能一覽
 
-| 功能 | 狀態 |
-|------|------|
-| 三欄工作區（檔案樹 / Diff / 提交圖） | ✅ |
-| Hunk 級 Stage / Unstage / Stash | ✅ |
-| AI 提交訊息（Gemini / OpenAI / Ollama） | ✅ |
-| 提交歷史多分支視覺化圖 | ✅ |
-| 全文提交搜尋（訊息 / 作者 / Diff 內容） | ✅ |
-| 分支建立 / 切換 / 刪除 / 重命名 | ✅ |
-| 分支比較（ahead/behind + diff） | ✅ |
-| Stash 完整管理 | ✅ |
-| 衝突解決 UI | ✅ |
-| 多倉庫標籤管理 | ✅ |
-| Clone 含進度條 | ✅ |
-| Push / Pull / Fetch / Push Tags | ✅ |
-| Revert / Reset (soft/hard) / Cherry-pick | ✅ |
-| Tag 建立 / 刪除 / 推送 | ✅ |
-| 遠端管理 | ✅ |
-| 命令面板（Ctrl+Shift+P） | ✅ |
-| 內嵌終端（xterm.js） | ✅ |
-| 即時 .git 目錄監視 | ✅ |
-| 深色 / 淺色 / 系統主題 | ✅ |
-| 自動偵測本機 Shell 與編輯器 | ✅ |
-| 系統通知（Toast + 原生通知） | ✅ |
-| WSL2 支援 | 規劃中 |
-| macOS 支援 | 規劃中 |
-| Plugin 系統 | 規劃中 |
+| 功能                                     | 狀態   |
+| ---------------------------------------- | ------ |
+| 三欄工作區（檔案樹 / Diff / 提交圖）     | ✅     |
+| Hunk 級 Stage / Unstage / Stash          | ✅     |
+| AI 提交訊息（Gemini / OpenAI / Ollama）  | ✅     |
+| 提交歷史多分支視覺化圖                   | ✅     |
+| 全文提交搜尋（訊息 / 作者 / Diff 內容）  | ✅     |
+| 分支建立 / 切換 / 刪除 / 重命名          | ✅     |
+| 分支比較（ahead/behind + diff）          | ✅     |
+| Stash 完整管理                           | ✅     |
+| 衝突解決 UI                              | ✅     |
+| 多倉庫標籤管理                           | ✅     |
+| Clone 含進度條                           | ✅     |
+| Push / Pull / Fetch / Push Tags          | ✅     |
+| Revert / Reset (soft/hard) / Cherry-pick | ✅     |
+| Tag 建立 / 刪除 / 推送                   | ✅     |
+| 遠端管理                                 | ✅     |
+| 命令面板（Ctrl+Shift+P）                 | ✅     |
+| 內嵌終端（xterm.js）                     | ✅     |
+| 即時 .git 目錄監視                       | ✅     |
+| 深色 / 淺色 / 系統主題                   | ✅     |
+| 自動偵測本機 Shell 與編輯器              | ✅     |
+| 系統通知（Toast + 原生通知）             | ✅     |
+| WSL2 支援                                | 規劃中 |
+| macOS 支援                               | 規劃中 |
+| Plugin 系統                              | 規劃中 |
 
 ---
 
@@ -148,30 +150,30 @@ GitBiker 內建 AI 提交訊息生成器，支援三種 AI 提供者：
 
 ### 技術棧
 
-| 層級 | 技術 |
-|------|------|
-| 桌面框架 | Tauri 2.x |
-| 前端 | SvelteKit + TypeScript |
-| 狀態管理 | Svelte 5 Runes ($state / $derived / $effect) |
-| 後端 | Rust |
-| Git 讀取 | git2-rs |
-| Git 寫入 | subprocess git 2.30+ |
-| AI 整合 | Gemini / OpenAI / Ollama（async HTTP） |
-| 終端 | xterm.js |
-| 設定持久化 | tauri-plugin-store |
-| 檔案監視 | notify-debouncer-full |
-| 日誌 | tracing crate |
+| 層級       | 技術                                         |
+| ---------- | -------------------------------------------- |
+| 桌面框架   | Tauri 2.x                                    |
+| 前端       | SvelteKit + TypeScript                       |
+| 狀態管理   | Svelte 5 Runes ($state / $derived / $effect) |
+| 後端       | Rust                                         |
+| Git 讀取   | git2-rs                                      |
+| Git 寫入   | subprocess git 2.30+                         |
+| AI 整合    | Gemini / OpenAI / Ollama（async HTTP）       |
+| 終端       | xterm.js                                     |
+| 設定持久化 | tauri-plugin-store                           |
+| 檔案監視   | notify-debouncer-full                        |
+| 日誌       | tracing crate                                |
 
 ---
 
 ## 平台支援
 
-| 平台 | 狀態 |
-|------|------|
-| Windows 11 | ✅ v0.3.0 |
+| 平台          | 狀態      |
+| ------------- | --------- |
+| Windows 11    | ✅ v0.3.0 |
 | Ubuntu 24.04+ | ✅ v0.3.0 |
-| Fedora 40+ | ✅ v0.3.0 |
-| macOS | 規劃中 |
+| Fedora 40+    | ✅ v0.3.0 |
+| macOS         | 規劃中    |
 
 ---
 

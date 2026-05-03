@@ -1,5 +1,12 @@
 import { extractErrorMessage } from '$lib/utils/error';
-import { gitStatus, gitBranches, gitFetch, gitPull, gitPush, scanGitRepos } from '$lib/git/commands';
+import {
+  gitStatus,
+  gitBranches,
+  gitFetch,
+  gitPull,
+  gitPush,
+  scanGitRepos,
+} from '$lib/git/commands';
 import { repoNameFromPath } from './app.svelte';
 import {
   loadScanPaths,
@@ -130,9 +137,7 @@ class MultiRepoStore {
       if (repoPaths.length === 0) {
         return;
       }
-      const newRepos = await Promise.all(
-        repoPaths.map((rp) => this.loadRepoInfo(rp, path)),
-      );
+      const newRepos = await Promise.all(repoPaths.map((rp) => this.loadRepoInfo(rp, path)));
       // Merge, avoiding duplicates
       const existingPaths = new Set(this.repos.map((r) => r.path));
       const unique = newRepos.filter((r) => !existingPaths.has(r.path));
@@ -197,10 +202,7 @@ class MultiRepoStore {
 
   private async loadRepoInfo(repoPath: string, scanPath: string): Promise<RepoInfo> {
     try {
-      const [status, branches] = await Promise.all([
-        gitStatus(repoPath),
-        gitBranches(repoPath),
-      ]);
+      const [status, branches] = await Promise.all([gitStatus(repoPath), gitBranches(repoPath)]);
       const current = branches.find((b: Branch) => b.is_current);
       return {
         path: repoPath,
@@ -235,9 +237,7 @@ class MultiRepoStore {
     this.bulkRunning = true;
     this.bulkAction = 'Fetching...';
     try {
-      const results = await Promise.allSettled(
-        this.repos.map((r) => gitFetch(r.path)),
-      );
+      const results = await Promise.allSettled(this.repos.map((r) => gitFetch(r.path)));
       const ok = results.filter((r) => r.status === 'fulfilled').length;
       const fail = results.filter((r) => r.status === 'rejected').length;
       await this.refreshAll();
@@ -253,9 +253,7 @@ class MultiRepoStore {
     this.bulkRunning = true;
     this.bulkAction = 'Pulling...';
     try {
-      const results = await Promise.allSettled(
-        this.repos.map((r) => gitPull(r.path)),
-      );
+      const results = await Promise.allSettled(this.repos.map((r) => gitPull(r.path)));
       const ok = results.filter((r) => r.status === 'fulfilled').length;
       const fail = results.filter((r) => r.status === 'rejected').length;
       await this.refreshAll();
@@ -273,9 +271,7 @@ class MultiRepoStore {
     this.bulkRunning = true;
     this.bulkAction = 'Pushing...';
     try {
-      const results = await Promise.allSettled(
-        pushable.map((r) => gitPush(r.path)),
-      );
+      const results = await Promise.allSettled(pushable.map((r) => gitPush(r.path)));
       const ok = results.filter((r) => r.status === 'fulfilled').length;
       const fail = results.filter((r) => r.status === 'rejected').length;
       await this.refreshAll();

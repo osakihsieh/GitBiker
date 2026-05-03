@@ -2,8 +2,10 @@ use std::path::PathBuf;
 
 use tauri::{AppHandle, State};
 
+use crate::git::local_git::{
+    get_disable_auto_crlf, get_ignore_eol, set_disable_auto_crlf, set_ignore_eol,
+};
 use crate::git::types::*;
-use crate::git::local_git::{get_disable_auto_crlf, set_disable_auto_crlf, get_ignore_eol, set_ignore_eol};
 use crate::git::{GitError, GitOperations, LocalGit};
 use crate::watcher::WatcherState;
 
@@ -23,7 +25,9 @@ pub fn git_log(
     limit: Option<usize>,
     filter: Option<LogFilter>,
 ) -> Result<Vec<Commit>, GitError> {
-    state.git.log(&PathBuf::from(&path), limit.unwrap_or(100), filter)
+    state
+        .git
+        .log(&PathBuf::from(&path), limit.unwrap_or(100), filter)
 }
 
 #[tauri::command]
@@ -32,17 +36,11 @@ pub fn git_diff(
     path: String,
     file: String,
 ) -> Result<DiffResult, GitError> {
-    state
-        .git
-        .diff(&PathBuf::from(&path), &PathBuf::from(&file))
+    state.git.diff(&PathBuf::from(&path), &PathBuf::from(&file))
 }
 
 #[tauri::command]
-pub fn git_stage(
-    state: State<GitState>,
-    path: String,
-    files: Vec<String>,
-) -> Result<(), GitError> {
+pub fn git_stage(state: State<GitState>, path: String, files: Vec<String>) -> Result<(), GitError> {
     let file_paths: Vec<PathBuf> = files.into_iter().map(PathBuf::from).collect();
     state.git.stage(&PathBuf::from(&path), &file_paths)
 }
@@ -143,11 +141,7 @@ pub fn git_init(path: String) -> Result<(), GitError> {
 
 /// Revert 指定 commit（產生新的 revert commit）
 #[tauri::command]
-pub fn git_revert(
-    path: String,
-    commit_id: String,
-    is_merge: bool,
-) -> Result<String, GitError> {
+pub fn git_revert(path: String, commit_id: String, is_merge: bool) -> Result<String, GitError> {
     let repo_path = std::path::PathBuf::from(&path);
     crate::git::LocalGit::check_index_lock(&repo_path)?;
     let mut args = vec!["revert", "--no-edit"];
@@ -196,7 +190,11 @@ fn scan_repos_recursive(
 
         // Skip common non-project directories
         if let Some(name) = entry_path.file_name().and_then(|n| n.to_str()) {
-            if name.starts_with('.') || name == "node_modules" || name == "target" || name == "vendor" {
+            if name.starts_with('.')
+                || name == "node_modules"
+                || name == "target"
+                || name == "vendor"
+            {
                 continue;
             }
         }
@@ -231,7 +229,11 @@ pub fn git_unstage_hunk(path: String, patch: String) -> Result<(), GitError> {
 
 /// Stash a single hunk by applying it to index then stashing staged changes
 #[tauri::command]
-pub fn git_stash_hunk(path: String, patch: String, message: Option<String>) -> Result<String, GitError> {
+pub fn git_stash_hunk(
+    path: String,
+    patch: String,
+    message: Option<String>,
+) -> Result<String, GitError> {
     let repo_path = std::path::PathBuf::from(&path);
     crate::git::LocalGit::check_index_lock(&repo_path)?;
 

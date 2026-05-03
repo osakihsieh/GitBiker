@@ -1,7 +1,16 @@
 <script lang="ts">
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
-  import { gitStage, gitUnstage, gitCommit, gitIgnore, gitCheckoutFile, openInEditor, gitStashPushFiles, generateCommitMessage } from '$lib/git/commands';
+  import {
+    gitStage,
+    gitUnstage,
+    gitCommit,
+    gitIgnore,
+    gitCheckoutFile,
+    openInEditor,
+    gitStashPushFiles,
+    generateCommitMessage,
+  } from '$lib/git/commands';
   import type { FileStatus } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
@@ -11,22 +20,41 @@
   let generating = $state(false);
   let commitType = $state('auto');
 
-  const COMMIT_TYPES = ['auto', 'feat', 'fix', 'refactor', 'docs', 'test', 'chore', 'perf', 'ci'] as const;
+  const COMMIT_TYPES = [
+    'auto',
+    'feat',
+    'fix',
+    'refactor',
+    'docs',
+    'test',
+    'chore',
+    'perf',
+    'ci',
+  ] as const;
   const TYPE_PREFIX_RE = /^(feat|fix|refactor|docs|test|chore|perf|ci):\s*/;
   let contextMenu = $state<{ file: FileStatus; x: number; y: number } | null>(null);
 
   function statusLabel(kind: FileStatus['kind']): string {
     const map: Record<string, string> = {
-      Modified: 'M', Added: 'A', Deleted: 'D', Renamed: 'R',
-      Copied: 'C', Untracked: 'U', Conflicted: '⚠', Unknown: '?'
+      Modified: 'M',
+      Added: 'A',
+      Deleted: 'D',
+      Renamed: 'R',
+      Copied: 'C',
+      Untracked: 'U',
+      Conflicted: '⚠',
+      Unknown: '?',
     };
     return map[kind] || '?';
   }
 
   function statusClass(kind: FileStatus['kind']): string {
     const map: Record<string, string> = {
-      Modified: 'status-m', Added: 'status-a', Deleted: 'status-d',
-      Untracked: 'status-u', Conflicted: 'status-c'
+      Modified: 'status-m',
+      Added: 'status-a',
+      Deleted: 'status-d',
+      Untracked: 'status-u',
+      Conflicted: 'status-c',
     };
     return map[kind] || '';
   }
@@ -149,7 +177,7 @@
   function selectFile(path: string) {
     // Check if this is a conflicted file — enter conflict mode
     const allFiles = [...app.stagedFiles, ...app.unstagedFiles];
-    const file = allFiles.find(f => f.path === path);
+    const file = allFiles.find((f) => f.path === path);
     if (file?.kind === 'Conflicted') {
       app.enterConflictMode().then(() => app.selectConflictFile(path));
       return;
@@ -291,7 +319,9 @@
   <!-- File changes summary -->
   {#if app.stagedFiles.length + app.unstagedFiles.length > 0}
     <div class="changes-badge">
-      <span class="changes-count">{app.stagedFiles.length + app.unstagedFiles.length}</span> file change{app.stagedFiles.length + app.unstagedFiles.length !== 1 ? 's' : ''} on <span class="changes-branch">{app.currentBranch}</span>
+      <span class="changes-count">{app.stagedFiles.length + app.unstagedFiles.length}</span> file
+      change{app.stagedFiles.length + app.unstagedFiles.length !== 1 ? 's' : ''} on
+      <span class="changes-branch">{app.currentBranch}</span>
     </div>
   {/if}
 
@@ -315,9 +345,12 @@
           role="checkbox"
           aria-checked="true"
           tabindex="-1"
-          onclick={(e: MouseEvent) => { e.stopPropagation(); handleToggleStage(file); }}
-          onkeydown={(e) => e.key === 'Enter' && handleToggleStage(file)}
-        >✓</span>
+          onclick={(e: MouseEvent) => {
+            e.stopPropagation();
+            handleToggleStage(file);
+          }}
+          onkeydown={(e) => e.key === 'Enter' && handleToggleStage(file)}>✓</span
+        >
         <span class="status {statusClass(file.kind)}">{statusLabel(file.kind)}</span>
         <span class="filename" title={file.path}>{fileName(file.path)}</span>
       </button>
@@ -346,7 +379,10 @@
           role="checkbox"
           aria-checked="false"
           tabindex="-1"
-          onclick={(e: MouseEvent) => { e.stopPropagation(); handleToggleStage(file); }}
+          onclick={(e: MouseEvent) => {
+            e.stopPropagation();
+            handleToggleStage(file);
+          }}
           onkeydown={(e) => e.key === 'Enter' && handleToggleStage(file)}
         ></span>
         <span class="status {statusClass(file.kind)}">{statusLabel(file.kind)}</span>
@@ -416,7 +452,7 @@
     y={contextMenu.y}
     items={buildContextMenuItems(contextMenu.file)}
     onSelect={handleContextSelect}
-    onClose={() => contextMenu = null}
+    onClose={() => (contextMenu = null)}
   />
 {/if}
 
@@ -477,7 +513,9 @@
     border: none;
     font-family: var(--font-ui);
   }
-  .section-action:hover { text-decoration: underline; }
+  .section-action:hover {
+    text-decoration: underline;
+  }
   .file-list {
     overflow-y: auto;
     max-height: 140px;
@@ -503,7 +541,9 @@
     width: 100%;
     text-align: left;
   }
-  .file-item:hover { background: var(--bg-hover); }
+  .file-item:hover {
+    background: var(--bg-hover);
+  }
   .file-item.active {
     background: var(--bg-surface);
     border-left-color: var(--accent);
@@ -525,12 +565,28 @@
     border-color: var(--accent);
     color: var(--bg-primary);
   }
-  .status { font-size: 11px; flex-shrink: 0; width: 12px; text-align: center; }
-  .status-m { color: var(--warning); }
-  .status-a { color: var(--success); }
-  .status-d { color: var(--error); }
-  .status-u { color: var(--text-secondary); }
-  .status-c { color: var(--error); font-weight: bold; }
+  .status {
+    font-size: 11px;
+    flex-shrink: 0;
+    width: 12px;
+    text-align: center;
+  }
+  .status-m {
+    color: var(--warning);
+  }
+  .status-a {
+    color: var(--success);
+  }
+  .status-d {
+    color: var(--error);
+  }
+  .status-u {
+    color: var(--text-secondary);
+  }
+  .status-c {
+    color: var(--error);
+    font-weight: bold;
+  }
   .filename {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -566,7 +622,9 @@
     flex-shrink: 0;
     border-bottom: none;
   }
-  .commit-type-select:focus { border-color: var(--accent); }
+  .commit-type-select:focus {
+    border-color: var(--accent);
+  }
   .commit-title-input {
     width: 100%;
     background: var(--bg-surface);
@@ -580,9 +638,16 @@
     outline: none;
     border-bottom: none;
   }
-  .commit-title-input:focus { border-color: var(--accent); }
-  .commit-title-row:focus-within + .commit-body-input { border-color: var(--accent); }
-  .commit-title-input::placeholder { color: var(--text-muted); font-weight: 400; }
+  .commit-title-input:focus {
+    border-color: var(--accent);
+  }
+  .commit-title-row:focus-within + .commit-body-input {
+    border-color: var(--accent);
+  }
+  .commit-title-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
   .commit-body-input {
     width: 100%;
     background: var(--bg-surface);
@@ -597,8 +662,12 @@
     max-height: 160px;
     outline: none;
   }
-  .commit-body-input:focus { border-color: var(--accent); }
-  .commit-body-input::placeholder { color: var(--text-muted); }
+  .commit-body-input:focus {
+    border-color: var(--accent);
+  }
+  .commit-body-input::placeholder {
+    color: var(--text-muted);
+  }
   .commit-actions {
     margin-top: var(--space-sm);
     display: flex;
@@ -619,8 +688,13 @@
     align-items: center;
     gap: var(--space-xs);
   }
-  .ai-gen-btn:hover:not(:disabled) { background: var(--bg-hover); }
-  .ai-gen-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ai-gen-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+  }
+  .ai-gen-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .commit-btn {
     flex: 1;
     background: var(--accent);
@@ -637,8 +711,13 @@
     justify-content: center;
     gap: var(--space-xs);
   }
-  .commit-btn:hover:not(:disabled) { filter: brightness(1.1); }
-  .commit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .commit-btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+  .commit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .shortcut-hint {
     font-size: 10px;
     color: var(--text-muted);
@@ -649,10 +728,14 @@
     display: inline-block;
     width: 12px;
     height: 12px;
-    border: 2px solid rgba(0,0,0,0.3);
+    border: 2px solid rgba(0, 0, 0, 0.3);
     border-top-color: var(--bg-primary);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 </style>

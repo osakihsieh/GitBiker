@@ -25,4 +25,5 @@
   - 切換分支時重新 fetch log
 
 ## 優先級：P2 | 工作量：S（小）
+
 ## 依賴：CommitLog、Branch 列表（已完成）

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
+  import { conflicts } from '$lib/stores/conflictStore.svelte';
   import {
     gitBranches,
     gitCreateBranch,
@@ -304,7 +305,7 @@
         await app.refreshAll();
         // Enter conflict mode
         onClose();
-        await app.enterConflictMode();
+        await conflicts.enterConflictMode();
         return;
       }
       await app.refreshAll();
@@ -342,13 +343,19 @@
       <!-- Dry-run preview dialog -->
       <div class="confirm-overlay">
         <div class="confirm-dialog">
-          <p class="confirm-text"><strong>合併 {dryRunResult.branch} 將產生 {dryRunResult.conflicts.length} 個衝突</strong></p>
+          <p class="confirm-text">
+            <strong>合併 {dryRunResult.branch} 將產生 {dryRunResult.conflicts.length} 個衝突</strong
+            >
+          </p>
           <div class="conflict-list">
             {#each dryRunResult.conflicts as file}
               <div class="conflict-item">{file}</div>
             {/each}
           </div>
-          <p class="confirm-text" style="margin-top: var(--space-sm); font-size: 11px; color: var(--text-muted);">
+          <p
+            class="confirm-text"
+            style="margin-top: var(--space-sm); font-size: 11px; color: var(--text-muted);"
+          >
             繼續合併後可以在衝突解決面板中處理衝突。
           </p>
           <div class="confirm-actions">
@@ -371,7 +378,13 @@
           </div>
           <div class="confirm-actions">
             <button class="btn-danger" onclick={handleMergeAbort}>取消 Merge</button>
-            <button class="btn-cancel" onclick={() => { mergeConflicts = []; onClose(); }}>關閉</button>
+            <button
+              class="btn-cancel"
+              onclick={() => {
+                mergeConflicts = [];
+                onClose();
+              }}>關閉</button
+            >
           </div>
         </div>
       </div>
@@ -407,7 +420,8 @@
       <!-- Create -->
       <div class="create-section">
         {#if !createExpanded}
-          <button class="create-toggle" onclick={() => (createExpanded = true)}>+ New Branch</button>
+          <button class="create-toggle" onclick={() => (createExpanded = true)}>+ New Branch</button
+          >
         {:else}
           <div class="create-form" onkeydown={handleKeydown}>
             <input
@@ -424,7 +438,13 @@
               <button class="btn-create" onclick={handleCreate} disabled={!canCreate}>
                 {#if creating}<span class="spinner"></span>{:else}建立{/if}
               </button>
-              <button class="btn-text" onclick={() => { createExpanded = false; createName = ''; }}>取消</button>
+              <button
+                class="btn-text"
+                onclick={() => {
+                  createExpanded = false;
+                  createName = '';
+                }}>取消</button
+              >
             </div>
           </div>
         {/if}
@@ -451,7 +471,10 @@
                   autofocus
                   onkeydown={(e) => {
                     if (e.key === 'Enter') handleRename();
-                    if (e.key === 'Escape') { renamingBranch = null; renameError = ''; }
+                    if (e.key === 'Escape') {
+                      renamingBranch = null;
+                      renameError = '';
+                    }
                   }}
                   onblur={handleRename}
                 />
@@ -459,7 +482,10 @@
                   <div class="inline-error">{renameError}</div>
                 {/if}
               {:else}
-                <button class="branch-name" onclick={() => !branch.is_current && handleSwitchBranch(branch.name)}>
+                <button
+                  class="branch-name"
+                  onclick={() => !branch.is_current && handleSwitchBranch(branch.name)}
+                >
                   {branch.name}
                   {#if branch.is_current}<span class="current-dot">●</span>{/if}
                 </button>
@@ -478,26 +504,36 @@
                       disabled={pushingBranch === branch.name}
                       onclick={() => handlePushBranch(branch.name)}
                     >
-                      {#if pushingBranch === branch.name}<span class="spinner-sm"></span>{:else}↑{/if}
+                      {#if pushingBranch === branch.name}<span class="spinner-sm"
+                        ></span>{:else}↑{/if}
                     </button>
                   {/if}
-                    <div class="action-group">
+                  <div class="action-group">
+                    <button
+                      class="action-btn compare-btn"
+                      title="與 {app.currentBranch} 比較"
+                      onclick={() => app.compareBranches(app.currentBranch, branch.name)}>⇄</button
+                    >
+                    {#if !branch.is_current}
                       <button
-                        class="action-btn compare-btn"
-                        title="與 {app.currentBranch} 比較"
-                        onclick={() => app.compareBranches(app.currentBranch, branch.name)}
-                      >⇄</button>
-                      {#if !branch.is_current}
-                        <button
-                          class="action-btn merge-btn"
+                        class="action-btn merge-btn"
                         title="Merge into {app.currentBranch}"
                         disabled={mergingBranch === branch.name}
                         onclick={() => handleMerge(branch.name)}
                       >
-                        {#if mergingBranch === branch.name}<span class="spinner-sm"></span>{:else}⤵{/if}
+                        {#if mergingBranch === branch.name}<span class="spinner-sm"
+                          ></span>{:else}⤵{/if}
                       </button>
-                      <button class="action-btn" title="重命名" onclick={() => startRename(branch.name)}>✎</button>
-                      <button class="action-btn delete-btn" title="刪除" onclick={() => handleDelete(branch.name)}>×</button>
+                      <button
+                        class="action-btn"
+                        title="重命名"
+                        onclick={() => startRename(branch.name)}>✎</button
+                      >
+                      <button
+                        class="action-btn delete-btn"
+                        title="刪除"
+                        onclick={() => handleDelete(branch.name)}>×</button
+                      >
                     {/if}
                   </div>
                 </div>
@@ -516,13 +552,13 @@
                 <button
                   class="action-btn compare-btn"
                   title="與 {app.currentBranch} 比較"
-                  onclick={() => app.compareBranches(app.currentBranch, branch.name)}
-                >⇄</button>
+                  onclick={() => app.compareBranches(app.currentBranch, branch.name)}>⇄</button
+                >
                 <button
                   class="action-btn checkout-btn"
                   title="Checkout as local branch"
-                  onclick={() => handleCheckoutRemote(branch.name)}
-                >⬇</button>
+                  onclick={() => handleCheckoutRemote(branch.name)}>⬇</button
+                >
               </div>
             </div>
           {/each}
@@ -530,7 +566,10 @@
 
         <!-- Stale -->
         {#if staleBranches().length > 0}
-          <button class="section-header stale-header" onclick={() => (staleExpanded = !staleExpanded)}>
+          <button
+            class="section-header stale-header"
+            onclick={() => (staleExpanded = !staleExpanded)}
+          >
             <span class="chevron" class:expanded={staleExpanded}>▸</span>
             STALE ({staleBranches().length})
           </button>
@@ -539,7 +578,11 @@
               <div class="branch-item stale-item" role="option" aria-selected="false">
                 <span class="branch-name stale-name">{branch.name}</span>
                 <span class="stale-meta">{daysAgo(branch.last_commit_timestamp)}</span>
-                <button class="action-btn delete-btn" title="刪除" onclick={() => handleDelete(branch.name)}>×</button>
+                <button
+                  class="action-btn delete-btn"
+                  title="刪除"
+                  onclick={() => handleDelete(branch.name)}>×</button
+                >
               </div>
             {/each}
             <button
@@ -586,12 +629,20 @@
   }
 
   @media (max-width: 900px) {
-    .branch-manager { width: calc(100vw - 24px); }
+    .branch-manager {
+      width: calc(100vw - 24px);
+    }
   }
 
   @keyframes popoverIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .search-bar {
@@ -607,7 +658,9 @@
     font-size: var(--font-size-md);
     font-family: var(--font-ui);
   }
-  .search-bar input::placeholder { color: var(--text-muted); }
+  .search-bar input::placeholder {
+    color: var(--text-muted);
+  }
 
   .create-section {
     padding: var(--space-xs) var(--space-md);
@@ -622,9 +675,15 @@
     cursor: pointer;
     padding: var(--space-xs) 0;
   }
-  .create-toggle:hover { text-decoration: underline; }
+  .create-toggle:hover {
+    text-decoration: underline;
+  }
 
-  .create-form { display: flex; flex-direction: column; gap: var(--space-xs); }
+  .create-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
   .create-input {
     width: 100%;
     background: var(--bg-surface);
@@ -636,14 +695,20 @@
     font-family: var(--font-mono);
     outline: none;
   }
-  .create-input:focus { border-color: var(--accent); }
+  .create-input:focus {
+    border-color: var(--accent);
+  }
   .slug-preview {
     font-size: 11px;
     font-family: var(--font-mono);
     color: var(--text-muted);
     padding-left: 2px;
   }
-  .create-actions { display: flex; gap: var(--space-xs); align-items: center; }
+  .create-actions {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+  }
   .btn-create {
     background: var(--accent);
     color: var(--bg-primary);
@@ -658,8 +723,13 @@
     align-items: center;
     gap: var(--space-xs);
   }
-  .btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-create:hover:not(:disabled) { filter: brightness(1.1); }
+  .btn-create:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-create:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
   .btn-text {
     background: none;
     border: none;
@@ -667,7 +737,9 @@
     font-size: var(--font-size-sm);
     cursor: pointer;
   }
-  .btn-text:hover { color: var(--text-primary); }
+  .btn-text:hover {
+    color: var(--text-primary);
+  }
 
   .branch-list {
     overflow-y: auto;
@@ -697,13 +769,17 @@
     align-items: center;
     gap: var(--space-xs);
   }
-  .stale-header:hover { color: var(--text-secondary); }
+  .stale-header:hover {
+    color: var(--text-secondary);
+  }
   .chevron {
     display: inline-block;
     transition: transform 0.15s ease;
     font-size: 10px;
   }
-  .chevron.expanded { transform: rotate(90deg); }
+  .chevron.expanded {
+    transform: rotate(90deg);
+  }
 
   .branch-item {
     display: flex;
@@ -712,8 +788,12 @@
     gap: var(--space-xs);
     min-height: 28px;
   }
-  .branch-item:hover { background: var(--bg-hover); }
-  .branch-item:hover .action-group { opacity: 1; }
+  .branch-item:hover {
+    background: var(--bg-hover);
+  }
+  .branch-item:hover .action-group {
+    opacity: 1;
+  }
 
   .branch-name {
     flex: 1;
@@ -730,11 +810,25 @@
     cursor: pointer;
     padding: 0;
   }
-  .branch-name:hover { color: var(--accent); }
-  .branch-item.active .branch-name { color: var(--accent); cursor: default; }
-  .remote-name { cursor: default; color: var(--text-secondary); }
-  .stale-name { color: var(--text-muted); }
-  .current-dot { color: var(--accent); font-size: 8px; margin-left: var(--space-xs); }
+  .branch-name:hover {
+    color: var(--accent);
+  }
+  .branch-item.active .branch-name {
+    color: var(--accent);
+    cursor: default;
+  }
+  .remote-name {
+    cursor: default;
+    color: var(--text-secondary);
+  }
+  .stale-name {
+    color: var(--text-muted);
+  }
+  .current-dot {
+    color: var(--accent);
+    font-size: 8px;
+    margin-left: var(--space-xs);
+  }
 
   .branch-meta {
     display: flex;
@@ -775,14 +869,32 @@
     border-radius: var(--radius-sm);
     flex-shrink: 0;
   }
-  .action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-  .delete-btn:hover { color: var(--error); }
-  .checkout-btn { color: var(--text-muted); opacity: 1; }
-  .checkout-btn:hover { color: var(--accent); }
-  .compare-btn:hover { color: var(--accent); }
-  .push-btn { opacity: 1; }
-  .push-btn:hover { color: var(--accent); }
-  .merge-btn:hover { color: var(--success, #4ec9b0); }
+  .action-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .delete-btn:hover {
+    color: var(--error);
+  }
+  .checkout-btn {
+    color: var(--text-muted);
+    opacity: 1;
+  }
+  .checkout-btn:hover {
+    color: var(--accent);
+  }
+  .compare-btn:hover {
+    color: var(--accent);
+  }
+  .push-btn {
+    opacity: 1;
+  }
+  .push-btn:hover {
+    color: var(--accent);
+  }
+  .merge-btn:hover {
+    color: var(--success, #4ec9b0);
+  }
 
   .conflict-list {
     max-height: 120px;
@@ -809,7 +921,9 @@
     outline: none;
     min-width: 0;
   }
-  .rename-input.error { border-color: var(--error); }
+  .rename-input.error {
+    border-color: var(--error);
+  }
   .inline-error {
     font-size: var(--font-size-sm);
     color: var(--error);
@@ -829,8 +943,13 @@
     cursor: pointer;
     text-align: center;
   }
-  .batch-cleanup-btn:hover { text-decoration: underline; }
-  .batch-cleanup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .batch-cleanup-btn:hover {
+    text-decoration: underline;
+  }
+  .batch-cleanup-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   .empty-state {
     padding: var(--space-lg) var(--space-md);
@@ -860,7 +979,11 @@
     margin: 0 0 var(--space-md);
     line-height: 1.5;
   }
-  .confirm-actions { display: flex; gap: var(--space-sm); justify-content: flex-end; }
+  .confirm-actions {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: flex-end;
+  }
   .btn-cancel {
     background: var(--bg-surface);
     border: 1px solid var(--border);
@@ -870,7 +993,9 @@
     font-size: var(--font-size-sm);
     cursor: pointer;
   }
-  .btn-cancel:hover { background: var(--bg-hover); }
+  .btn-cancel:hover {
+    background: var(--bg-hover);
+  }
   .btn-danger {
     background: var(--error);
     border: none;
@@ -884,16 +1009,31 @@
     align-items: center;
     gap: var(--space-xs);
   }
-  .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
-  .spinner, .spinner-sm {
+  .spinner,
+  .spinner-sm {
     display: inline-block;
     border: 2px solid var(--text-muted);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
-  .spinner { width: 12px; height: 12px; }
-  .spinner-sm { width: 10px; height: 10px; border-width: 1.5px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 12px;
+    height: 12px;
+  }
+  .spinner-sm {
+    width: 10px;
+    height: 10px;
+    border-width: 1.5px;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 </style>

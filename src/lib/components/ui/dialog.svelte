@@ -35,7 +35,7 @@
         'rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] shadow-2xl',
         'focus:outline-none',
         'animate-in fade-in-0 zoom-in-95',
-        className
+        className,
       )}
     >
       <!-- Header -->
@@ -49,8 +49,16 @@
         <Dialog.Close
           class="flex h-6 w-6 items-center justify-center rounded text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <path d="M18 6L6 18M6 6l12 12"/>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </Dialog.Close>
       </div>

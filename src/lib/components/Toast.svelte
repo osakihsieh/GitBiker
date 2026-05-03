@@ -34,14 +34,18 @@
 </script>
 
 {#if app.toasts.length > 0}
-  <div class="fixed bottom-4 right-4 z-[300] flex flex-col gap-2" role="region" aria-label="Notifications">
+  <div
+    class="fixed bottom-4 right-4 z-[300] flex flex-col gap-2"
+    role="region"
+    aria-label="Notifications"
+  >
     {#each app.toasts as toast (toast.id)}
       <div
         class={cn(
           'flex min-w-[220px] max-w-[480px] items-start gap-2.5',
           'rounded-md border px-3 py-2.5 text-xs shadow-lg',
           'animate-in slide-in-from-right-2 fade-in-0',
-          typeStyles[toast.type] ?? typeStyles.info
+          typeStyles[toast.type] ?? typeStyles.info,
         )}
         role="alert"
         aria-live="polite"
@@ -55,14 +59,17 @@
             <span class="break-words leading-relaxed">{summary(toast.message)}</span>
             <button
               class="self-start text-[10px] opacity-70 underline hover:opacity-100 bg-transparent border-none cursor-pointer p-0 text-inherit"
-              onclick={() => toggleExpand(toast.id)}
-            >展開</button>
+              onclick={() => toggleExpand(toast.id)}>展開</button
+            >
           {:else if isLong(toast.message) && expanded.has(toast.id)}
-            <span class="block max-h-60 overflow-y-auto break-words whitespace-pre-wrap leading-relaxed">{toast.message}</span>
+            <span
+              class="block max-h-60 overflow-y-auto break-words whitespace-pre-wrap leading-relaxed"
+              >{toast.message}</span
+            >
             <button
               class="self-start text-[10px] opacity-70 underline hover:opacity-100 bg-transparent border-none cursor-pointer p-0 text-inherit"
-              onclick={() => toggleExpand(toast.id)}
-            >收起</button>
+              onclick={() => toggleExpand(toast.id)}>收起</button
+            >
           {:else}
             <span class="break-words leading-relaxed">{toast.message}</span>
           {/if}
@@ -75,8 +82,16 @@
             onclick={() => app.removeToast(toast.id)}
             aria-label="關閉通知"
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <path d="M18 6L6 18M6 6l12 12"/>
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         {/if}

@@ -10,8 +10,7 @@
 
   /** Check if the currently selected file is in the staged list */
   const isStaged = $derived(
-    app.selectedFile != null &&
-    app.stagedFiles.some((f) => f.path === app.selectedFile)
+    app.selectedFile != null && app.stagedFiles.some((f) => f.path === app.selectedFile),
   );
 
   /** Check if we're in worktree mode (hunk staging only makes sense here) */
@@ -121,19 +120,19 @@
                 <button
                   class="hunk-btn unstage"
                   onclick={() => handleUnstageHunk(hunk)}
-                  title="Unstage 此 hunk"
-                >−</button>
+                  title="Unstage 此 hunk">−</button
+                >
               {:else}
                 <button
                   class="hunk-btn stage"
                   onclick={() => handleStageHunk(hunk)}
-                  title="Stage 此 hunk"
-                >+</button>
+                  title="Stage 此 hunk">+</button
+                >
                 <button
                   class="hunk-btn stash"
                   onclick={() => handleStashHunk(hunk)}
-                  title="Stash 此 hunk"
-                >⊟</button>
+                  title="Stash 此 hunk">⊟</button
+                >
               {/if}
             </span>
           {/if}
@@ -177,7 +176,9 @@
     font-size: var(--font-size-sm);
     flex-shrink: 0;
   }
-  .filepath { font-family: var(--font-mono); }
+  .filepath {
+    font-family: var(--font-mono);
+  }
   .stats {
     margin-left: auto;
     display: flex;
@@ -185,8 +186,12 @@
     font-size: 11px;
     font-family: var(--font-mono);
   }
-  .add { color: var(--diff-add-text); }
-  .del { color: var(--diff-del-text); }
+  .add {
+    color: var(--diff-add-text);
+  }
+  .del {
+    color: var(--diff-del-text);
+  }
   .diff-content {
     flex: 1;
     overflow: auto;
@@ -199,7 +204,8 @@
     white-space: pre;
     min-height: 21px;
   }
-  .line-num, .line-num-new {
+  .line-num,
+  .line-num-new {
     width: 40px;
     min-width: 40px;
     text-align: right;
@@ -217,17 +223,27 @@
     flex: 1;
     padding-left: var(--space-sm);
   }
-  .diff-line.add { background: var(--diff-add-bg); }
-  .diff-line.add .code { color: var(--diff-add-text); }
-  .diff-line.del { background: var(--diff-del-bg); }
-  .diff-line.del .code { color: var(--diff-del-text); }
+  .diff-line.add {
+    background: var(--diff-add-bg);
+  }
+  .diff-line.add .code {
+    color: var(--diff-add-text);
+  }
+  .diff-line.del {
+    background: var(--diff-del-bg);
+  }
+  .diff-line.del .code {
+    color: var(--diff-del-text);
+  }
   .diff-line.hunk {
     background: var(--bg-surface);
     color: var(--accent);
     padding: var(--space-xs) 0;
     font-size: var(--font-size-sm);
   }
-  .diff-line.hunk .code { color: var(--accent); }
+  .diff-line.hunk .code {
+    color: var(--accent);
+  }
 
   /* Hunk staging buttons */
   .hunk-actions {
@@ -250,7 +266,9 @@
     font-weight: 700;
     line-height: 1;
     padding: 0;
-    transition: background 0.15s, border-color 0.15s;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
   }
   .hunk-btn.stage {
     color: var(--diff-add-text);
@@ -283,13 +301,21 @@
     gap: var(--space-sm);
     color: var(--text-muted);
   }
-  .empty-icon { font-size: 32px; opacity: 0.3; }
-  .empty-text { font-size: var(--font-size-sm); }
-  .diff-empty, .diff-warning {
+  .empty-icon {
+    font-size: 32px;
+    opacity: 0.3;
+  }
+  .empty-text {
+    font-size: var(--font-size-sm);
+  }
+  .diff-empty,
+  .diff-warning {
     padding: var(--space-lg);
     text-align: center;
     color: var(--text-muted);
     font-size: var(--font-size-sm);
   }
-  .diff-warning { color: var(--warning); }
+  .diff-warning {
+    color: var(--warning);
+  }
 </style>

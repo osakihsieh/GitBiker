@@ -24,4 +24,5 @@
 - 可複用 DiffViewer 元件顯示檔案差異
 
 ## 優先級：P2 | 工作量：M（中）
+
 ## 依賴：BranchManager、DiffViewer（已完成）

@@ -22,9 +22,10 @@ impl WatcherState {
     }
 
     pub fn start(&self, repo_path: &str, app_handle: AppHandle) -> Result<(), GitError> {
-        let mut guard = self.inner.lock().map_err(|e| {
-            GitError::OperationFailed(format!("watcher lock poisoned: {e}"))
-        })?;
+        let mut guard = self
+            .inner
+            .lock()
+            .map_err(|e| GitError::OperationFailed(format!("watcher lock poisoned: {e}")))?;
 
         // 先停止舊的 watcher
         *guard = None;
@@ -66,9 +67,10 @@ impl WatcherState {
     }
 
     pub fn stop(&self) -> Result<(), GitError> {
-        let mut guard = self.inner.lock().map_err(|e| {
-            GitError::OperationFailed(format!("watcher lock poisoned: {e}"))
-        })?;
+        let mut guard = self
+            .inner
+            .lock()
+            .map_err(|e| GitError::OperationFailed(format!("watcher lock poisoned: {e}")))?;
         *guard = None;
         tracing::info!("停止監聽");
         Ok(())

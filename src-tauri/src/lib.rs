@@ -22,7 +22,9 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
-                if let Ok(icon) = tauri::image::Image::from_bytes(include_bytes!("../icons/icon.ico")) {
+                if let Ok(icon) =
+                    tauri::image::Image::from_bytes(include_bytes!("../icons/icon.ico"))
+                {
                     let _ = window.set_icon(icon);
                 }
             }
@@ -53,6 +55,7 @@ pub fn run() {
             commands::git_checkout_remote_branch,
             commands::git_branch_merge_status,
             commands::git_merge_branch,
+            commands::git_rebase,
             commands::git_merge_abort,
             commands::git_branch_compare,
             commands::git_merge_dry_run,

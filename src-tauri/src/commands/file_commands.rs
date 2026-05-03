@@ -111,7 +111,10 @@ pub fn git_show_file_diff(
                         old_line = after_minus[..comma_or_space].parse().unwrap_or(1);
                     }
                 }
-                hunks.push(DiffHunk { header, lines: Vec::new() });
+                hunks.push(DiffHunk {
+                    header,
+                    lines: Vec::new(),
+                });
             } else if let Some(last_hunk) = hunks.last_mut() {
                 let (kind, old_lineno, new_lineno) = if raw_line.starts_with('+') {
                     additions += 1;
@@ -133,8 +136,17 @@ pub fn git_show_file_diff(
                     continue;
                 };
 
-                let content = if raw_line.len() > 1 { raw_line[1..].to_string() } else { String::new() };
-                last_hunk.lines.push(DiffLine { kind, content, old_lineno, new_lineno });
+                let content = if raw_line.len() > 1 {
+                    raw_line[1..].to_string()
+                } else {
+                    String::new()
+                };
+                last_hunk.lines.push(DiffLine {
+                    kind,
+                    content,
+                    old_lineno,
+                    new_lineno,
+                });
             }
         }
     }
@@ -142,7 +154,10 @@ pub fn git_show_file_diff(
     Ok(DiffResult {
         file_path: PathBuf::from(&file),
         hunks,
-        stats: DiffStats { additions, deletions },
+        stats: DiffStats {
+            additions,
+            deletions,
+        },
         is_binary,
         is_truncated: false,
     })
@@ -154,13 +169,21 @@ pub fn git_show_files(path: String, commit_id: String) -> Result<Vec<FileStatus>
     let repo_path = PathBuf::from(&path);
     let output = LocalGit::run_git(
         &repo_path,
-        &["diff-tree", "--no-commit-id", "-r", "--name-status", &commit_id],
+        &[
+            "diff-tree",
+            "--no-commit-id",
+            "-r",
+            "--name-status",
+            &commit_id,
+        ],
     )?;
 
     let mut files = Vec::new();
     for line in output.lines() {
         let parts: Vec<&str> = line.splitn(2, '\t').collect();
-        if parts.len() != 2 { continue; }
+        if parts.len() != 2 {
+            continue;
+        }
         let (status_char, file_path) = (parts[0], parts[1]);
         let kind = match status_char {
             "M" => FileStatusKind::Modified,
@@ -192,7 +215,12 @@ pub fn git_log_search(
     let repo_path = PathBuf::from(&path);
     let limit_str = (limit.unwrap_or(200)).to_string();
 
-    let mut args = vec!["log", "--format=%H%n%an%n%ae%n%at%n%P%n%s%n---END---", "-n", &limit_str];
+    let mut args = vec![
+        "log",
+        "--format=%H%n%an%n%ae%n%at%n%P%n%s%n---END---",
+        "-n",
+        &limit_str,
+    ];
 
     match search_type.as_str() {
         "message" => {
@@ -228,7 +256,12 @@ pub fn git_log_search(
         let author = lines.next().unwrap_or("").to_string();
         let email = lines.next().unwrap_or("").to_string();
         let timestamp: i64 = lines.next().unwrap_or("0").parse().unwrap_or(0);
-        let parents: Vec<String> = lines.next().unwrap_or("").split_whitespace().map(String::from).collect();
+        let parents: Vec<String> = lines
+            .next()
+            .unwrap_or("")
+            .split_whitespace()
+            .map(String::from)
+            .collect();
         let message = lines.next().unwrap_or("").to_string();
         let _ = lines.next(); // Skip ---END--- marker
 

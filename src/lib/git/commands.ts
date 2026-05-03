@@ -29,7 +29,6 @@ export async function gitLog(path: string, limit?: number, filter?: LogFilter): 
   return invoke('git_log', { path, limit, filter });
 }
 
-
 export async function gitDiff(path: string, file: string): Promise<DiffResult> {
   return invoke('git_diff', { path, file });
 }
@@ -60,19 +59,11 @@ export async function gitCommit(path: string, message: string): Promise<string> 
   return invoke('git_commit', { path, message });
 }
 
-export async function gitPush(
-  path: string,
-  remote?: string,
-  branch?: string
-): Promise<PushResult> {
+export async function gitPush(path: string, remote?: string, branch?: string): Promise<PushResult> {
   return invoke('git_push', { path, remote, branch });
 }
 
-export async function gitPull(
-  path: string,
-  remote?: string,
-  branch?: string
-): Promise<PullResult> {
+export async function gitPull(path: string, remote?: string, branch?: string): Promise<PullResult> {
   return invoke('git_pull', { path, remote, branch });
 }
 
@@ -92,7 +83,11 @@ export async function gitDeleteBranch(path: string, name: string, force = false)
   return invoke('git_delete_branch', { path, name, force });
 }
 
-export async function gitRenameBranch(path: string, oldName: string, newName: string): Promise<void> {
+export async function gitRenameBranch(
+  path: string,
+  oldName: string,
+  newName: string,
+): Promise<void> {
   return invoke('git_rename_branch', { path, oldName, newName });
 }
 
@@ -100,7 +95,11 @@ export async function gitCheckoutRemoteBranch(path: string, remoteBranch: string
   return invoke('git_checkout_remote_branch', { path, remoteBranch });
 }
 
-export async function gitBranchMergeStatus(path: string, branchName: string, base?: string): Promise<BranchMergeStatus> {
+export async function gitBranchMergeStatus(
+  path: string,
+  branchName: string,
+  base?: string,
+): Promise<BranchMergeStatus> {
   return invoke('git_branch_merge_status', { path, branchName, base });
 }
 
@@ -108,6 +107,10 @@ export async function gitBranchMergeStatus(path: string, branchName: string, bas
 
 export async function gitMergeBranch(path: string, branchName: string): Promise<MergeResult> {
   return invoke('git_merge_branch', { path, branchName });
+}
+
+export async function gitRebase(path: string, branch: string, onto: string): Promise<MergeResult> {
+  return invoke('git_rebase', { path, branch, onto });
 }
 
 export async function gitMergeAbort(path: string): Promise<void> {
@@ -124,7 +127,10 @@ export async function gitGetConflictFiles(path: string): Promise<ConflictFile[]>
   return invoke('git_get_conflict_files', { path });
 }
 
-export async function gitGetConflictContent(path: string, filePath: string): Promise<ConflictContent> {
+export async function gitGetConflictContent(
+  path: string,
+  filePath: string,
+): Promise<ConflictContent> {
   return invoke('git_get_conflict_content', { path, filePath });
 }
 
@@ -145,7 +151,10 @@ export async function gitResolveConflictChoice(
   return invoke('git_resolve_conflict_choice', { path, filePath, choice });
 }
 
-export async function gitCompleteMerge(path: string, message?: string): Promise<MergeCompleteResult> {
+export async function gitCompleteMerge(
+  path: string,
+  message?: string,
+): Promise<MergeCompleteResult> {
   return invoke('git_complete_merge', { path, message });
 }
 
@@ -159,10 +168,13 @@ export async function gitStashPush(path: string, message?: string): Promise<stri
   return invoke('git_stash_push', { path, message: message ?? null });
 }
 
-export async function gitStashPushFiles(path: string, files: string[], message?: string): Promise<string> {
+export async function gitStashPushFiles(
+  path: string,
+  files: string[],
+  message?: string,
+): Promise<string> {
   return invoke('git_stash_push_files', { path, files, message: message ?? null });
 }
-
 
 export async function gitStashPop(path: string, index?: number): Promise<string> {
   return invoke('git_stash_pop', { path, index });
@@ -190,7 +202,11 @@ export async function stopWatching(): Promise<void> {
 
 // ── Commit Detail + Search ────────────────────────────
 
-export async function gitShowFileDiff(path: string, commitId: string, file: string): Promise<DiffResult> {
+export async function gitShowFileDiff(
+  path: string,
+  commitId: string,
+  file: string,
+): Promise<DiffResult> {
   return invoke('git_show_file_diff', { path, commitId, file });
 }
 
@@ -221,7 +237,11 @@ export async function gitRemoteRemove(path: string, name: string): Promise<void>
   return invoke('git_remote_remove', { path, name });
 }
 
-export async function gitRemoteRename(path: string, oldName: string, newName: string): Promise<void> {
+export async function gitRemoteRename(
+  path: string,
+  oldName: string,
+  newName: string,
+): Promise<void> {
   return invoke('git_remote_rename', { path, oldName, newName });
 }
 
@@ -239,7 +259,11 @@ export async function gitTagDelete(path: string, name: string): Promise<void> {
   return invoke('git_tag_delete', { path, name });
 }
 
-export async function gitTagDeleteRemote(path: string, name: string, remote?: string): Promise<PushResult> {
+export async function gitTagDeleteRemote(
+  path: string,
+  name: string,
+  remote?: string,
+): Promise<PushResult> {
   return invoke('git_tag_delete_remote', { path, name, remote });
 }
 
@@ -350,7 +374,11 @@ export async function scanGitRepos(path: string, maxDepth?: number): Promise<str
   return invoke('scan_git_repos', { path, maxDepth: maxDepth ?? 2 });
 }
 
-export async function gitBranchCompare(path: string, base: string, compare: string): Promise<BranchCompareResult> {
+export async function gitBranchCompare(
+  path: string,
+  base: string,
+  compare: string,
+): Promise<BranchCompareResult> {
   return invoke('git_branch_compare', { path, base, compare });
 }
 

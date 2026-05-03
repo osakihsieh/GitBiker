@@ -24,4 +24,5 @@
 - 考慮用右側面板的切換 view 模式實現
 
 ## 優先級：P1 | 工作量：M（中）
+
 ## 依賴：CommitLog、DiffViewer（已完成）

@@ -55,7 +55,21 @@ export interface PersistableState {
 export async function loadAppSettings(state: PersistableState): Promise<void> {
   try {
     const store = await getStore();
-    const [savedRecent, savedPinned, savedEditor, savedAiProvider, savedAiKey, savedAiModel, savedAiPrompt, savedAiLang, savedAiEndpoint, savedDisableAutoCrlf, savedIgnoreEol, savedTerminalShell, savedUseSystemNotification] = await Promise.all([
+    const [
+      savedRecent,
+      savedPinned,
+      savedEditor,
+      savedAiProvider,
+      savedAiKey,
+      savedAiModel,
+      savedAiPrompt,
+      savedAiLang,
+      savedAiEndpoint,
+      savedDisableAutoCrlf,
+      savedIgnoreEol,
+      savedTerminalShell,
+      savedUseSystemNotification,
+    ] = await Promise.all([
       store.get<string[]>(RECENT_REPOS_KEY),
       store.get<string[]>(PINNED_REPOS_KEY),
       store.get<string | null>(PREFERRED_EDITOR_KEY),
@@ -88,7 +102,8 @@ export async function loadAppSettings(state: PersistableState): Promise<void> {
     if (typeof savedDisableAutoCrlf === 'boolean') state.disableAutoCrlf = savedDisableAutoCrlf;
     if (typeof savedIgnoreEol === 'boolean') state.ignoreEol = savedIgnoreEol;
     if (typeof savedTerminalShell === 'string') state.terminalShell = savedTerminalShell;
-    if (typeof savedUseSystemNotification === 'boolean') state.useSystemNotification = savedUseSystemNotification;
+    if (typeof savedUseSystemNotification === 'boolean')
+      state.useSystemNotification = savedUseSystemNotification;
   } catch {
     // 首次啟動 store 檔案不存在，忽略
   }
@@ -138,7 +153,10 @@ export async function togglePin(state: PersistableState, path: string): Promise<
   }
 }
 
-export async function reorderPinnedRepos(state: PersistableState, newOrder: string[]): Promise<void> {
+export async function reorderPinnedRepos(
+  state: PersistableState,
+  newOrder: string[],
+): Promise<void> {
   state.pinnedRepos = newOrder;
   await savePinnedRepos(state);
 }
@@ -152,7 +170,10 @@ async function savePinnedRepos(state: PersistableState): Promise<void> {
 
 // ── Preferred Editor ─────────────────────────────────
 
-export async function savePreferredEditor(state: PersistableState, editor: string | null): Promise<void> {
+export async function savePreferredEditor(
+  state: PersistableState,
+  editor: string | null,
+): Promise<void> {
   state.preferredEditor = editor;
   try {
     const store = await getStore();

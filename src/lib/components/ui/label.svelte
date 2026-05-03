@@ -6,12 +6,6 @@
   let { class: className = '', children, ...rest }: Props = $props();
 </script>
 
-<label
-  class={cn(
-    'text-xs font-medium text-[var(--text-secondary)]',
-    className
-  )}
-  {...rest}
->
+<label class={cn('text-xs font-medium text-[var(--text-secondary)]', className)} {...rest}>
   {@render children?.()}
 </label>

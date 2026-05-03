@@ -66,8 +66,15 @@
 <div class="file-history">
   <div class="header">
     <button class="back-btn" onclick={handleBack} title="返回">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M19 12H5M12 19l-7-7 7-7" />
       </svg>
     </button>
     <div class="title">
@@ -156,7 +163,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .loading, .empty {
+  .loading,
+  .empty {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -184,7 +192,9 @@
     color: var(--text-primary);
     font-family: var(--font-ui);
   }
-  .commit-item:hover { background: var(--bg-hover); }
+  .commit-item:hover {
+    background: var(--bg-hover);
+  }
   .commit-item.selected {
     background: var(--bg-surface);
     border-left-color: var(--accent);
@@ -202,7 +212,10 @@
     border-radius: 50%;
     background: var(--accent);
   }
-  .commit-info { flex: 1; min-width: 0; }
+  .commit-info {
+    flex: 1;
+    min-width: 0;
+  }
   .commit-msg {
     font-size: var(--font-size-sm);
     white-space: nowrap;
@@ -217,5 +230,8 @@
     gap: var(--space-sm);
     margin-top: 2px;
   }
-  .commit-hash { font-family: var(--font-mono); font-size: 10px; }
+  .commit-hash {
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
 </style>

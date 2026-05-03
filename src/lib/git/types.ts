@@ -39,10 +39,7 @@ export interface RemoteInfo {
   url: string;
 }
 
-export type LogFilter =
-  | { type: 'Head' }
-  | { type: 'All' }
-  | { type: 'Branch'; value: string };
+export type LogFilter = { type: 'Head' } | { type: 'All' } | { type: 'Branch'; value: string };
 
 export type DiffLineKind = 'Context' | 'Addition' | 'Deletion' | 'Header';
 

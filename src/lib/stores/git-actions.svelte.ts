@@ -1,6 +1,14 @@
 import { extractErrorMessage } from '$lib/utils/error';
 import type { FileStatus, Commit, DiffResult, Branch, LogFilter, TagInfo } from '$lib/git/types';
-import { gitStatus, gitLog, gitBranches, gitDiff, gitTags, startWatching, stopWatching } from '$lib/git/commands';
+import {
+  gitStatus,
+  gitLog,
+  gitBranches,
+  gitDiff,
+  gitTags,
+  startWatching,
+  stopWatching,
+} from '$lib/git/commands';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 const MAX_COMMITS_PER_TAB = 200;
@@ -9,24 +17,30 @@ const MAX_COMMITS_PER_TAB = 200;
 
 /** AppState 的最小介面，避免循環 import */
 export interface GitActionableState {
-  activeTab: { path: string; state: {
-    stagedFiles: FileStatus[];
-    unstagedFiles: FileStatus[];
-    commits: Commit[];
-    branches: Branch[];
-    tags: TagInfo[];
-    currentBranch: string;
-    logFilter: LogFilter;
-  } } | null;
-  tabs: Array<{ id: string; state: {
-    stagedFiles: FileStatus[];
-    unstagedFiles: FileStatus[];
-    commits: Commit[];
-    branches: Branch[];
-    tags: TagInfo[];
-    currentBranch: string;
-    logFilter: LogFilter;
-  } }>;
+  activeTab: {
+    path: string;
+    state: {
+      stagedFiles: FileStatus[];
+      unstagedFiles: FileStatus[];
+      commits: Commit[];
+      branches: Branch[];
+      tags: TagInfo[];
+      currentBranch: string;
+      logFilter: LogFilter;
+    };
+  } | null;
+  tabs: Array<{
+    id: string;
+    state: {
+      stagedFiles: FileStatus[];
+      unstagedFiles: FileStatus[];
+      commits: Commit[];
+      branches: Branch[];
+      tags: TagInfo[];
+      currentBranch: string;
+      logFilter: LogFilter;
+    };
+  }>;
   currentDiff: DiffResult | null;
   repoPath: string | null;
   loading: boolean;

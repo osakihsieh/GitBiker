@@ -1,7 +1,15 @@
 <script lang="ts">
   import '../app.css';
   import { app } from '$lib/stores/app.svelte';
-  import { gitDiff, openInEditor, openInFolder, openInTerminal } from '$lib/git/commands';
+  import {
+  gitDiff,
+  openInEditor,
+  openInFolder,
+  openInTerminal,
+  gitMergeBranch,
+  gitRebase,
+  gitCherryPick,
+} from '$lib/git/commands';
   import TitleBar from '$lib/components/TitleBar.svelte';
   import Toolbar from '$lib/components/Toolbar.svelte';
   import TabBar from '$lib/components/TabBar.svelte';
@@ -44,9 +52,7 @@
       const startWidth = panel === 'sidebar' ? sidebarWidth : rightWidth;
 
       function onMove(ev: MouseEvent) {
-        const delta = panel === 'sidebar'
-          ? ev.clientX - startX
-          : startX - ev.clientX;
+        const delta = panel === 'sidebar' ? ev.clientX - startX : startX - ev.clientX;
         const newWidth = Math.max(180, Math.min(400, startWidth + delta));
         if (panel === 'sidebar') {
           sidebarWidth = newWidth;
@@ -112,7 +118,13 @@
   function handleGlobalKeydown(e: KeyboardEvent) {
     // Esc: clear file selection, return to CommitLog view
     // Guard: only handle if no modal/popover/palette is open (they handle their own Esc)
-    if (e.key === 'Escape' && !showCommandPalette && !showSettings && !showCloneDialog && activePopover === null) {
+    if (
+      e.key === 'Escape' &&
+      !showCommandPalette &&
+      !showSettings &&
+      !showCloneDialog &&
+      activePopover === null
+    ) {
       if (app.stashDiff !== null) {
         e.preventDefault();
         app.stashDiff = null;
@@ -195,8 +207,9 @@
     if (e.altKey && e.key === 'e') {
       e.preventDefault();
       if (app.repoPath) {
-        openInEditor(app.repoPath, app.preferredEditor ?? undefined)
-          .catch((err: unknown) => app.addToast(String(err), 'error'));
+        openInEditor(app.repoPath, app.preferredEditor ?? undefined).catch((err: unknown) =>
+          app.addToast(String(err), 'error'),
+        );
       }
       return;
     }
@@ -205,8 +218,7 @@
     if (e.altKey && e.key === 'o') {
       e.preventDefault();
       if (app.repoPath) {
-        openInFolder(app.repoPath)
-          .catch((err: unknown) => app.addToast(String(err), 'error'));
+        openInFolder(app.repoPath).catch((err: unknown) => app.addToast(String(err), 'error'));
       }
       return;
     }
@@ -215,8 +227,7 @@
     if (e.altKey && e.key === 't') {
       e.preventDefault();
       if (app.repoPath) {
-        openInTerminal(app.repoPath)
-          .catch((err: unknown) => app.addToast(String(err), 'error'));
+        openInTerminal(app.repoPath).catch((err: unknown) => app.addToast(String(err), 'error'));
       }
       return;
     }
@@ -247,10 +258,10 @@
     <TabBar onOpenPopover={togglePopover} />
   </TitleBar>
   {#if showSettings}
-    <Settings onClose={() => showSettings = false} />
+    <Settings onClose={() => (showSettings = false)} />
   {:else if app.hasRepo}
     <Toolbar
-      onOpenSettings={() => showSettings = true}
+      onOpenSettings={() => (showSettings = true)}
       onOpenPopover={togglePopover}
       onOpenMultiRepo={toggleMultiRepo}
     />
@@ -278,23 +289,46 @@
           {#if app.stashDiff !== null}
             <div class="breadcrumb-bar">
               <span class="breadcrumb-current">Stash Diff</span>
-              <button class="breadcrumb-item" style="margin-left:auto" onclick={() => app.stashDiff = null}>✕ 關閉</button>
+              <button
+                class="breadcrumb-item"
+                style="margin-left:auto"
+                onclick={() => (app.stashDiff = null)}>✕ 關閉</button
+              >
             </div>
             <pre class="stash-diff-viewer">{app.stashDiff}</pre>
           {:else if app.selectedFile || app.currentDiff}
             <div class="breadcrumb-bar">
-              <button class="breadcrumb-item" onclick={() => { app.selectedFile = null; app.currentDiff = null; if (app.viewMode === 'commit-detail') app.backToWorktree(); }}>
+              <button
+                class="breadcrumb-item"
+                onclick={() => {
+                  app.selectedFile = null;
+                  app.currentDiff = null;
+                  if (app.viewMode === 'commit-detail') app.backToWorktree();
+                }}
+              >
                 CommitLog
               </button>
               {#if app.viewMode === 'commit-detail' && app.selectedCommit}
                 <span class="breadcrumb-sep">&gt;</span>
-                <button class="breadcrumb-item" onclick={() => { app.selectedFile = null; app.currentDiff = null; }}>
-                  {app.selectedCommit.id.substring(0, 7)} "{app.selectedCommit.message.split('\n')[0].substring(0, 30)}{app.selectedCommit.message.split('\n')[0].length > 30 ? '...' : ''}"
+                <button
+                  class="breadcrumb-item"
+                  onclick={() => {
+                    app.selectedFile = null;
+                    app.currentDiff = null;
+                  }}
+                >
+                  {app.selectedCommit.id.substring(0, 7)} "{app.selectedCommit.message
+                    .split('\n')[0]
+                    .substring(0, 30)}{app.selectedCommit.message.split('\n')[0].length > 30
+                    ? '...'
+                    : ''}"
                 </button>
               {/if}
               {#if app.selectedFile}
                 <span class="breadcrumb-sep">&gt;</span>
-                <span class="breadcrumb-current">{app.selectedFile.replace(/\\/g, '/').split('/').pop()}</span>
+                <span class="breadcrumb-current"
+                  >{app.selectedFile.replace(/\\/g, '/').split('/').pop()}</span
+                >
               {/if}
             </div>
             <DiffViewer />
@@ -324,7 +358,7 @@
   {:else}
     <div class="welcome-toolbar">
       <div class="spacer"></div>
-      <button class="settings-btn" onclick={() => showSettings = true}>⚙</button>
+      <button class="settings-btn" onclick={() => (showSettings = true)}>⚙</button>
     </div>
     <Welcome
       onOpenRepo={(path) => app.openRepo(path)}
@@ -335,7 +369,9 @@
         if (repos.length > 0) {
           await app.openRepo(repos[0].path);
           // Auto-open multi-repo popover after workspace loads
-          setTimeout(() => { activePopover = 'multiRepo'; }, 300);
+          setTimeout(() => {
+            activePopover = 'multiRepo';
+          }, 300);
         }
       }}
     />
@@ -343,26 +379,23 @@
 
   <RepoPopover
     open={activePopover === 'repo'}
-    onClose={() => activePopover = null}
+    onClose={() => (activePopover = null)}
     onClone={handleClone}
   />
 
-  <MultiRepoPopover
-    open={activePopover === 'multiRepo'}
-    onClose={() => activePopover = null}
-  />
+  <MultiRepoPopover open={activePopover === 'multiRepo'} onClose={() => (activePopover = null)} />
 
   {#if showCloneDialog}
-    <CloneDialog
-      onClose={() => showCloneDialog = false}
-      onCloned={handleCloned}
-    />
+    <CloneDialog onClose={() => (showCloneDialog = false)} onCloned={handleCloned} />
   {/if}
 
   <CommandPalette
     open={showCommandPalette}
     onClose={() => (showCommandPalette = false)}
-    onOpenSettings={() => { showCommandPalette = false; showSettings = true; }}
+    onOpenSettings={() => {
+      showCommandPalette = false;
+      showSettings = true;
+    }}
   />
 
   <Toast />
@@ -396,7 +429,9 @@
     font-size: 16px;
     padding: var(--space-xs);
   }
-  .settings-btn:hover { color: var(--text-primary); }
+  .settings-btn:hover {
+    color: var(--text-primary);
+  }
   .main {
     display: flex;
     flex: 1;
@@ -453,8 +488,14 @@
     padding: 1px 4px;
     border-radius: var(--radius-sm);
   }
-  .breadcrumb-item:hover { background: var(--bg-hover); text-decoration: underline; }
-  .breadcrumb-sep { color: var(--text-muted); font-size: 11px; }
+  .breadcrumb-item:hover {
+    background: var(--bg-hover);
+    text-decoration: underline;
+  }
+  .breadcrumb-sep {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
   .breadcrumb-current {
     color: var(--text-primary);
     font-family: var(--font-mono);
@@ -480,5 +521,8 @@
     flex-shrink: 0;
     transition: background 0.15s;
   }
-  .resize-handle:hover, .resize-handle.active { background: var(--accent); }
+  .resize-handle:hover,
+  .resize-handle.active {
+    background: var(--accent);
+  }
 </style>

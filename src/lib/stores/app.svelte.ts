@@ -1,6 +1,16 @@
 import { extractErrorMessage } from '$lib/utils/error';
-import type { FileStatus, Commit, DiffResult, Branch, ConflictFile, ConflictContent, LogFilter, BranchCompareResult, TagInfo } from '$lib/git/types';
-import { gitGetConflictFiles, gitGetConflictContent, gitBranchCompare } from '$lib/git/commands';
+import type {
+  FileStatus,
+  Commit,
+  DiffResult,
+  Branch,
+  ConflictFile,
+  ConflictContent,
+  LogFilter,
+  BranchCompareResult,
+  TagInfo,
+} from '$lib/git/types';
+import { gitBranchCompare } from '$lib/git/commands';
 import {
   loadAppSettings as _loadAppSettings,
   addRecentRepo as _addRecentRepo,
@@ -36,7 +46,12 @@ export interface Toast {
   autoDismiss: boolean;
 }
 
-export type ViewMode = 'worktree' | 'commit-detail' | 'conflict-resolution' | 'file-history' | 'branch-compare';
+export type ViewMode =
+  | 'worktree'
+  | 'commit-detail'
+  | 'conflict-resolution'
+  | 'file-history'
+  | 'branch-compare';
 
 export interface RepoState {
   stagedFiles: FileStatus[];
@@ -60,19 +75,19 @@ export interface RepoState {
   // Branch compare
   branchCompareResult: BranchCompareResult | null;
 }
-  export interface RepoTab {
+export interface RepoTab {
   id: string;
   path: string;
   name: string;
   state: RepoState;
-  }
+}
 
-  // ── Helpers ────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────
 
-  export function repoNameFromPath(path: string): string {
+export function repoNameFromPath(path: string): string {
   const parts = path.replace(/\\/g, '/').split('/');
   return parts[parts.length - 1] || '';
-  }
+}
 
 export function createEmptyState(): RepoState {
   return {
@@ -267,37 +282,7 @@ class AppState {
     if (tab) tab.state.tags = value;
   }
 
-  // ── Conflict State (proxied to active tab) ──
-
-  get conflictFiles(): ConflictFile[] {
-    return this.activeTab?.state.conflictFiles ?? [];
-  }
-
-  get activeConflictFile(): string | null {
-    return this.activeTab?.state.activeConflictFile ?? null;
-  }
-
-  get conflictContent(): ConflictContent | null {
-    return this.activeTab?.state.conflictContent ?? null;
-  }
-
-  get hunkChoices(): Record<number, 'Ours' | 'Theirs' | 'Both' | 'Custom'> {
-    return this.activeTab?.state.hunkChoices ?? {};
-  }
-
-  get isInConflictMode(): boolean {
-    return this.viewMode === 'conflict-resolution';
-  }
-
-  get conflictResolvedCount(): number {
-    const files = this.conflictFiles;
-    const active = this.activeConflictFile;
-    // A file is "resolved" if it's no longer in the conflict list after refresh
-    // For now, count is managed via the conflict files list length vs initial
-    return 0; // Will be computed from actual state
-  }
-
-  // ── View Mode ──
+  // ── Tab CRUD ──
 
   selectCommit(commit: Commit): void {
     this.selectedCommit = commit;
@@ -351,78 +336,6 @@ class AppState {
 
   get branchCompareResult(): BranchCompareResult | null {
     return this.activeTab?.state.branchCompareResult ?? null;
-  }
-
-  // ── Conflict Resolution Methods ──
-
-  async enterConflictMode(): Promise<void> {
-    const path = this.repoPath;
-    if (!path) return;
-
-    try {
-      const files = await gitGetConflictFiles(path);
-      const tab = this.activeTab;
-      if (!tab) return;
-      tab.state.conflictFiles = files;
-      tab.state.activeConflictFile = files.length > 0 ? files[0].path : null;
-      tab.state.conflictContent = null;
-      tab.state.hunkChoices = {};
-      tab.state.viewMode = 'conflict-resolution';
-
-      if (files.length > 0) {
-        await this.selectConflictFile(files[0].path);
-      }
-    } catch (e: unknown) {
-      this.addToast(extractErrorMessage(e), 'error');
-    }
-  }
-
-  exitConflictMode(): void {
-    const tab = this.activeTab;
-    if (!tab) return;
-    tab.state.conflictFiles = [];
-    tab.state.activeConflictFile = null;
-    tab.state.conflictContent = null;
-    tab.state.hunkChoices = {};
-    tab.state.viewMode = 'worktree';
-    this.selectedCommit = null;
-  }
-
-  async selectConflictFile(filePath: string): Promise<void> {
-    const path = this.repoPath;
-    const tab = this.activeTab;
-    if (!path || !tab) return;
-
-    tab.state.activeConflictFile = filePath;
-    tab.state.hunkChoices = {};
-
-    try {
-      const content = await gitGetConflictContent(path, filePath);
-      tab.state.conflictContent = content;
-    } catch (e: unknown) {
-      tab.state.conflictContent = null;
-      this.addToast(extractErrorMessage(e), 'error');
-    }
-  }
-
-  setHunkChoice(hunkIndex: number, choice: 'Ours' | 'Theirs' | 'Both' | 'Custom'): void {
-    const tab = this.activeTab;
-    if (!tab) return;
-    tab.state.hunkChoices = { ...tab.state.hunkChoices, [hunkIndex]: choice };
-  }
-
-  async refreshConflictFiles(): Promise<void> {
-    const path = this.repoPath;
-    const tab = this.activeTab;
-    if (!path || !tab) return;
-
-    try {
-      const files = await gitGetConflictFiles(path);
-      tab.state.conflictFiles = files;
-    } catch {
-      // If not in merge state anymore, exit conflict mode
-      this.exitConflictMode();
-    }
   }
 
   // ── Tab CRUD ──
@@ -557,19 +470,45 @@ class AppState {
     // 載入持久化設定後，同步 CRLF 設定到 Rust 後端
     this.syncDisableAutoCrlf();
   }
-  async addRecentRepo(path: string) { return _addRecentRepo(this, path); }
-  async removeRecentRepo(path: string) { return _removeRecentRepo(this, path); }
-  isPinned(path: string) { return _isPinned(this, path); }
-  async pinRepo(path: string) { return _pinRepo(this, path); }
-  async unpinRepo(path: string) { return _unpinRepo(this, path); }
-  async togglePin(path: string) { return _togglePin(this, path); }
-  async savePreferredEditor(editor: string | null) { return _savePreferredEditor(this, editor); }
-  async reorderPinnedRepos(newOrder: string[]) { return _reorderPinnedRepos(this, newOrder); }
-  async saveAiSettings() { return _saveAiSettings(this); }
-  async saveDisableAutoCrlf() { return _saveDisableAutoCrlf(this); }
-  async saveIgnoreEol() { return _saveIgnoreEol(this); }
-  async saveTerminalShell() { return _saveTerminalShell(this); }
-  async saveUseSystemNotification() { return _saveUseSystemNotification(this); }
+  async addRecentRepo(path: string) {
+    return _addRecentRepo(this, path);
+  }
+  async removeRecentRepo(path: string) {
+    return _removeRecentRepo(this, path);
+  }
+  isPinned(path: string) {
+    return _isPinned(this, path);
+  }
+  async pinRepo(path: string) {
+    return _pinRepo(this, path);
+  }
+  async unpinRepo(path: string) {
+    return _unpinRepo(this, path);
+  }
+  async togglePin(path: string) {
+    return _togglePin(this, path);
+  }
+  async savePreferredEditor(editor: string | null) {
+    return _savePreferredEditor(this, editor);
+  }
+  async reorderPinnedRepos(newOrder: string[]) {
+    return _reorderPinnedRepos(this, newOrder);
+  }
+  async saveAiSettings() {
+    return _saveAiSettings(this);
+  }
+  async saveDisableAutoCrlf() {
+    return _saveDisableAutoCrlf(this);
+  }
+  async saveIgnoreEol() {
+    return _saveIgnoreEol(this);
+  }
+  async saveTerminalShell() {
+    return _saveTerminalShell(this);
+  }
+  async saveUseSystemNotification() {
+    return _saveUseSystemNotification(this);
+  }
 
   // ── Auto Fetch ──
 
@@ -603,10 +542,13 @@ class AppState {
     this.autoFetchEnabled = enabled;
     if (interval !== undefined) this.autoFetchInterval = interval;
     try {
-      localStorage.setItem('gitbiker-auto-fetch', JSON.stringify({
-        enabled: this.autoFetchEnabled,
-        interval: this.autoFetchInterval,
-      }));
+      localStorage.setItem(
+        'gitbiker-auto-fetch',
+        JSON.stringify({
+          enabled: this.autoFetchEnabled,
+          interval: this.autoFetchInterval,
+        }),
+      );
     } catch {}
     if (enabled) {
       this.startAutoFetch();
@@ -631,9 +573,15 @@ class AppState {
 
   // ── Git action wrappers (maintain existing API) ──
 
-  async refreshStatus() { return _refreshStatus(this); }
-  async refreshAll() { return _refreshAll(this); }
-  async loadDiff(filePath: string) { return _loadDiff(this, filePath); }
+  async refreshStatus() {
+    return _refreshStatus(this);
+  }
+  async refreshAll() {
+    return _refreshAll(this);
+  }
+  async loadDiff(filePath: string) {
+    return _loadDiff(this, filePath);
+  }
 
   // ── Toast ──
 
@@ -664,13 +612,13 @@ class AppState {
   theme = $state<'system' | 'dark' | 'light'>(
     (typeof localStorage !== 'undefined'
       ? (localStorage.getItem('gitbiker-theme') as 'system' | 'dark' | 'light')
-      : null) || 'system'
+      : null) || 'system',
   );
 
   systemPrefersDark = $state(
     typeof window !== 'undefined'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
-      : true
+      : true,
   );
 
   get resolvedTheme(): 'dark' | 'light' {
@@ -712,7 +660,9 @@ class AppState {
 
   setTheme(value: 'system' | 'dark' | 'light') {
     this.theme = value;
-    try { localStorage.setItem('gitbiker-theme', value); } catch {}
+    try {
+      localStorage.setItem('gitbiker-theme', value);
+    } catch {}
     this.applyTheme();
   }
 

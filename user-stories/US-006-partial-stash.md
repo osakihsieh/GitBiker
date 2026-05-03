@@ -25,4 +25,5 @@
 - 選擇性 un-stash：`git checkout stash@{n} -- <file>`
 
 ## 優先級：P2 | 工作量：M（中）
+
 ## 依賴：StashManager（已完成）
