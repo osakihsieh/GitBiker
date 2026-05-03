@@ -4,8 +4,11 @@
   import { gitStageHunk, gitUnstageHunk, gitStashHunk, generateCommitMessage } from '$lib/git/commands';
   import type { DiffHunk } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
+  import AiExplanationDialog from './AiExplanationDialog.svelte';
 
   let contextMenu = $state<{ x: number; y: number; text: string } | null>(null);
+  let aiExplanation = $state('');
+  let showAiDialog = $state(false);
 
   function handleContextMenu(e: MouseEvent) {
     const selection = window.getSelection();
@@ -26,7 +29,7 @@
       app.addToast('AI 正在思考中...', 'info');
       try {
         const prompt = `請簡要解釋以下代碼片段的功能與邏輯：\n\n\`\`\`\n${text}\n\`\`\``;
-        const explanation = await generateCommitMessage({
+        aiExplanation = await generateCommitMessage({
           path: app.repoPath || '',
           provider: app.aiProvider,
           apiKey: app.aiApiKey,
@@ -34,7 +37,7 @@
           language: app.aiLanguage,
           customPrompt: prompt
         });
-        alert(`AI 解釋：\n\n${explanation}`);
+        showAiDialog = true;
       } catch (e: unknown) {
         app.addToast(extractErrorMessage(e), 'error');
       }
@@ -205,6 +208,12 @@
     onClose={() => (contextMenu = null)}
   />
 {/if}
+
+<AiExplanationDialog
+  open={showAiDialog}
+  explanation={aiExplanation}
+  onClose={() => (showAiDialog = false)}
+/>
 
 <style>
   .diff-panel {
