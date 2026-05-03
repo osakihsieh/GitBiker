@@ -19,6 +19,7 @@
   import CommitFileList from '$lib/components/CommitFileList.svelte';
   import BranchSidebar from '$lib/components/BranchSidebar.svelte';
   import Welcome from '$lib/components/Welcome.svelte';
+  import AiBranchManager from '$lib/components/AiBranchManager.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import CloneDialog from '$lib/components/CloneDialog.svelte';
   import RepoPopover from '$lib/components/RepoPopover.svelte';
@@ -290,6 +291,8 @@
         <BranchCompare />
       {:else if app.viewMode === 'rebase-editor'}
         <RebaseEditor />
+      {:else if app.viewMode === 'ai-branch-manager'}
+        <AiBranchManager />
       {:else}
         <div class="sidebar" style:width="{sidebarWidth}px">
           <BranchSidebar />

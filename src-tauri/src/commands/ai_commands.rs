@@ -79,3 +79,61 @@ pub async fn generate_commit_message(
 
     Ok(message)
 }
+
+#[tauri::command]
+pub async fn analyze_branches(
+    state: State<'_, GitState>,
+    path: String,
+    provider: String,
+    api_key: String,
+    model: String,
+    language: String,
+    ollama_endpoint: Option<String>,
+) -> Result<String, GitError> {
+    let repo_path = PathBuf::from(&path);
+    let branches = state.git.branches(&repo_path)?;
+    let mut branch_infos = Vec::new();
+
+    for b in branches {
+        if b.is_remote {
+            continue;
+        }
+        let is_merged = state
+            .git
+            .branch_merge_status(&repo_path, &b.name, "main")
+            .map(|s| s.merged)
+            .unwrap_or(false);
+
+        let last_commit = state
+            .git
+            .log(&repo_path, 1, Some(crate::git::types::LogFilter::Branch(b.name.clone())))
+            .ok()
+            .and_then(|log| log.into_iter().next());
+
+        branch_infos.push(ai::BranchInfo {
+            name: b.name,
+            last_commit_message: last_commit.as_ref().map(|c| c.message.clone()).unwrap_or_default(),
+            last_commit_timestamp: last_commit.as_ref().map(|c| c.timestamp).unwrap_or(0),
+            is_merged,
+            ahead: b.ahead.unwrap_or(0),
+            behind: b.behind.unwrap_or(0),
+            upstream: b.upstream,
+        });
+    }
+
+    let config = ProviderConfig {
+        api_key,
+        model,
+        endpoint: ollama_endpoint,
+    };
+
+    let ai_provider = ai::create_provider(&provider, config)
+        .map_err(|e| GitError::OperationFailed(e.to_string()))?;
+
+    let analysis = ai_provider
+        .analyze_branches(&branch_infos, &language)
+        .await
+        .map_err(|e| GitError::OperationFailed(e.to_string()))?;
+
+    Ok(analysis)
+}

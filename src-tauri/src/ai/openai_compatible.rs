@@ -280,6 +280,71 @@ impl AiProvider for OpenAiCompatibleProvider {
 
         Ok(message)
     }
+
+    async fn analyze_branches(
+        &self,
+        branches: &[super::BranchInfo],
+        language: &str,
+    ) -> Result<String, AiError> {
+        if self.requires_auth && self.api_key.is_empty() {
+            return Err(AiError::NoApiKey);
+        }
+
+        let mut system_prompt = String::new();
+        system_prompt.push_str("You are a Git repository expert and cleanup assistant.\n");
+        system_prompt.push_str("Analyze the provided branch list and suggest cleanup actions.\n");
+        system_prompt.push_str("Identify merged branches, stale branches, and potential candidates for deletion.\n");
+
+        match language {
+            "zh-TW" => system_prompt.push_str("使用繁體中文回答，語氣專業且精簡。\n"),
+            _ => system_prompt.push_str("Respond in English, be professional and concise.\n"),
+        }
+
+        let mut user_message = String::new();
+        user_message.push_str("Branch List:\n");
+        for b in branches {
+            let status = if b.is_merged { "Merged" } else { "Unmerged" };
+            user_message.push_str(&format!(
+                "- {}: [{}], Ahead: {}, Behind: {}, Last Commit: \"{}\" (Timestamp: {})\n",
+                b.name, status, b.ahead, b.behind, b.last_commit_message, b.last_commit_timestamp
+            ));
+        }
+
+        let request = ChatRequest {
+            model: self.model.clone(),
+            messages: vec![
+                ChatMessage {
+                    role: "system".to_string(),
+                    content: system_prompt,
+                },
+                ChatMessage {
+                    role: "user".to_string(),
+                    content: user_message,
+                },
+            ],
+            temperature: 0.3,
+        };
+
+        let mut req_builder = http_client().post(&self.endpoint).json(&request);
+        if self.requires_auth && !self.api_key.is_empty() {
+            req_builder = req_builder.bearer_auth(&self.api_key);
+        }
+
+        let response = req_builder.send().await?;
+        let body = response.text().await?;
+        let parsed: ChatResponse =
+            serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+        let message = parsed
+            .choices
+            .and_then(|c| c.into_iter().next())
+            .and_then(|c| c.message)
+            .and_then(|m| m.content)
+            .map(|s| s.trim().to_string())
+            .unwrap_or_default();
+
+        Ok(message)
+    }
 }
 
 // ── Helper trait for conditional auth ────────────────

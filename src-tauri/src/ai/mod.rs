@@ -73,6 +73,22 @@ impl From<reqwest::Error> for AiError {
 pub trait AiProvider: Send + Sync {
     fn name(&self) -> &str;
     async fn generate(&self, context: &CommitContext) -> Result<String, AiError>;
+    async fn analyze_branches(
+        &self,
+        branches: &[BranchInfo],
+        language: &str,
+    ) -> Result<String, AiError>;
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BranchInfo {
+    pub name: String,
+    pub last_commit_message: String,
+    pub last_commit_timestamp: i64,
+    pub is_merged: bool,
+    pub ahead: u32,
+    pub behind: u32,
+    pub upstream: Option<String>,
 }
 
 // ── Context Types ────────────────────────────────────

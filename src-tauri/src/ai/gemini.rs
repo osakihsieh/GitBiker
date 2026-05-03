@@ -190,4 +190,67 @@ impl AiProvider for GeminiProvider {
 
         Ok(message)
     }
+
+    async fn analyze_branches(
+        &self,
+        branches: &[super::BranchInfo],
+        language: &str,
+    ) -> Result<String, AiError> {
+        if self.api_key.is_empty() {
+            return Err(AiError::NoApiKey);
+        }
+
+        let mut system_prompt = String::new();
+        system_prompt.push_str("You are a Git repository expert and cleanup assistant.\n");
+        system_prompt.push_str("Analyze the provided branch list and suggest cleanup actions.\n");
+        system_prompt.push_str("Identify merged branches, stale branches, and potential candidates for deletion.\n");
+
+        match language {
+            "zh-TW" => system_prompt.push_str("使用繁體中文回答，語氣專業且精簡。\n"),
+            _ => system_prompt.push_str("Respond in English, be professional and concise.\n"),
+        }
+
+        let mut user_message = String::new();
+        user_message.push_str("Branch List:\n");
+        for b in branches {
+            let status = if b.is_merged { "Merged" } else { "Unmerged" };
+            user_message.push_str(&format!(
+                "- {}: [{}], Ahead: {}, Behind: {}, Last Commit: \"{}\" (Timestamp: {})\n",
+                b.name, status, b.ahead, b.behind, b.last_commit_message, b.last_commit_timestamp
+            ));
+        }
+
+        let request = GeminiRequest {
+            contents: vec![GeminiContent {
+                parts: vec![GeminiPart { text: user_message }],
+                role: Some("user".to_string()),
+            }],
+            system_instruction: Some(GeminiContent {
+                parts: vec![GeminiPart {
+                    text: system_prompt,
+                }],
+                role: None,
+            }),
+        };
+
+        let url = format!(
+            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+            self.model, self.api_key
+        );
+
+        let response = http_client().post(&url).json(&request).send().await?;
+        let body = response.text().await?;
+        let parsed: GeminiResponse =
+            serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+        let message = parsed
+            .candidates
+            .and_then(|c| c.into_iter().next())
+            .and_then(|c| c.content)
+            .and_then(|c| c.parts.into_iter().next())
+            .map(|p| p.text.trim().to_string())
+            .unwrap_or_default();
+
+        Ok(message)
+    }
 }

@@ -54,7 +54,8 @@ export type ViewMode =
   | 'conflict-resolution'
   | 'file-history'
   | 'branch-compare'
-  | 'rebase-editor';
+  | 'rebase-editor'
+  | 'ai-branch-manager';
 
 export interface RepoState {
   stagedFiles: FileStatus[];

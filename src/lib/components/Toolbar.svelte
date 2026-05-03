@@ -168,6 +168,10 @@
     branchManagerOpen = false;
   }
 
+  async function handleCleanup() {
+    app.viewMode = 'ai-branch-manager';
+  }
+
   function handleBranchKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape' && branchDropdownOpen) {
       e.stopPropagation();
@@ -398,6 +402,10 @@
           >{#if fetching}<span class="spinner"></span>{:else}↻{/if}</span
         >
         <span class="action-label">Fetch</span>
+      </button>
+      <button class="action-btn" onclick={handleCleanup} title="AI 分支管理">
+        <span class="action-icon">✨</span>
+        <span class="action-label">AI Cleanup</span>
       </button>
     </div>
   </div>
