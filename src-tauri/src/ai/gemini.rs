@@ -149,8 +149,6 @@ impl AiProvider for GeminiProvider {
             }),
         };
 
-        // Note: API key is in query param per Google's design.
-        // reqwest does not log URLs by default; we don't enable tracing for requests.
         let url = format!(
             "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
             self.model, self.api_key
@@ -218,6 +216,70 @@ impl AiProvider for GeminiProvider {
                 "- {}: [{}], Ahead: {}, Behind: {}, Last Commit: \"{}\" (Timestamp: {})\n",
                 b.name, status, b.ahead, b.behind, b.last_commit_message, b.last_commit_timestamp
             ));
+        }
+
+        let request = GeminiRequest {
+            contents: vec![GeminiContent {
+                parts: vec![GeminiPart { text: user_message }],
+                role: Some("user".to_string()),
+            }],
+            system_instruction: Some(GeminiContent {
+                parts: vec![GeminiPart {
+                    text: system_prompt,
+                }],
+                role: None,
+            }),
+        };
+
+        let url = format!(
+            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+            self.model, self.api_key
+        );
+
+        let response = http_client().post(&url).json(&request).send().await?;
+        let body = response.text().await?;
+        let parsed: GeminiResponse =
+            serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+        let message = parsed
+            .candidates
+            .and_then(|c| c.into_iter().next())
+            .and_then(|c| c.content)
+            .and_then(|c| c.parts.into_iter().next())
+            .map(|p| p.text.trim().to_string())
+            .unwrap_or_default();
+
+        Ok(message)
+    }
+
+    async fn resolve_conflict(
+        &self,
+        path: &str,
+        hunk: &crate::git::types::ConflictHunk,
+        language: &str,
+    ) -> Result<String, AiError> {
+        if self.api_key.is_empty() {
+            return Err(AiError::NoApiKey);
+        }
+
+        let mut system_prompt = String::new();
+        system_prompt.push_str("You are a code fusion expert. Your task is to resolve a Git merge conflict.\n");
+        system_prompt.push_str("Analyze the 'ours' (HEAD) and 'theirs' versions of the code and provide a clean, integrated version.\n");
+        system_prompt.push_str("If there is a base version, use it to understand the changes from both sides.\n");
+        system_prompt.push_str("Output ONLY the resolved code without any explanation or markdown markers.\n");
+
+        let mut user_message = String::new();
+        user_message.push_str(&format!("File: {}\n\n", path));
+        user_message.push_str("<<< OURS (HEAD) <<<\n");
+        user_message.push_str(&hunk.ours);
+        user_message.push_str("\n=======\n");
+        user_message.push_str(&hunk.theirs);
+        user_message.push_str("\n>>> THEIRS >>>\n");
+
+        if let Some(base) = &hunk.base {
+            user_message.push_str("\n||| BASE |||\n");
+            user_message.push_str(base);
+            user_message.push_str("\n");
         }
 
         let request = GeminiRequest {

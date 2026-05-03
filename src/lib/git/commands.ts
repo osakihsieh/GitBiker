@@ -489,6 +489,26 @@ export async function analyzeBranches(params: {
   });
 }
 
+export async function aiResolveConflict(params: {
+  path: string;
+  hunk: any;
+  provider: string;
+  apiKey: string;
+  model: string;
+  language: string;
+  ollamaEndpoint?: string;
+}): Promise<string> {
+  return invoke('ai_resolve_conflict', {
+    path: params.path,
+    hunk: params.hunk,
+    provider: params.provider,
+    apiKey: params.apiKey,
+    model: params.model,
+    language: params.language,
+    ollamaEndpoint: params.ollamaEndpoint ?? null,
+  });
+}
+
 // ── Git CRLF Settings ──────────────────────────────────
 
 export async function setGitDisableAutoCrlf(disabled: boolean): Promise<void> {

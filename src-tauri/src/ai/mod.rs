@@ -78,6 +78,12 @@ pub trait AiProvider: Send + Sync {
         branches: &[BranchInfo],
         language: &str,
     ) -> Result<String, AiError>;
+    async fn resolve_conflict(
+        &self,
+        path: &str,
+        hunk: &ConflictHunk,
+        language: &str,
+    ) -> Result<String, AiError>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

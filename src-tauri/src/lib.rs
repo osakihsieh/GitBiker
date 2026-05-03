@@ -120,6 +120,7 @@ pub fn run() {
             commands::generate_commit_message,
             commands::list_ai_models,
             commands::analyze_branches,
+            commands::ai_resolve_conflict,
             commands::set_git_disable_auto_crlf,
             commands::get_git_disable_auto_crlf,
             commands::set_git_ignore_eol,

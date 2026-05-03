@@ -9,6 +9,7 @@
     gitMergeAbort,
     gitStage,
     openInEditor,
+    aiResolveConflict,
   } from '$lib/git/commands';
   import type { ConflictSegment, ConflictHunk } from '$lib/git/types';
 
@@ -18,6 +19,7 @@
   let aborting = $state(false);
   /** Custom edited content per hunk index */
   let customEdits = $state<Record<number, string>>({});
+  let aiResolving = $state<Record<number, boolean>>({});
 
   // ── Derived ──
   const files = $derived(conflicts.files);
@@ -85,6 +87,29 @@
 
   function updateCustomEdit(hunkIndex: number, value: string) {
     customEdits = { ...customEdits, [hunkIndex]: value };
+  }
+
+  async function handleAiResolve(hunk: ConflictHunk) {
+    if (!app.repoPath || aiResolving[hunk.index]) return;
+    aiResolving = { ...aiResolving, [hunk.index]: true };
+    try {
+      const resolved = await aiResolveConflict({
+        path: activeFile!,
+        hunk,
+        provider: app.aiProvider,
+        apiKey: app.aiApiKey,
+        model: app.aiModel,
+        language: app.aiLanguage,
+        ollamaEndpoint: app.aiOllamaEndpoint,
+      });
+      customEdits = { ...customEdits, [hunk.index]: resolved };
+      conflicts.setHunkChoice(hunk.index, 'Custom');
+      app.addToast('AI 已建議解決方案', 'success');
+    } catch (e: unknown) {
+      app.addToast(extractErrorMessage(e), 'error');
+    } finally {
+      aiResolving = { ...aiResolving, [hunk.index]: false };
+    }
   }
 
   // ── Handlers ──
@@ -359,6 +384,18 @@
                     onclick={() => startCustomEdit(hunk.index, hunk.ours, hunk.theirs)}
                     >Custom Edit</button
                   >
+                  <button
+                    class="btn-accept-both ai-btn"
+                    class:selected={choice === 'Custom' && !!customEdits[hunk.index]}
+                    disabled={aiResolving[hunk.index] || !app.aiApiKey}
+                    onclick={() => handleAiResolve(hunk)}
+                  >
+                    {#if aiResolving[hunk.index]}
+                      <span class="spinning">↻</span> 正在融合...
+                    {:else}
+                      ✨ AI Suggest
+                    {/if}
+                  </button>
                 </div>
 
                 <!-- Theirs section -->
@@ -819,9 +856,26 @@
     border-color: var(--accent);
   }
 
-  .custom-edit-section {
-    border-top: 1px solid var(--border);
+  .ai-btn {
+    border: 1px solid var(--accent);
+    color: var(--accent);
   }
+
+  .ai-btn:hover:not(:disabled) {
+    background: rgba(0, 123, 255, 0.1);
+  }
+
+  .spinning {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Content header ── */
   .custom-tag {
     color: var(--accent);
     background: rgba(79, 193, 255, 0.15);

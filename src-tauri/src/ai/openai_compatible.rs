@@ -345,6 +345,72 @@ impl AiProvider for OpenAiCompatibleProvider {
 
         Ok(message)
     }
+
+    async fn resolve_conflict(
+        &self,
+        path: &str,
+        hunk: &crate::git::types::ConflictHunk,
+        language: &str,
+    ) -> Result<String, AiError> {
+        if self.requires_auth && self.api_key.is_empty() {
+            return Err(AiError::NoApiKey);
+        }
+
+        let mut system_prompt = String::new();
+        system_prompt.push_str("You are a code fusion expert. Your task is to resolve a Git merge conflict.\n");
+        system_prompt.push_str("Analyze the 'ours' (HEAD) and 'theirs' versions of the code and provide a clean, integrated version.\n");
+        system_prompt.push_str("If there is a base version, use it to understand the changes from both sides.\n");
+        system_prompt.push_str("Output ONLY the resolved code without any explanation or markdown markers.\n");
+
+        let mut user_message = String::new();
+        user_message.push_str(&format!("File: {}\n\n", path));
+        user_message.push_str("<<< OURS (HEAD) <<<\n");
+        user_message.push_str(&hunk.ours);
+        user_message.push_str("\n=======\n");
+        user_message.push_str(&hunk.theirs);
+        user_message.push_str("\n>>> THEIRS >>>\n");
+
+        if let Some(base) = &hunk.base {
+            user_message.push_str("\n||| BASE |||\n");
+            user_message.push_str(base);
+            user_message.push_str("\n");
+        }
+
+        let request = ChatRequest {
+            model: self.model.clone(),
+            messages: vec![
+                ChatMessage {
+                    role: "system".to_string(),
+                    content: system_prompt,
+                },
+                ChatMessage {
+                    role: "user".to_string(),
+                    content: user_message,
+                },
+            ],
+            temperature: 0.3,
+        };
+
+        let mut req_builder = http_client().post(&self.endpoint).json(&request);
+        if self.requires_auth && !self.api_key.is_empty() {
+            req_builder = req_builder.bearer_auth(&self.api_key);
+        }
+
+        let response = req_builder.send().await?;
+        let body = response.text().await?;
+        let parsed: ChatResponse =
+            serde_json::from_str(&body).map_err(|e| AiError::Parse(e.to_string()))?;
+
+        let message = parsed
+            .choices
+            .and_then(|c| c.into_iter().next())
+            .and_then(|c| c.message)
+            .and_then(|m| m.content)
+            .map(|s| s.trim().to_string())
+            .unwrap_or_default();
+
+        Ok(message)
+    }
 }
 
 // ── Helper trait for conditional auth ────────────────

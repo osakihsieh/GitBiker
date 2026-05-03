@@ -137,3 +137,31 @@ pub async fn analyze_branches(
 
     Ok(analysis)
 }
+
+#[tauri::command]
+pub async fn ai_resolve_conflict(
+    state: State<'_, GitState>,
+    path: String,
+    hunk: crate::git::types::ConflictHunk,
+    provider: String,
+    api_key: String,
+    model: String,
+    language: String,
+    ollama_endpoint: Option<String>,
+) -> Result<String, GitError> {
+    let config = ProviderConfig {
+        api_key,
+        model,
+        endpoint: ollama_endpoint,
+    };
+
+    let ai_provider = ai::create_provider(&provider, config)
+        .map_err(|e| GitError::OperationFailed(e.to_string()))?;
+
+    let resolved = ai_provider
+        .resolve_conflict(&path, &hunk, &language)
+        .await
+        .map_err(|e| GitError::OperationFailed(e.to_string()))?;
+
+    Ok(resolved)
+}
