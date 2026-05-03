@@ -86,6 +86,24 @@ pub struct RebaseCommit {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubmoduleInfo {
+    pub name: String,
+    pub path: String,
+    pub url: String,
+    pub head_id: Option<String>,
+    pub index_id: Option<String>,
+    pub status: SubmoduleStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum SubmoduleStatus {
+    Uninitialized,
+    Initialized,
+    Outdated,
+    UpToDate,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitEnvInfo {
     pub is_available: bool,
     pub version: String,

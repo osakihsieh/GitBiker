@@ -38,4 +38,13 @@ pub trait GitOperations: Send + Sync {
     fn lfs_track(&self, path: &Path, pattern: &str) -> Result<(), GitError>;
     fn lfs_untrack(&self, path: &Path, pattern: &str) -> Result<(), GitError>;
     fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError>;
+    fn get_submodules(&self, path: &Path) -> Result<Vec<SubmoduleInfo>, GitError>;
+    fn update_submodule(
+        &self,
+        path: &Path,
+        name: &str,
+        init: bool,
+        recursive: bool,
+    ) -> Result<(), GitError>;
+    fn add_submodule(&self, path: &Path, url: &str, submodule_path: &Path) -> Result<(), GitError>;
 }

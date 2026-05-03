@@ -1652,4 +1652,94 @@ impl GitOperations for LocalGit {
     fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError> {
         Self::cherry_pick(self, path, commit_id)
     }
+
+    fn get_submodules(&self, path: &Path) -> Result<Vec<SubmoduleInfo>, GitError> {
+        let output = Self::run_git(path, &["submodule", "status"])?;
+        let mut submodules = Vec::new();
+
+        for line in output.lines() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            // Line format: <status_char><hash> <path> (<branch>)
+            let status_char = line.chars().next().unwrap_or(' ');
+            let rest = &line[1..];
+            let parts: Vec<&str> = rest.split_whitespace().collect();
+            if parts.len() < 2 {
+                continue;
+            }
+
+            let hash = parts[0].to_string();
+            let sub_path = parts[1].to_string();
+
+            let status = match status_char {
+                '-' => SubmoduleStatus::Uninitialized,
+                '+' => SubmoduleStatus::Outdated,
+                'U' => SubmoduleStatus::Outdated,
+                ' ' => SubmoduleStatus::UpToDate,
+                _ => SubmoduleStatus::UpToDate,
+            };
+
+            // Get URL from config (Try to find the name first)
+            let mut url = "Unknown".to_string();
+            if let Ok(config_output) = Self::run_git(path, &["config", "--file", ".gitmodules", "--get-regexp", "path"]) {
+                for config_line in config_output.lines() {
+                    let config_parts: Vec<&str> = config_line.split_whitespace().collect();
+                    if config_parts.len() == 2 && config_parts[1] == sub_path {
+                        // Found the path, extract the name from the key: submodule.<name>.path
+                        let key = config_parts[0];
+                        if let Some(name) = key.strip_prefix("submodule.").and_then(|s| s.strip_suffix(".path")) {
+                            if let Ok(sub_url) = Self::run_git(path, &["config", "--file", ".gitmodules", &format!("submodule.{}.url", name)]) {
+                                url = sub_url.trim().to_string();
+                            }
+                        }
+                    }
+                }
+            }
+
+            submodules.push(SubmoduleInfo {
+                name: sub_path.clone(),
+                path: sub_path,
+                url,
+                head_id: Some(hash),
+                index_id: None,
+                status,
+            });
+        }
+
+        Ok(submodules)
+    }
+
+    fn update_submodule(
+        &self,
+        path: &Path,
+        name: &str,
+        init: bool,
+        recursive: bool,
+    ) -> Result<(), GitError> {
+        let mut args = vec!["submodule", "update"];
+        if init {
+            args.push("--init");
+        }
+        if recursive {
+            args.push("--recursive");
+        }
+        args.push("--");
+        args.push(name);
+        Self::run_git(path, &args)?;
+        Ok(())
+    }
+
+    fn add_submodule(&self, path: &Path, url: &str, submodule_path: &Path) -> Result<(), GitError> {
+        Self::run_git(
+            path,
+            &[
+                "submodule",
+                "add",
+                url,
+                &submodule_path.display().to_string(),
+            ],
+        )?;
+        Ok(())
+    }
 }

@@ -22,6 +22,8 @@ import type {
   RebaseResult,
   RebaseCommit,
   GitEnvInfo,
+  GitLfsStatus,
+  SubmoduleInfo,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
@@ -304,6 +306,23 @@ export async function gitLfsTrack(path: string, pattern: string): Promise<void> 
 
 export async function gitLfsUntrack(path: string, pattern: string): Promise<void> {
   return invoke('git_lfs_untrack', { path, pattern });
+}
+
+export async function gitGetSubmodules(path: string): Promise<SubmoduleInfo[]> {
+  return invoke('git_get_submodules', { path });
+}
+
+export async function gitUpdateSubmodule(
+  path: string,
+  name: string,
+  init: boolean,
+  recursive: boolean,
+): Promise<void> {
+  return invoke('git_update_submodule', { path, name, init, recursive });
+}
+
+export async function gitAddSubmodule(path: string, url: string, submodulePath: string): Promise<void> {
+  return invoke('git_add_submodule', { path, url, submodulePath });
 }
 
 // ── File Operations ───────────────────────────────────

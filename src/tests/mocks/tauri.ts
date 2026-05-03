@@ -61,6 +61,9 @@ const mockGitCommands = {
   gitLfsStatus: vi.fn().mockResolvedValue({ is_installed: true, version: '', files: [] }),
   gitLfsTrack: vi.fn().mockResolvedValue(undefined),
   gitLfsUntrack: vi.fn().mockResolvedValue(undefined),
+  gitGetSubmodules: vi.fn().mockResolvedValue([]),
+  gitUpdateSubmodule: vi.fn().mockResolvedValue(undefined),
+  gitAddSubmodule: vi.fn().mockResolvedValue(undefined),
   checkGitEnv: vi.fn().mockResolvedValue({ is_available: true, version: '', path: '', is_bundled: false }),
 };
 

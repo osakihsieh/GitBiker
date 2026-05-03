@@ -410,6 +410,32 @@ pub fn git_lfs_untrack(
 }
 
 #[tauri::command]
+pub fn git_get_submodules(state: State<GitState>, path: String) -> Result<Vec<SubmoduleInfo>, GitError> {
+    state.git.get_submodules(&PathBuf::from(&path))
+}
+
+#[tauri::command]
+pub fn git_update_submodule(
+    state: State<GitState>,
+    path: String,
+    name: String,
+    init: bool,
+    recursive: bool,
+) -> Result<(), GitError> {
+    state.git.update_submodule(&PathBuf::from(&path), &name, init, recursive)
+}
+
+#[tauri::command]
+pub fn git_add_submodule(
+    state: State<GitState>,
+    path: String,
+    url: String,
+    submodule_path: String,
+) -> Result<(), GitError> {
+    state.git.add_submodule(&PathBuf::from(&path), &url, &PathBuf::from(&submodule_path))
+}
+
+#[tauri::command]
 pub fn check_git_version() -> Result<String, GitError> {
     let output = LocalGit::git_command()
         .args(["--version"])

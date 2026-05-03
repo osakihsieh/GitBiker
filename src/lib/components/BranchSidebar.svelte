@@ -18,6 +18,7 @@
     gitStashShow,
   } from '$lib/git/commands';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
+  import SubmoduleManager from './SubmoduleManager.svelte';
   import type { StashEntry } from '$lib/git/types';
 
   // ── State ──────────────────────────────────────────────
@@ -581,6 +582,11 @@
       {/if}
     </div>
   {/if}
+
+  <div class="sidebar-divider"></div>
+
+  <!-- SUBMODULES -->
+  <SubmoduleManager />
 </div>
 
 <!-- Context menus -->

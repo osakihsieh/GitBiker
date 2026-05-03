@@ -219,3 +219,16 @@ export interface GitLfsStatus {
   version: string;
   files: LfsFile[];
 }
+
+// ── Submodule Types ───────────────────────────────────
+
+export type SubmoduleStatus = 'Uninitialized' | 'Initialized' | 'Outdated' | 'UpToDate';
+
+export interface SubmoduleInfo {
+  name: string;
+  path: string;
+  url: string;
+  head_id: string | null;
+  index_id: string | null;
+  status: SubmoduleStatus;
+}

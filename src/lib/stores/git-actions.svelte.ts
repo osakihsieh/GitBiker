@@ -7,6 +7,7 @@ import type {
   LogFilter,
   TagInfo,
   GitLfsStatus,
+  SubmoduleInfo,
 } from '$lib/git/types';
 import {
   gitStatus,
@@ -15,6 +16,7 @@ import {
   gitDiff,
   gitTags,
   gitLfsStatus,
+  gitGetSubmodules,
   startWatching,
   stopWatching,
 } from '$lib/git/commands';
@@ -37,6 +39,7 @@ export interface GitActionableState {
       currentBranch: string;
       logFilter: LogFilter;
       lfsStatus: GitLfsStatus | null;
+      submodules: SubmoduleInfo[];
     };
   } | null;
   tabs: Array<{
@@ -50,6 +53,7 @@ export interface GitActionableState {
       currentBranch: string;
       logFilter: LogFilter;
       lfsStatus: GitLfsStatus | null;
+      submodules: SubmoduleInfo[];
     };
   }>;
   currentDiff: DiffResult | null;
@@ -108,12 +112,13 @@ export async function refreshAll(state: GitActionableState): Promise<void> {
   const tab = state.activeTab;
   if (!tab) return;
   try {
-    const [status, commits, branches, tags, lfs] = await Promise.all([
+    const [status, commits, branches, tags, lfs, submodules] = await Promise.all([
       gitStatus(tab.path),
       gitLog(tab.path, MAX_COMMITS_PER_TAB, tab.state.logFilter),
       gitBranches(tab.path),
       gitTags(tab.path),
       gitLfsStatus(tab.path).catch(() => null),
+      gitGetSubmodules(tab.path).catch(() => []),
     ]);
     tab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
     tab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
@@ -121,6 +126,7 @@ export async function refreshAll(state: GitActionableState): Promise<void> {
     tab.state.branches = branches;
     tab.state.tags = tags;
     tab.state.lfsStatus = lfs;
+    tab.state.submodules = submodules;
     tab.state.currentBranch = branches.find((b) => b.is_current)?.name || tab.state.currentBranch;
   } catch (e: unknown) {
     state.addToast(extractErrorMessage(e), 'error');
@@ -149,12 +155,13 @@ export async function loadRepoData(
   const reactiveTab = state.tabs.find((t) => t.id === tabId);
   if (!reactiveTab) return;
 
-  const [status, commits, branches, tags, lfs] = await Promise.all([
+  const [status, commits, branches, tags, lfs, submodules] = await Promise.all([
     gitStatus(path),
     gitLog(path, MAX_COMMITS_PER_TAB, reactiveTab.state.logFilter),
     gitBranches(path),
     gitTags(path),
     gitLfsStatus(path).catch(() => null),
+    gitGetSubmodules(path).catch(() => []),
   ]);
 
   reactiveTab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
@@ -163,6 +170,7 @@ export async function loadRepoData(
   reactiveTab.state.branches = branches;
   reactiveTab.state.tags = tags;
   reactiveTab.state.lfsStatus = lfs;
+  reactiveTab.state.submodules = submodules;
   reactiveTab.state.currentBranch = branches.find((b) => b.is_current)?.name || 'main';
 }
 
