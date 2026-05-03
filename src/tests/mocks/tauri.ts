@@ -64,6 +64,9 @@ const mockGitCommands = {
   gitGetSubmodules: vi.fn().mockResolvedValue([]),
   gitUpdateSubmodule: vi.fn().mockResolvedValue(undefined),
   gitAddSubmodule: vi.fn().mockResolvedValue(undefined),
+  gitGetWorktrees: vi.fn().mockResolvedValue([]),
+  gitAddWorktree: vi.fn().mockResolvedValue(undefined),
+  gitRemoveWorktree: vi.fn().mockResolvedValue(undefined),
   checkGitEnv: vi.fn().mockResolvedValue({ is_available: true, version: '', path: '', is_bundled: false }),
 };
 

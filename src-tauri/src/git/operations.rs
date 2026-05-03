@@ -47,4 +47,12 @@ pub trait GitOperations: Send + Sync {
         recursive: bool,
     ) -> Result<(), GitError>;
     fn add_submodule(&self, path: &Path, url: &str, submodule_path: &Path) -> Result<(), GitError>;
+    fn get_worktrees(&self, path: &Path) -> Result<Vec<WorktreeInfo>, GitError>;
+    fn add_worktree(
+        &self,
+        path: &Path,
+        worktree_path: &Path,
+        branch: &str,
+    ) -> Result<(), GitError>;
+    fn remove_worktree(&self, path: &Path, name: &str, force: bool) -> Result<(), GitError>;
 }

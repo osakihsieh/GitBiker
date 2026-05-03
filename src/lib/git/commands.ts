@@ -24,6 +24,7 @@ import type {
   GitEnvInfo,
   GitLfsStatus,
   SubmoduleInfo,
+  WorktreeInfo,
 } from './types';
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
@@ -323,6 +324,18 @@ export async function gitUpdateSubmodule(
 
 export async function gitAddSubmodule(path: string, url: string, submodulePath: string): Promise<void> {
   return invoke('git_add_submodule', { path, url, submodulePath });
+}
+
+export async function gitGetWorktrees(path: string): Promise<WorktreeInfo[]> {
+  return invoke('git_get_worktrees', { path });
+}
+
+export async function gitAddWorktree(path: string, worktreePath: string, branch: string): Promise<void> {
+  return invoke('git_add_worktree', { path, worktreePath, branch });
+}
+
+export async function gitRemoveWorktree(path: string, name: string, force = false): Promise<void> {
+  return invoke('git_remove_worktree', { path, name, force });
 }
 
 // ── File Operations ───────────────────────────────────

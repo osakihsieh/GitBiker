@@ -8,6 +8,7 @@ import type {
   TagInfo,
   GitLfsStatus,
   SubmoduleInfo,
+  WorktreeInfo,
 } from '$lib/git/types';
 import {
   gitStatus,
@@ -17,6 +18,7 @@ import {
   gitTags,
   gitLfsStatus,
   gitGetSubmodules,
+  gitGetWorktrees,
   startWatching,
   stopWatching,
 } from '$lib/git/commands';
@@ -40,6 +42,7 @@ export interface GitActionableState {
       logFilter: LogFilter;
       lfsStatus: GitLfsStatus | null;
       submodules: SubmoduleInfo[];
+      worktrees: WorktreeInfo[];
     };
   } | null;
   tabs: Array<{
@@ -54,6 +57,7 @@ export interface GitActionableState {
       logFilter: LogFilter;
       lfsStatus: GitLfsStatus | null;
       submodules: SubmoduleInfo[];
+      worktrees: WorktreeInfo[];
     };
   }>;
   currentDiff: DiffResult | null;
@@ -112,13 +116,14 @@ export async function refreshAll(state: GitActionableState): Promise<void> {
   const tab = state.activeTab;
   if (!tab) return;
   try {
-    const [status, commits, branches, tags, lfs, submodules] = await Promise.all([
+    const [status, commits, branches, tags, lfs, submodules, worktrees] = await Promise.all([
       gitStatus(tab.path),
       gitLog(tab.path, MAX_COMMITS_PER_TAB, tab.state.logFilter),
       gitBranches(tab.path),
       gitTags(tab.path),
       gitLfsStatus(tab.path).catch(() => null),
       gitGetSubmodules(tab.path).catch(() => []),
+      gitGetWorktrees(tab.path).catch(() => []),
     ]);
     tab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
     tab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
@@ -127,6 +132,7 @@ export async function refreshAll(state: GitActionableState): Promise<void> {
     tab.state.tags = tags;
     tab.state.lfsStatus = lfs;
     tab.state.submodules = submodules;
+    tab.state.worktrees = worktrees;
     tab.state.currentBranch = branches.find((b) => b.is_current)?.name || tab.state.currentBranch;
   } catch (e: unknown) {
     state.addToast(extractErrorMessage(e), 'error');

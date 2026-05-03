@@ -104,6 +104,16 @@ pub enum SubmoduleStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorktreeInfo {
+    pub name: String,
+    pub path: String,
+    pub branch: Option<String>,
+    pub head_id: Option<String>,
+    pub is_locked: bool,
+    pub lock_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitEnvInfo {
     pub is_available: bool,
     pub version: String,

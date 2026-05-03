@@ -436,6 +436,31 @@ pub fn git_add_submodule(
 }
 
 #[tauri::command]
+pub fn git_get_worktrees(state: State<GitState>, path: String) -> Result<Vec<WorktreeInfo>, GitError> {
+    state.git.get_worktrees(&PathBuf::from(&path))
+}
+
+#[tauri::command]
+pub fn git_add_worktree(
+    state: State<GitState>,
+    path: String,
+    worktree_path: String,
+    branch: String,
+) -> Result<(), GitError> {
+    state.git.add_worktree(&PathBuf::from(&path), &PathBuf::from(&worktree_path), &branch)
+}
+
+#[tauri::command]
+pub fn git_remove_worktree(
+    state: State<GitState>,
+    path: String,
+    name: String,
+    force: bool,
+) -> Result<(), GitError> {
+    state.git.remove_worktree(&PathBuf::from(&path), &name, force)
+}
+
+#[tauri::command]
 pub fn check_git_version() -> Result<String, GitError> {
     let output = LocalGit::git_command()
         .args(["--version"])

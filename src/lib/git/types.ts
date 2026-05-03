@@ -232,3 +232,14 @@ export interface SubmoduleInfo {
   index_id: string | null;
   status: SubmoduleStatus;
 }
+
+// ── Worktree Types ───────────────────────────────────
+
+export interface WorktreeInfo {
+  name: string;
+  path: string;
+  branch: string | null;
+  head_id: string | null;
+  is_locked: boolean;
+  lock_reason: string | null;
+}

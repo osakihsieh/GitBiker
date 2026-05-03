@@ -19,6 +19,7 @@
   } from '$lib/git/commands';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
   import SubmoduleManager from './SubmoduleManager.svelte';
+  import WorktreeManager from './WorktreeManager.svelte';
   import type { StashEntry } from '$lib/git/types';
 
   // ── State ──────────────────────────────────────────────
@@ -587,6 +588,11 @@
 
   <!-- SUBMODULES -->
   <SubmoduleManager />
+
+  <div class="sidebar-divider"></div>
+
+  <!-- WORKTREES -->
+  <WorktreeManager />
 </div>
 
 <!-- Context menus -->

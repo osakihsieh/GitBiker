@@ -1742,4 +1742,106 @@ impl GitOperations for LocalGit {
         )?;
         Ok(())
     }
+
+    fn get_worktrees(&self, path: &Path) -> Result<Vec<WorktreeInfo>, GitError> {
+        let output = Self::run_git(path, &["worktree", "list", "--porcelain"])?;
+        let mut worktrees = Vec::new();
+        let mut current = None::<WorktreeInfo>;
+
+        for line in output.lines() {
+            if line.trim().is_empty() {
+                if let Some(wt) = current.take() {
+                    worktrees.push(wt);
+                }
+                continue;
+            }
+
+            let parts: Vec<&str> = line.splitn(2, ' ').collect();
+            if parts.len() < 2 {
+                continue;
+            }
+
+            let key = parts[0];
+            let value = parts[1];
+
+            match key {
+                "worktree" => {
+                    if let Some(wt) = current.take() {
+                        worktrees.push(wt);
+                    }
+                    let wt_path = PathBuf::from(value);
+                    let name = wt_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or(value)
+                        .to_string();
+                    current = Some(WorktreeInfo {
+                        name,
+                        path: value.to_string(),
+                        branch: None,
+                        head_id: None,
+                        is_locked: false,
+                        lock_reason: None,
+                    });
+                }
+                "HEAD" => {
+                    if let Some(ref mut wt) = current {
+                        wt.head_id = Some(value.to_string());
+                    }
+                }
+                "branch" => {
+                    if let Some(ref mut wt) = current {
+                        // value is refs/heads/branch-name
+                        let branch_name = value.strip_prefix("refs/heads/").unwrap_or(value);
+                        wt.branch = Some(branch_name.to_string());
+                    }
+                }
+                "locked" => {
+                    if let Some(ref mut wt) = current {
+                        wt.is_locked = true;
+                        wt.lock_reason = if value.is_empty() {
+                            None
+                        } else {
+                            Some(value.to_string())
+                        };
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if let Some(wt) = current {
+            worktrees.push(wt);
+        }
+
+        Ok(worktrees)
+    }
+
+    fn add_worktree(
+        &self,
+        path: &Path,
+        worktree_path: &Path,
+        branch: &str,
+    ) -> Result<(), GitError> {
+        Self::run_git(
+            path,
+            &[
+                "worktree",
+                "add",
+                &worktree_path.display().to_string(),
+                branch,
+            ],
+        )?;
+        Ok(())
+    }
+
+    fn remove_worktree(&self, path: &Path, name: &str, force: bool) -> Result<(), GitError> {
+        let mut args = vec!["worktree", "remove"];
+        if force {
+            args.push("--force");
+        }
+        args.push(name);
+        Self::run_git(path, &args)?;
+        Ok(())
+    }
 }

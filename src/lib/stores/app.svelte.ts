@@ -86,6 +86,8 @@ export interface RepoState {
   lfsStatus: GitLfsStatus | null;
   // Submodules
   submodules: SubmoduleInfo[];
+  // Worktrees
+  worktrees: WorktreeInfo[];
 }
 export interface RepoTab {
   id: string;
@@ -122,6 +124,7 @@ export function createEmptyState(): RepoState {
     rebaseCommits: [],
     lfsStatus: null,
     submodules: [],
+    worktrees: [],
   };
 }
 
@@ -258,6 +261,10 @@ class AppState {
     return this.activeTab?.state.submodules ?? [];
   }
 
+  get worktrees(): WorktreeInfo[] {
+    return this.activeTab?.state.worktrees ?? [];
+  }
+
   get currentBranch(): string {
     return this.activeTab?.state.currentBranch ?? '';
   }
@@ -306,6 +313,11 @@ class AppState {
   set submodules(value: SubmoduleInfo[]) {
     const tab = this.activeTab;
     if (tab) tab.state.submodules = value;
+  }
+
+  set worktrees(value: WorktreeInfo[]) {
+    const tab = this.activeTab;
+    if (tab) tab.state.worktrees = value;
   }
 
   // ── Tab CRUD ──
