@@ -1,8 +1,46 @@
 <script lang="ts">
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
-  import { gitStageHunk, gitUnstageHunk, gitStashHunk } from '$lib/git/commands';
+  import { gitStageHunk, gitUnstageHunk, gitStashHunk, generateCommitMessage } from '$lib/git/commands';
   import type { DiffHunk } from '$lib/git/types';
+  import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
+
+  let contextMenu = $state<{ x: number; y: number; text: string } | null>(null);
+
+  function handleContextMenu(e: MouseEvent) {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    if (selectedText) {
+      e.preventDefault();
+      contextMenu = { x: e.clientX, y: e.clientY, text: selectedText };
+    }
+  }
+
+  const menuItems: MenuItem[] = [
+    { id: 'ai-explain', label: 'AI 解釋此代碼', shortcut: '⌘I' }
+  ];
+
+  async function handleMenuSelect(id: string) {
+    if (id === 'ai-explain' && contextMenu) {
+      const text = contextMenu.text;
+      app.addToast('AI 正在思考中...', 'info');
+      try {
+        const prompt = `請簡要解釋以下代碼片段的功能與邏輯：\n\n\`\`\`\n${text}\n\`\`\``;
+        const explanation = await generateCommitMessage({
+          path: app.repoPath || '',
+          provider: app.aiProvider,
+          apiKey: app.aiApiKey,
+          model: app.aiModel,
+          language: app.aiLanguage,
+          customPrompt: prompt
+        });
+        alert(`AI 解釋：\n\n${explanation}`);
+      } catch (e: unknown) {
+        app.addToast(extractErrorMessage(e), 'error');
+      }
+    }
+    contextMenu = null;
+  }
 
   function fileName(path: string): string {
     return path.replace(/\\/g, '/');
@@ -103,7 +141,7 @@
         <span class="del">-{app.currentDiff.stats.deletions}</span>
       </div>
     </div>
-    <div class="diff-content">
+    <div class="diff-content" oncontextmenu={handleContextMenu}>
       {#if app.currentDiff.is_binary}
         <div class="diff-empty">Binary file — cannot display diff</div>
       {:else if app.currentDiff.is_truncated}
@@ -157,6 +195,16 @@
     </div>
   {/if}
 </div>
+
+{#if contextMenu}
+  <ContextMenu
+    x={contextMenu.x}
+    y={contextMenu.y}
+    items={menuItems}
+    onSelect={handleMenuSelect}
+    onClose={() => (contextMenu = null)}
+  />
+{/if}
 
 <style>
   .diff-panel {
