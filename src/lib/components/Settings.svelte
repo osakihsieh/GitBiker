@@ -556,6 +556,35 @@
 
       <div class="setting-row">
         <div class="setting-info">
+          <span class="setting-label">代碼審查 (AI Review)</span>
+          <span class="setting-desc">
+            {app.aiReviewEnabled
+              ? '已開啟：在 Staged 檔案列表顯示 AI 預檢按鈕'
+              : '已關閉：隱藏 AI 預檢功能'}
+          </span>
+        </div>
+        <button
+          class="toggle-btn"
+          class:active={app.aiReviewEnabled}
+          role="switch"
+          aria-checked={app.aiReviewEnabled}
+          onclick={async () => {
+            app.aiReviewEnabled = !app.aiReviewEnabled;
+            await app.saveAiReviewEnabled();
+            app.addToast(
+              app.aiReviewEnabled ? '已開啟 AI 代碼審查' : '已關閉 AI 代碼審查',
+              'success',
+            );
+          }}
+        >
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
           <span class="setting-label">模型</span>
           <span class="setting-desc">
             {#if loadingModels}

@@ -10,6 +10,7 @@ const AI_MODEL_KEY = 'aiModel';
 const AI_CUSTOM_PROMPT_KEY = 'aiCustomPrompt';
 const AI_LANGUAGE_KEY = 'aiLanguage';
 const AI_OLLAMA_ENDPOINT_KEY = 'aiOllamaEndpoint';
+const AI_REVIEW_ENABLED_KEY = 'aiReviewEnabled';
 const DISABLE_AUTO_CRLF_KEY = 'disableAutoCrlf';
 const IGNORE_EOL_KEY = 'ignoreEol';
 const TERMINAL_SHELL_KEY = 'terminalShell';
@@ -44,6 +45,7 @@ export interface PersistableState {
   aiCustomPrompt: string;
   aiLanguage: AiLanguage;
   aiOllamaEndpoint: string;
+  aiReviewEnabled: boolean;
   disableAutoCrlf: boolean;
   ignoreEol: boolean;
   terminalShell: string | null;
@@ -65,6 +67,7 @@ export async function loadAppSettings(state: PersistableState): Promise<void> {
       savedAiPrompt,
       savedAiLang,
       savedAiEndpoint,
+      savedAiReviewEnabled,
       savedDisableAutoCrlf,
       savedIgnoreEol,
       savedTerminalShell,
@@ -99,6 +102,7 @@ export async function loadAppSettings(state: PersistableState): Promise<void> {
     if (typeof savedAiPrompt === 'string') state.aiCustomPrompt = savedAiPrompt;
     if (savedAiLang) state.aiLanguage = savedAiLang;
     if (typeof savedAiEndpoint === 'string') state.aiOllamaEndpoint = savedAiEndpoint;
+    if (typeof savedAiReviewEnabled === 'boolean') state.aiReviewEnabled = savedAiReviewEnabled;
     if (typeof savedDisableAutoCrlf === 'boolean') state.disableAutoCrlf = savedDisableAutoCrlf;
     if (typeof savedIgnoreEol === 'boolean') state.ignoreEol = savedIgnoreEol;
     if (typeof savedTerminalShell === 'string') state.terminalShell = savedTerminalShell;
@@ -193,7 +197,15 @@ export async function saveAiSettings(state: PersistableState): Promise<void> {
       store.set(AI_CUSTOM_PROMPT_KEY, state.aiCustomPrompt),
       store.set(AI_LANGUAGE_KEY, state.aiLanguage),
       store.set(AI_OLLAMA_ENDPOINT_KEY, state.aiOllamaEndpoint),
+      store.set(AI_REVIEW_ENABLED_KEY, state.aiReviewEnabled),
     ]);
+  } catch {}
+}
+
+export async function saveAiReviewEnabled(state: PersistableState): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(AI_REVIEW_ENABLED_KEY, state.aiReviewEnabled);
   } catch {}
 }
 

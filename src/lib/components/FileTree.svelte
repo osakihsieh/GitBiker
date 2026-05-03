@@ -479,17 +479,7 @@
       onkeydown={handleKeydown}
     ></textarea>
     <div class="commit-actions">
-      <button
-        class="ai-gen-btn"
-        onclick={handleAiGenerate}
-        disabled={app.stagedFiles.length === 0 || generating || committing}
-      >
-        {#if generating}
-          <span class="spinner"></span> 生成中...
-          {:else}
-            AI 生成
-          {/if}
-        </button>
+      {#if app.aiReviewEnabled}
         <button
           class="ai-gen-btn review-btn"
           onclick={handleAiReview}
@@ -501,7 +491,19 @@
             ✨ AI 預檢
           {/if}
         </button>
-      </div>
+      {/if}
+      <button
+        class="ai-gen-btn"
+        onclick={handleAiGenerate}
+        disabled={app.stagedFiles.length === 0 || generating || committing}
+      >
+        {#if generating}
+          <span class="spinner"></span> 生成中...
+        {:else}
+          AI 生成
+        {/if}
+      </button>
+    </div>
       <button
         class="commit-btn"
         onclick={handleCommit}

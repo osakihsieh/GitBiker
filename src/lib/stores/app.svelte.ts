@@ -24,6 +24,7 @@ import {
   savePreferredEditor as _savePreferredEditor,
   reorderPinnedRepos as _reorderPinnedRepos,
   saveAiSettings as _saveAiSettings,
+  saveAiReviewEnabled as _saveAiReviewEnabled,
   saveDisableAutoCrlf as _saveDisableAutoCrlf,
   saveIgnoreEol as _saveIgnoreEol,
   saveTerminalShell as _saveTerminalShell,
@@ -187,6 +188,7 @@ class AppState {
   aiCustomPrompt = $state('');
   aiLanguage = $state<AiLanguage>('zh-TW');
   aiOllamaEndpoint = $state('http://localhost:11434');
+  aiReviewEnabled = $state(true);
 
   // ── Git Settings ──
   disableAutoCrlf = $state(true); // 預設開啟：禁止自動轉換換行符
@@ -599,6 +601,9 @@ class AppState {
   }
   async saveAiSettings() {
     return _saveAiSettings(this);
+  }
+  async saveAiReviewEnabled() {
+    return _saveAiReviewEnabled(this);
   }
   async saveDisableAutoCrlf() {
     return _saveDisableAutoCrlf(this);
