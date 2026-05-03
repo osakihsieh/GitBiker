@@ -1,7 +1,17 @@
 <script lang="ts">
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
-  import { gitLogSearch, gitTagCreate, gitTagDelete, gitTagDeleteRemote, gitPushTag, gitRevert, gitResetSoft, gitResetHard, gitCherryPick } from '$lib/git/commands';
+  import {
+    gitLogSearch,
+    gitTagCreate,
+    gitTagDelete,
+    gitTagDeleteRemote,
+    gitPushTag,
+    gitRevert,
+    gitResetSoft,
+    gitResetHard,
+    gitCherryPick,
+  } from '$lib/git/commands';
   import type { Commit } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 
@@ -10,6 +20,32 @@
   let searchResults = $state<Commit[] | null>(null);
   let searching = $state(false);
   let authorFilter = $state('');
+  let scrollTop = $state(0);
+  let containerHeight = $state(600);
+
+  const ROW_HEIGHT = 44;
+  const BUFFER = 10;
+
+  const visibleRange = $derived.by(() => {
+    const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
+    const end = Math.min(
+      displayCommits.length,
+      Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + BUFFER,
+    );
+    return { start, end };
+  });
+
+  const virtualCommits = $derived(displayCommits.slice(visibleRange.start, visibleRange.end));
+  const totalHeight = $derived((displayCommits.length + (hasWip ? 1 : 0)) * ROW_HEIGHT);
+
+  const rowMids = $derived(
+    Array.from(
+      { length: displayCommits.length + (hasWip ? 1 : 0) },
+      (_, i) => i * ROW_HEIGHT + ROW_HEIGHT / 2,
+    ),
+  );
+  const totalGraphHeight = $derived(totalHeight);
+
   let contextMenu = $state<{ commit: Commit; x: number; y: number } | null>(null);
   let tagContextMenu = $state<{ tagName: string; x: number; y: number } | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -34,7 +70,7 @@
     return base.filter((c) => c.author === authorFilter);
   });
 
-  const hasWip = $derived(!searchResults && (app.stagedFiles.length + app.unstagedFiles.length) > 0);
+  const hasWip = $derived(!searchResults && app.stagedFiles.length + app.unstagedFiles.length > 0);
 
   // ── Commit Graph ──
 
@@ -72,7 +108,10 @@
 
       function allocateLane(): number {
         for (let i = 0; i < laneOccupied.length; i++) {
-          if (!laneOccupied[i]) { laneOccupied[i] = true; return i; }
+          if (!laneOccupied[i]) {
+            laneOccupied[i] = true;
+            return i;
+          }
         }
         laneOccupied.push(true);
         return laneOccupied.length - 1;
@@ -127,7 +166,7 @@
   });
 
   const graphWidth = $derived(
-    Math.max(28, (Math.max(0, ...graphLayout.map((g) => g.lane)) + 1) * LANE_WIDTH + 12)
+    Math.max(28, (Math.max(0, ...graphLayout.map((g) => g.lane)) + 1) * LANE_WIDTH + 12),
   );
 
   function laneX(lane: number): number {
@@ -168,7 +207,11 @@
       return;
     }
     const tid = setTimeout(() => {
-      try { measureRows(); } catch { /* safe */ }
+      try {
+        measureRows();
+      } catch {
+        /* safe */
+      }
     }, 50);
     return () => clearTimeout(tid);
   });
@@ -178,7 +221,11 @@
     const el = listInnerEl;
     if (!el) return;
     const observer = new ResizeObserver(() => {
-      try { measureRows(); } catch { /* safe */ }
+      try {
+        measureRows();
+      } catch {
+        /* safe */
+      }
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -186,80 +233,89 @@
 
   // ── SVG path computation ──
 
-  interface SvgPath { d: string; color: string; dashed?: boolean }
-  interface SvgDot { cx: number; cy: number; color: string; hollow?: boolean }
+  interface SvgPath {
+    d: string;
+    color: string;
+    dashed?: boolean;
+  }
+  interface SvgDot {
+    cx: number;
+    cy: number;
+    color: string;
+    hollow?: boolean;
+  }
 
   const graphSvgData = $derived.by((): { paths: SvgPath[]; dots: SvgDot[] } => {
     if (rowMids.length === 0 || graphLayout.length === 0) return { paths: [], dots: [] };
 
     try {
-    const paths: SvgPath[] = [];
-    const dots: SvgDot[] = [];
-    const commits = displayCommits;
-    const wipOffset = hasWip ? 1 : 0;
+      const paths: SvgPath[] = [];
+      const dots: SvgDot[] = [];
+      const commits = displayCommits;
+      const wipOffset = hasWip ? 1 : 0;
 
-    // Build id→index map
-    const idToIdx = new Map<string, number>();
-    for (let i = 0; i < commits.length; i++) idToIdx.set(commits[i].id, i);
+      // Build id→index map
+      const idToIdx = new Map<string, number>();
+      for (let i = 0; i < commits.length; i++) idToIdx.set(commits[i].id, i);
 
-    // WIP row
-    if (hasWip && rowMids.length > 0) {
-      const wipLane = graphLayout[0]?.lane ?? 0;
-      const wipColor = graphLayout[0]?.color ?? LANE_COLORS[0];
-      const wipY = rowMids[0];
-      dots.push({ cx: laneX(wipLane), cy: wipY, color: wipColor, hollow: true });
+      // WIP row
+      if (hasWip && rowMids.length > 0) {
+        const wipLane = graphLayout[0]?.lane ?? 0;
+        const wipColor = graphLayout[0]?.color ?? LANE_COLORS[0];
+        const wipY = rowMids[0];
+        dots.push({ cx: laneX(wipLane), cy: wipY, color: wipColor, hollow: true });
 
-      if (rowMids.length > wipOffset) {
-        const firstY = rowMids[wipOffset];
-        paths.push({
-          d: `M ${laneX(wipLane)} ${wipY + DOT_RADIUS + 2} L ${laneX(wipLane)} ${firstY}`,
-          color: wipColor,
-          dashed: true,
-        });
-      }
-    }
-
-    // Commit dots and parent connections
-    for (let i = 0; i < commits.length; i++) {
-      const graph = graphLayout[i];
-      if (!graph) continue;
-      const posIdx = i + wipOffset;
-      if (posIdx >= rowMids.length) continue;
-
-      const cx = laneX(graph.lane);
-      const cy = rowMids[posIdx];
-      dots.push({ cx, cy, color: graph.color });
-
-      const parents = commits[i].parents ?? [];
-      for (let p = 0; p < parents.length; p++) {
-        const parentId = parents[p];
-        const parentIdx = idToIdx.get(parentId);
-        if (parentIdx === undefined) continue;
-        const parentPosIdx = parentIdx + wipOffset;
-        if (parentPosIdx >= rowMids.length) continue;
-        const parentGraph = graphLayout[parentIdx];
-        if (!parentGraph) continue;
-
-        const toX = laneX(parentGraph.lane);
-        const toY = rowMids[parentPosIdx];
-        // First parent: use commit's color. Other parents: use parent lane's color.
-        const color = p === 0 ? graph.color : parentGraph.color;
-
-        if (cx === toX) {
-          // Same lane: straight line
-          paths.push({ d: `M ${cx} ${cy} L ${toX} ${toY}`, color });
-        } else {
-          // Different lane: smooth cubic bezier
-          const dy = toY - cy;
+        if (rowMids.length > wipOffset) {
+          const firstY = rowMids[wipOffset];
           paths.push({
-            d: `M ${cx} ${cy} C ${cx} ${cy + dy * 0.4}, ${toX} ${toY - dy * 0.4}, ${toX} ${toY}`,
-            color,
+            d: `M ${laneX(wipLane)} ${wipY + DOT_RADIUS + 2} L ${laneX(wipLane)} ${firstY}`,
+            color: wipColor,
+            dashed: true,
           });
         }
       }
-    }
 
-    return { paths, dots };
+      // Commit dots and parent connections
+      for (let i = 0; i < commits.length; i++) {
+        const graph = graphLayout[i];
+        if (!graph) continue;
+        const posIdx = i + wipOffset;
+        if (posIdx >= rowMids.length) continue;
+
+        const cx = laneX(graph.lane);
+        const cy = rowMids[posIdx];
+        dots.push({ cx, cy, color: graph.color });
+
+        const parents = commits[i].parents ?? [];
+        for (let p = 0; p < parents.length; p++) {
+          const parentId = parents[p];
+          const parentIdx = idToIdx.get(parentId);
+          if (parentIdx === undefined) continue;
+          const parentPosIdx = parentIdx + wipOffset;
+          if (parentPosIdx >= rowMids.length) continue;
+          const parentGraph = graphLayout[parentIdx];
+          if (!parentGraph) continue;
+
+          const toX = laneX(parentGraph.lane);
+          const toY = rowMids[parentPosIdx];
+          // First parent: use commit's color. Other parents: use parent lane's color.
+          const color = p === 0 ? graph.color : parentGraph.color;
+
+          if (cx === toX) {
+            // Same lane: straight line
+            paths.push({ d: `M ${cx} ${cy} L ${toX} ${toY}`, color });
+          } else {
+            // Different lane: smooth cubic bezier
+            const dy = toY - cy;
+            paths.push({
+              d: `M ${cx} ${cy} C ${cx} ${cy + dy * 0.4}, ${toX} ${toY - dy * 0.4}, ${toX} ${toY}`,
+              color,
+            });
+          }
+        }
+      }
+
+      return { paths, dots };
     } catch {
       return { paths: [], dots: [] };
     }
@@ -359,9 +415,7 @@
     return items;
   }
 
-  const contextMenuItems = $derived(
-    contextMenu ? getContextMenuItems(contextMenu.commit) : [],
-  );
+  const contextMenuItems = $derived(contextMenu ? getContextMenuItems(contextMenu.commit) : []);
 
   async function handleContextSelect(actionId: string) {
     if (!contextMenu || !app.repoPath) return;
@@ -384,7 +438,11 @@
         case 'revert': {
           const isMerge = commit.parents.length > 1;
           const label = isMerge ? '（Merge commit，將使用 -m 1）' : '';
-          if (confirm(`確定要 Revert commit ${commit.id.substring(0, 7)}？${label}\n\n${commit.message}`)) {
+          if (
+            confirm(
+              `確定要 Revert commit ${commit.id.substring(0, 7)}？${label}\n\n${commit.message}`,
+            )
+          ) {
             await gitRevert(app.repoPath, commit.id, isMerge);
             app.addToast('Revert 成功', 'success');
             await app.refreshAll();
@@ -400,7 +458,11 @@
           break;
         }
         case 'undoHard': {
-          if (confirm(`⚠️ 確定要撤銷到 ${commit.id.substring(0, 7)}？\n\n此操作不可撤銷，所有變更將被丟棄！`)) {
+          if (
+            confirm(
+              `⚠️ 確定要撤銷到 ${commit.id.substring(0, 7)}？\n\n此操作不可撤銷，所有變更將被丟棄！`,
+            )
+          ) {
             await gitResetHard(app.repoPath, commit.id);
             app.addToast('已撤銷 commit（變更已丟棄）', 'success');
             await app.refreshAll();
@@ -408,7 +470,9 @@
           break;
         }
         case 'cherryPick': {
-          if (confirm(`確定要 Cherry-pick commit ${commit.id.substring(0, 7)}？\n\n${commit.message}`)) {
+          if (
+            confirm(`確定要 Cherry-pick commit ${commit.id.substring(0, 7)}？\n\n${commit.message}`)
+          ) {
             const result = await gitCherryPick(app.repoPath, commit.id);
             if (result.success) {
               app.addToast('Cherry-pick 成功', 'success');
@@ -550,12 +614,12 @@
       <option value="head">Current Branch</option>
       <option value="all">All Branches</option>
       <optgroup label="Local Branches">
-        {#each app.branches.filter(b => !b.is_remote) as b}
+        {#each app.branches.filter((b) => !b.is_remote) as b}
           <option value={b.name}>{b.name}</option>
         {/each}
       </optgroup>
       <optgroup label="Remote Branches">
-        {#each app.branches.filter(b => b.is_remote) as b}
+        {#each app.branches.filter((b) => b.is_remote) as b}
           <option value={b.name}>{b.name}</option>
         {/each}
       </optgroup>
@@ -564,7 +628,7 @@
       <select
         class="filter-select author-filter"
         value={authorFilter}
-        onchange={(e) => authorFilter = e.currentTarget.value}
+        onchange={(e) => (authorFilter = e.currentTarget.value)}
       >
         <option value="">All Authors</option>
         {#each uniqueAuthors as author}
@@ -575,14 +639,18 @@
   </div>
 
   <!-- Commit List -->
-  <div class="history-list">
+  <div
+    class="history-list"
+    onscroll={(e) => (scrollTop = e.currentTarget.scrollTop)}
+    bind:clientHeight={containerHeight}
+  >
     {#if searchResults !== null && displayCommits.length === 0}
       <div class="empty-state">
         <div class="empty-icon">🔍</div>
         <div>No commits matching "{searchQuery}"</div>
       </div>
     {:else}
-      <div class="commit-list-inner" bind:this={listInnerEl}>
+      <div class="commit-list-inner" style="height: {totalHeight}px; position: relative;">
         <!-- Single overlay SVG for entire graph -->
         {#if totalGraphHeight > 0}
           <svg
@@ -603,8 +671,12 @@
             {#each graphSvgData.dots as d}
               {#if d.hollow}
                 <circle
-                  cx={d.cx} cy={d.cy} r={DOT_RADIUS}
-                  fill="var(--bg-primary)" stroke={d.color} stroke-width={LINE_WIDTH}
+                  cx={d.cx}
+                  cy={d.cy}
+                  r={DOT_RADIUS}
+                  fill="var(--bg-primary)"
+                  stroke={d.color}
+                  stroke-width={LINE_WIDTH}
                 />
               {:else}
                 <circle cx={d.cx} cy={d.cy} r={DOT_RADIUS} fill={d.color} />
@@ -613,67 +685,81 @@
           </svg>
         {/if}
 
-        <!-- WIP row -->
-        {#if hasWip}
-          <button
-            class="commit-item wip-item"
-            class:selected={!app.selectedCommit && app.viewMode === 'worktree'}
-            onclick={() => app.backToWorktree()}
-          >
-            <div class="graph-spacer" style:width="{graphWidth}px"></div>
-            <div class="commit-info">
-              <div class="wip-badge">// WIP</div>
-              <div class="commit-msg">{app.stagedFiles.length + app.unstagedFiles.length} file{app.stagedFiles.length + app.unstagedFiles.length !== 1 ? 's' : ''} changed</div>
-            </div>
-          </button>
-        {/if}
-
-        {#each displayCommits as commit, i (commit.id)}
-          <button
-            class="commit-item"
-            class:selected={app.selectedCommit?.id === commit.id}
-            onclick={() => handleCommitClick(commit)}
-            oncontextmenu={(e) => handleContextMenu(e, commit)}
-          >
-            <div class="graph-spacer" style:width="{graphWidth}px"></div>
-            <div class="commit-info">
-              {#if commit.refs && commit.refs.length > 0}
-                <div class="commit-tags">
-                  {#each commit.refs.slice(0, 3) as ref}
-                    {#if ref.kind === 'Tag'}
-                      <span
-                        class="ref-tag ref-tag-badge"
-                        role="button"
-                        tabindex="-1"
-                        oncontextmenu={(e) => handleTagContextMenu(e, ref.name)}
-                      >{ref.name}</span>
-                    {:else}
-                      <span
-                        class="ref-tag"
-                        class:ref-local={ref.kind === 'Local'}
-                        class:ref-remote={ref.kind === 'Remote'}
-                      >{ref.name}</span>
-                    {/if}
-                  {/each}
-                  {#if commit.refs.length > 3}
-                    <span class="ref-overflow" title={commit.refs.slice(3).map(r => r.name).join(', ')}>+{commit.refs.length - 3}</span>
-                  {/if}
+        <div
+          class="virtual-list-viewport"
+          style="transform: translateY({visibleRange.start *
+            ROW_HEIGHT}px); position: absolute; top: 0; left: 0; width: 100%;"
+        >
+          {#if hasWip && visibleRange.start === 0}
+            <button
+              class="commit-item wip-item"
+              class:selected={!app.selectedCommit && app.viewMode === 'worktree'}
+              onclick={() => app.backToWorktree()}
+              style="height: {ROW_HEIGHT}px;"
+            >
+              <div class="graph-spacer" style:width="{graphWidth}px"></div>
+              <div class="commit-info">
+                <div class="wip-badge">// WIP</div>
+                <div class="commit-msg">
+                  {app.stagedFiles.length + app.unstagedFiles.length} file{app.stagedFiles.length +
+                    app.unstagedFiles.length !==
+                  1
+                    ? 's'
+                    : ''} changed
                 </div>
-              {/if}
-              <div class="commit-msg" title={commit.message}>{firstLine(commit.message)}</div>
-              <div class="commit-meta">
-                <span class="commit-hash">{shortHash(commit.id)}</span>
-                <span>{commit.author}</span>
-                <span>{timeAgo(commit.timestamp)}</span>
               </div>
-            </div>
-          </button>
-        {:else}
-          <div class="empty-state">
-            <div class="empty-icon">◯</div>
-            <div>No commits yet</div>
-          </div>
-        {/each}
+            </button>
+          {/if}
+
+          {#each virtualCommits as commit, i (commit.id)}
+            <button
+              class="commit-item"
+              class:selected={app.selectedCommit?.id === commit.id}
+              onclick={() => handleCommitClick(commit)}
+              oncontextmenu={(e) => handleContextMenu(e, commit)}
+              style="height: {ROW_HEIGHT}px;"
+            >
+              <div class="graph-spacer" style:width="{graphWidth}px"></div>
+              <div class="commit-info">
+                {#if commit.refs && commit.refs.length > 0}
+                  <div class="commit-tags">
+                    {#each commit.refs.slice(0, 3) as ref}
+                      {#if ref.kind === 'Tag'}
+                        <span
+                          class="ref-tag ref-tag-badge"
+                          role="button"
+                          tabindex="-1"
+                          oncontextmenu={(e) => handleTagContextMenu(e, ref.name)}>{ref.name}</span
+                        >
+                      {:else}
+                        <span
+                          class="ref-tag"
+                          class:ref-local={ref.kind === 'Local'}
+                          class:ref-remote={ref.kind === 'Remote'}>{ref.name}</span
+                        >
+                      {/if}
+                    {/each}
+                    {#if commit.refs.length > 3}
+                      <span
+                        class="ref-overflow"
+                        title={commit.refs
+                          .slice(3)
+                          .map((r) => r.name)
+                          .join(', ')}>+{commit.refs.length - 3}</span
+                      >
+                    {/if}
+                  </div>
+                {/if}
+                <div class="commit-msg" title={commit.message}>{firstLine(commit.message)}</div>
+                <div class="commit-meta">
+                  <span class="commit-hash">{shortHash(commit.id)}</span>
+                  <span>{commit.author}</span>
+                  <span>{timeAgo(commit.timestamp)}</span>
+                </div>
+              </div>
+            </button>
+          {/each}
+        </div>
       </div>
     {/if}
   </div>
@@ -685,7 +771,7 @@
     y={contextMenu.y}
     items={contextMenuItems}
     onSelect={handleContextSelect}
-    onClose={() => contextMenu = null}
+    onClose={() => (contextMenu = null)}
   />
 {/if}
 
@@ -695,7 +781,7 @@
     y={tagContextMenu.y}
     items={tagContextMenuItems}
     onSelect={handleTagContextSelect}
-    onClose={() => tagContextMenu = null}
+    onClose={() => (tagContextMenu = null)}
   />
 {/if}
 
@@ -726,7 +812,10 @@
     outline: none;
     cursor: pointer;
   }
-  .search-type-select:hover { color: var(--text-primary); border-color: var(--accent); }
+  .search-type-select:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+  }
   .search-input {
     flex: 1;
     background: none;
@@ -737,7 +826,9 @@
     outline: none;
     min-width: 0;
   }
-  .search-input::placeholder { color: var(--text-muted); }
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
   .search-clear {
     background: none;
     border: none;
@@ -746,7 +837,9 @@
     font-size: 10px;
     padding: 2px 4px;
   }
-  .search-clear:hover { color: var(--text-primary); }
+  .search-clear:hover {
+    color: var(--text-primary);
+  }
   .search-spinner {
     display: inline-block;
     width: 12px;
@@ -786,8 +879,12 @@
     outline: none;
     max-width: 150px;
   }
-  .filter-select:hover { border-color: var(--accent); }
-  .author-filter { max-width: 120px; }
+  .filter-select:hover {
+    border-color: var(--accent);
+  }
+  .author-filter {
+    max-width: 120px;
+  }
 
   /* List */
   .history-list {
@@ -824,7 +921,9 @@
     font-family: var(--font-ui);
     min-height: 40px;
   }
-  .commit-item:hover { background: var(--bg-hover); }
+  .commit-item:hover {
+    background: var(--bg-hover);
+  }
   .commit-item.selected {
     background: var(--bg-surface);
     border-left-color: var(--accent);
@@ -887,7 +986,10 @@
     gap: var(--space-sm);
     margin-top: 2px;
   }
-  .commit-hash { font-family: var(--font-mono); font-size: 10px; }
+  .commit-hash {
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
   .empty-state {
     display: flex;
     flex-direction: column;
@@ -899,13 +1001,18 @@
     font-size: var(--font-size-sm);
     height: 100%;
   }
-  .empty-icon { font-size: 24px; opacity: 0.3; }
+  .empty-icon {
+    font-size: 24px;
+    opacity: 0.3;
+  }
 
   /* WIP row */
   .wip-item {
     background: var(--bg-surface);
   }
-  .wip-item:hover { background: var(--bg-hover); }
+  .wip-item:hover {
+    background: var(--bg-hover);
+  }
   .wip-badge {
     display: inline-block;
     font-size: 10px;
@@ -938,8 +1045,14 @@
     cursor: pointer;
     text-align: left;
   }
-  .branch-result-item:hover { background: var(--bg-hover); }
-  .branch-result-icon { font-size: 12px; color: var(--accent); flex-shrink: 0; }
+  .branch-result-item:hover {
+    background: var(--bg-hover);
+  }
+  .branch-result-icon {
+    font-size: 12px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
   .branch-result-name {
     flex: 1;
     font-family: var(--font-mono);
@@ -957,5 +1070,9 @@
     font-weight: 600;
   }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 </style>
