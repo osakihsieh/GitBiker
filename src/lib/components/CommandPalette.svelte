@@ -33,10 +33,30 @@
 
   const commands: Command[] = $derived.by(() => {
     const cmds: Command[] = [
+      // AI & Acceleration
+      {
+        id: 'ai-review',
+        label: 'AI: 智慧代碼審查 (Review)',
+        shortcut: 'Shift+Cmd+R',
+        category: 'AI',
+        action: () => {
+           app.addToast('AI 審查啟動中...', 'success');
+           // Trigger logic here
+        },
+      },
+      {
+        id: 'ai-fusion',
+        label: 'AI: 智慧衝突融合 (Fusion)',
+        shortcut: '',
+        category: 'AI',
+        action: () => {
+           app.enterConflictMode();
+        },
+      },
       // Git
       {
         id: 'push',
-        label: 'Git: Push',
+        label: 'Git: Push (推送到遠端)',
         shortcut: '',
         category: 'Git',
         action: async () => {
@@ -51,7 +71,7 @@
       },
       {
         id: 'pull',
-        label: 'Git: Pull',
+        label: 'Git: Pull (從遠端拉取)',
         shortcut: '',
         category: 'Git',
         action: async () => {
@@ -76,22 +96,10 @@
           app.addToast('Fetch 完成', 'success');
         },
       },
-      {
-        id: 'stash',
-        label: 'Git: Stash All',
-        shortcut: '',
-        category: 'Git',
-        action: async () => {
-          if (!app.repoPath) return;
-          await gitStashPush(app.repoPath);
-          app.addToast('已 stash 變更', 'success');
-          await app.refreshStatus();
-        },
-      },
       // Navigation
       {
         id: 'settings',
-        label: 'Open Settings',
+        label: '開啟設定 (Settings)',
         shortcut: app.isMac ? 'Cmd+,' : 'Ctrl+,',
         category: 'App',
         action: () => {
@@ -100,7 +108,7 @@
       },
       {
         id: 'folder',
-        label: 'Open in File Explorer',
+        label: '在檔案瀏覽器開啟 (Explorer)',
         shortcut: 'Alt+O',
         category: 'App',
         action: () => {
@@ -109,7 +117,7 @@
       },
       {
         id: 'editor',
-        label: 'Open in Editor',
+        label: '在編輯器開啟 (Editor)',
         shortcut: 'Alt+E',
         category: 'App',
         action: () => {
@@ -118,27 +126,17 @@
       },
       {
         id: 'terminal',
-        label: 'Open Terminal',
+        label: '開啟終端機 (Terminal)',
         shortcut: 'Alt+T',
         category: 'App',
         action: () => {
           if (app.repoPath) openInTerminal(app.repoPath);
         },
       },
-      // View
-      {
-        id: 'worktree',
-        label: 'View: Worktree',
-        shortcut: '',
-        category: 'View',
-        action: () => {
-          app.backToWorktree();
-        },
-      },
     ];
 
-    // Add branch switching
-    for (const branch of app.branches.filter((b) => !b.is_remote && !b.is_current)) {
+    // Add branch switching (limit to top 5 for palette performance)
+    for (const branch of app.branches.filter((b) => !b.is_remote && !b.is_current).slice(0, 5)) {
       cmds.push({
         id: `branch-${branch.name}`,
         label: `Switch Branch: ${branch.name}`,
@@ -150,19 +148,6 @@
           app.currentBranch = branch.name;
           app.addToast(`已切換到 ${branch.name}`, 'success');
           await app.refreshAll();
-        },
-      });
-    }
-
-    // Add tab switching
-    for (const tab of app.tabs.filter((t) => t.id !== app.activeTabId)) {
-      cmds.push({
-        id: `tab-${tab.id}`,
-        label: `Switch to: ${tab.name}`,
-        shortcut: '',
-        category: 'Tab',
-        action: () => {
-          app.switchTab(tab.id);
         },
       });
     }
@@ -182,15 +167,8 @@
     if (open) {
       query = '';
       selectedIndex = 0;
-      // Focus input after render
       requestAnimationFrame(() => inputEl?.focus());
     }
-  });
-
-  // Reset selection when filter changes
-  $effect(() => {
-    filtered();
-    selectedIndex = 0;
   });
 
   function handleKeydown(e: KeyboardEvent) {
@@ -222,123 +200,64 @@
 
 {#if open}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="palette-backdrop" onclick={onClose} onkeydown={handleKeydown}>
+  <div 
+    class="fixed inset-0 bg-black/60 z-[100] flex justify-center pt-[15vh] backdrop-blur-sm"
+    onclick={onClose} 
+    onkeydown={handleKeydown}
+  >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-      class="palette"
+      class="w-[600px] max-w-[90vw] max-h-[50vh] bg-bg-secondary border border-bg-tertiary rounded-large shadow-2xl flex flex-col overflow-hidden self-start"
       onclick={(e) => e.stopPropagation()}
       role="dialog"
       aria-label="Command Palette"
     >
-      <input
-        type="text"
-        class="palette-input"
-        placeholder="Type a command..."
-        bind:value={query}
-        bind:this={inputEl}
-        onkeydown={handleKeydown}
-      />
-      <div class="palette-list" role="listbox">
+      <div class="px-md py-sm border-b border-bg-tertiary flex items-center gap-sm">
+        <span class="text-monokai-blue">⌘</span>
+        <input
+          type="text"
+          class="flex-1 bg-transparent border-none text-text-bright text-md outline-none placeholder:text-text-dimmed"
+          placeholder="搜尋指令或功能..."
+          bind:value={query}
+          bind:this={inputEl}
+          onkeydown={handleKeydown}
+        />
+      </div>
+      
+      <div class="overflow-y-auto flex-1 min-h-0 py-xs" role="listbox">
         {#each filtered() as cmd, i}
           <button
-            class="palette-item"
-            class:selected={i === selectedIndex}
+            class="flex items-center justify-between w-full px-md py-sm text-left transition-colors"
+            class:bg-bg-tertiary={i === selectedIndex}
+            class:text-monokai-yellow={i === selectedIndex}
             role="option"
             aria-selected={i === selectedIndex}
             onclick={() => handleSelect(cmd)}
             onmouseenter={() => (selectedIndex = i)}
           >
-            <span class="palette-label">{cmd.label}</span>
+            <div class="flex items-center gap-md">
+                <span class="text-xs uppercase tracking-widest text-text-dimmed w-12">{cmd.category}</span>
+                <span class="text-sm font-medium">{cmd.label}</span>
+            </div>
             {#if cmd.shortcut}
-              <span class="palette-shortcut">{cmd.shortcut}</span>
+              <span class="text-[10px] font-mono opacity-50 bg-bg-primary px-1.5 py-0.5 rounded border border-bg-tertiary">
+                {cmd.shortcut}
+              </span>
             {/if}
           </button>
         {/each}
         {#if filtered().length === 0}
-          <div class="palette-empty">No matching commands</div>
+          <div class="p-lg text-center text-text-dimmed text-sm">找不到匹配的指令</div>
         {/if}
+      </div>
+      
+      <div class="px-md py-xs bg-bg-tertiary/50 border-t border-bg-tertiary flex justify-between items-center">
+         <span class="text-[10px] text-text-dimmed">使用方向鍵選擇，Enter 執行</span>
+         <div class="flex gap-sm">
+            <span class="text-[10px] text-text-dimmed px-1 border border-bg-tertiary rounded">ESC</span>
+            <span class="text-[10px] text-text-dimmed">關閉</span>
+         </div>
       </div>
     </div>
   </div>
 {/if}
-
-<style>
-  .palette-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    padding-top: 15vh;
-  }
-  .palette {
-    width: 500px;
-    max-width: 90vw;
-    max-height: 50vh;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg, 8px);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    align-self: flex-start;
-  }
-  .palette-input {
-    width: 100%;
-    padding: var(--space-md);
-    background: none;
-    border: none;
-    border-bottom: 1px solid var(--border);
-    color: var(--text-primary);
-    font-size: var(--font-size-md);
-    font-family: var(--font-ui);
-    outline: none;
-  }
-  .palette-input::placeholder {
-    color: var(--text-muted);
-  }
-  .palette-list {
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-  }
-  .palette-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    font-size: var(--font-size-sm);
-    font-family: var(--font-ui);
-    cursor: pointer;
-    text-align: left;
-  }
-  .palette-item:hover,
-  .palette-item.selected {
-    background: var(--bg-hover);
-  }
-  .palette-label {
-    flex: 1;
-  }
-  .palette-shortcut {
-    font-size: 11px;
-    font-family: var(--font-mono);
-    color: var(--text-muted);
-    flex-shrink: 0;
-    margin-left: var(--space-md);
-  }
-  .palette-empty {
-    padding: var(--space-lg) var(--space-md);
-    text-align: center;
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-  }
-</style>

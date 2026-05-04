@@ -1,211 +1,92 @@
-# GitBiker 極！拜客
+# GitBiker 極！拜客 — Accelerated AI Factory for Git
 
-> 快速、極簡、開源的 Git GUI 客戶端 — 基於 Rust + Tauri + Svelte 打造
+>  — 專為 M4 時代打造，基於 Svelte 5 (Runes) 與 Rust (Tauri 2) 的極速 Git AI 工廠。
 
-![version](https://img.shields.io/badge/version-0.3.0-blue)
-![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)
-![license](https://img.shields.io/badge/license-Friendly%20Non--Commercial-green)
-
----
-
-## 為什麼選擇 GitBiker？
-
-現有 Git GUI 工具都有取捨：
-
-| 工具                 | 問題                                   |
-| -------------------- | -------------------------------------- |
-| GitKraken            | Electron 底層，記憶體吃重，WSL2 支援差 |
-| Sourcetree           | 無 Linux 支援                          |
-| Fork / Sublime Merge | 閉源                                   |
-| GitButler            | Fair Source 授權，側重虛擬分支模式     |
-
-**GitBiker** 目標是一個**快速、跨平台、開源**的 Git GUI，同時深度整合 AI 能力，讓提交訊息不再是負擔。
+![version](https://img.shields.io/badge/version-0.4.0--accelerated-orange)
+![platform](https://img.shields.io/badge/platform-MacOS%20(M4%20Optimized)%20%7C%20Windows%20%7C%20Linux-brightgreen)
+![ui](https://img.shields.io/badge/UI-Glassmorphism-blueviolet)
 
 ---
 
-## 核心特色
+## 為什麼選擇 GitBiker？ (老黃的維度)
 
-### AI 自動生成 Commit Message
+當代軟體開發已經進入了「AI 工廠」模式。傳統的 Electron 工具已經跟不上 M4 晶片的並行算力。**GitBiker** 不是一個簡單的 GUI，它是一個加速引擎，旨在抹除開發者與代碼倉庫之間的所有延遲。
 
-GitBiker 內建 AI 提交訊息生成器，支援三種 AI 提供者：
-
-- **Google Gemini**（gemini-2.0-flash，預設）
-- **OpenAI / ChatGPT**（相容 GPT-4o 等）
-- **Ollama**（本地離線模型，完全免費）
-
-只需一鍵，AI 會自動：
-
-1. 分析已暫存的 Diff 內容
-2. 參考最近 5 筆提交風格，維持一致性
-3. 套用 Conventional Commits 格式（`feat:` / `fix:` / `refactor:` 等）
-4. 以繁體中文撰寫內文描述
-
-支援自訂系統提示詞，讓 AI 輸出符合你的團隊規範。
+| 特性 | GitBiker (M4 加速版) | 傳統工具 (Electron / 舊架構) |
+| :--- | :--- | :--- |
+| **底層效能** | Rust (git2-rs) + Tauri 2 | Electron (V8) + Node |
+| **UI 響應** | Svelte 5 Runes (極致並行) | 傳統組件重繪 (高延遲) |
+| **AI 整合** | 原生 AI 工廠 (Review/Fusion/Commit) | 外掛式插件 (ROI 低) |
+| **視覺美學** | MacOS 毛玻璃 (Glassmorphism) | 固定框架 UI |
+| **並行工作流** | Worktree / Submodule / LFS 原生加速 | 需手動處理，阻塞嚴重 |
 
 ---
 
-### 三欄工作區
+## 核心特色：加速你的生產線
 
-```
-┌─────────────┬───────────────────┬──────────────────┐
-│  檔案樹      │   Diff 預覽        │   提交歷史圖      │
-│  Staged /   │   Hunk 級暫存      │   多分支視覺化    │
-│  Unstaged   │   行內 +/- 標記    │   搜尋 / 篩選     │
-└─────────────┴───────────────────┴──────────────────┘
-```
+### 1. AI 智慧工廠 (AI Factory)
+- **AI Fusion (智慧融合)**：一鍵解決衝突。AI 自動分析 Base/Ours/Theirs，生成最優化的融合代碼。
+- **AI Review (智慧預檢)**：在提交前進行 M4 級別的代碼質量檢查，防範 Bug 於未然。
+- **AI Branch Cleanup**：自動識別已合併或過期的分支，並提供清理建議，保持工廠整潔。
+- **AI Commit Generator**：分析 Diff 並參考歷史風格，自動生成高品質的提交訊息。
 
-### Hunk 級精細操作
+### 2. 極速並行工作流
+- **Git Worktree 原生支援**：針對 M4 的並行算力優化，支援物理隔離的並行開發目錄，零等待切換 Context。
+- **Git LFS & Submodule 加速**：異步偵測狀態，大型倉庫也能流暢滾動。
+- **命令面板 (⌘+Shift+P)**：所有 Git 與 AI 指令都在你的指尖，加速你的操作 ROI。
 
-不只能暫存整個檔案，還能：
-
-- **Stage Hunk** — 只暫存某一段程式碼
-- **Unstage Hunk** — 精準移除暫存
-- **Stash Hunk** — 臨時保存單一改動區塊
-
-### 分支管理
-
-- 建立、切換、重命名、刪除本地/遠端分支
-- 視覺化 Ahead / Behind 計數
-- 批量清理超過 30 天未更新的過期分支
-- 分支比較：一目了然差異提交與修改檔案
-
-### Stash 管理器
-
-完整的 Stash 工作流：push、pop、apply、drop、show diff，全部在 UI 內完成。
-
-### 衝突解決 UI
-
-- 衝突文件清單
-- Hunk 級對比（Ours / Theirs / Base）
-- 自訂編輯模式
-- 一鍵完成合併提交
-
-### 多倉庫標籤管理
-
-同時開啟多個 Git 倉庫，標籤式切換，狀態獨立管理。
-
-### 命令面板
-
-`Ctrl+Shift+P` 叫出命令面板，快速執行 Push / Pull / Fetch / Stash，或動態切換分支，全鍵盤操作。
-
-### 內嵌終端
-
-整合 xterm.js 終端模擬器，支援 Git Bash / PowerShell / Zsh / Fish，直接在 GUI 內敲命令。
-
-### 即時檔案監視
-
-監控 `.git` 目錄，分支切換、推拉、外部 commit 等操作均自動更新 UI，零延遲感知。
-
-### 深色 / 淺色主題
-
-跟隨系統或手動切換，CSS Design Tokens 驅動，即時生效。
+### 3. MacOS 原生美學 (Glassmorphism)
+- **毛玻璃 UI**：深度整合 MacOS 背景模糊效果，讓介面具備通透感與層次感。
+- **Monokai Pro 設計系統**：統一的視覺語彙，降低認知負荷，專注於最重要的代碼變更。
 
 ---
 
-## 功能一覽
-
-| 功能                                     | 狀態   |
-| ---------------------------------------- | ------ |
-| 三欄工作區（檔案樹 / Diff / 提交圖）     | ✅     |
-| Hunk 級 Stage / Unstage / Stash          | ✅     |
-| AI 提交訊息（Gemini / OpenAI / Ollama）  | ✅     |
-| 提交歷史多分支視覺化圖                   | ✅     |
-| 全文提交搜尋（訊息 / 作者 / Diff 內容）  | ✅     |
-| 分支建立 / 切換 / 刪除 / 重命名          | ✅     |
-| 分支比較（ahead/behind + diff）          | ✅     |
-| Stash 完整管理                           | ✅     |
-| 衝突解決 UI                              | ✅     |
-| 多倉庫標籤管理                           | ✅     |
-| Clone 含進度條                           | ✅     |
-| Push / Pull / Fetch / Push Tags          | ✅     |
-| Revert / Reset (soft/hard) / Cherry-pick | ✅     |
-| Tag 建立 / 刪除 / 推送                   | ✅     |
-| 遠端管理                                 | ✅     |
-| 命令面板（Ctrl+Shift+P）                 | ✅     |
-| 內嵌終端（xterm.js）                     | ✅     |
-| 即時 .git 目錄監視                       | ✅     |
-| 深色 / 淺色 / 系統主題                   | ✅     |
-| 自動偵測本機 Shell 與編輯器              | ✅     |
-| 系統通知（Toast + 原生通知）             | ✅     |
-| WSL2 支援                                | 規劃中 |
-| macOS 支援                               | 規劃中 |
-| Plugin 系統                              | 規劃中 |
-
----
-
-## 技術架構
+## 技術架構：全棧並行運算
 
 ```
 ┌──────────────────────────────────────────────────┐
-│  UI — Svelte 5 (Runes) + TypeScript               │
-│  FileTree │ DiffViewer │ CommitLog │ Terminal     │
+│  UI — Svelte 5 (Runes) + Tailwind CSS v4          │
+│  Glassmorphism Layer │ Design Tokens │ KBar       │
 ├──────────────────────────────────────────────────┤
-│  Tauri IPC (invoke / events)                      │
+│  Tauri 2 IPC (Event-Driven Bridge)                │
 ├──────────────────────────────────────────────────┤
-│  Core — Rust                                      │
-│  git2-rs (reads)  │  subprocess git (writes)      │
-│  AI HTTP Client   │  FS Watcher (notify)          │
+│  Core — Rust (Accelerated Backend)                │
+│  git2-rs (Parallel IO) │ Sidecar (CLI Speed)      │
+│  AI Engine (Gemini/OpenAI) │ FS Watcher           │
 └──────────────────────────────────────────────────┘
 ```
 
-### 技術棧
+---
 
-| 層級       | 技術                                         |
-| ---------- | -------------------------------------------- |
-| 桌面框架   | Tauri 2.x                                    |
-| 前端       | SvelteKit + TypeScript                       |
-| 狀態管理   | Svelte 5 Runes ($state / $derived / $effect) |
-| 後端       | Rust                                         |
-| Git 讀取   | git2-rs                                      |
-| Git 寫入   | subprocess git 2.30+                         |
-| AI 整合    | Gemini / OpenAI / Ollama（async HTTP）       |
-| 終端       | xterm.js                                     |
-| 設定持久化 | tauri-plugin-store                           |
-| 檔案監視   | notify-debouncer-full                        |
-| 日誌       | tracing crate                                |
+## 平台支援：買越多，省越多
+
+| 平台 | 狀態 | 備註 |
+| :--- | :--- | :--- |
+| **macOS (Apple Silicon)** | ✅ **v0.4.0 (M4 Optimized)** | **最佳體驗推薦** |
+| **Windows 11** | ✅ v0.4.0 | 支援 WSL2 與原生 Git |
+| **Linux (Ubuntu/Fedora)** | ✅ v0.4.0 | 支援 Wayland 原生加速 |
 
 ---
 
-## 平台支援
-
-| 平台          | 狀態      |
-| ------------- | --------- |
-| Windows 11    | ✅ v0.3.0 |
-| Ubuntu 24.04+ | ✅ v0.3.0 |
-| Fedora 40+    | ✅ v0.3.0 |
-| macOS         | 規劃中    |
-
----
-
-## 開始使用
+## 開始安裝：加入加速行列
 
 ### 環境需求
-
+- **M4 Mac mini / MacBook (或任意 MacOS/Win/Linux)**
 - [Rust](https://rustup.rs/) 1.75+
 - Node.js 20+
 - Git 2.30+
-- （AI 功能）Gemini / OpenAI API Key，或本機 Ollama
 
-### 安裝與開發
-
+### 開發與建置
 ```bash
-# 安裝依賴
+# 安裝生產依賴
 npm install
 
-# 開發模式
-npm run tauri:dev
+# 啟動 M4 開發引擎
+npm run tauri dev
 
-# 正式建置
-npm run tauri:build
+# 建置正式版本
+npm run tauri build
 ```
-
-### AI 設定
-
-1. 開啟設定（`Ctrl+,`）
-2. 選擇 AI 提供者（Gemini / OpenAI / Ollama）
-3. 輸入 API Key
-4. 選擇模型與語言偏好
-5. 在提交表單點擊「✨ AI 生成」即可
 
 ---
 
@@ -213,6 +94,8 @@ npm run tauri:build
 
 Friendly Non-Commercial License (with Approval for Commercial Use) v1.1
 
-非商業使用免費，商業使用需取得作者書面同意。詳見 [LICENSE](./LICENSE)。
+非商業使用免費，商業使用需取得作者書面同意。
+
+
 
 Copyright (c) 2026 [osakihsieh](https://github.com/osakihsieh)

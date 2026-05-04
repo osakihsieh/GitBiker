@@ -1,188 +1,47 @@
-@import 'tailwindcss';
-@plugin "tailwindcss-animate";
+@import "tailwindcss";
 
-/* shadcn-svelte CSS variables (mapped to Monokai Pro) */
-@layer base {
-  :root {
-    --background: 39 4% 17%; /* #2d2a2e */
-    --foreground: 60 7% 98%; /* #fcfcfa */
-    --card: 300 4% 19%; /* #403e41 */
-    --card-foreground: 60 7% 98%;
-    --popover: 300 5% 14%; /* #221f22 */
-    --popover-foreground: 60 7% 98%;
-    --primary: 191 70% 69%; /* #78dce8 */
-    --primary-foreground: 39 4% 17%;
-    --secondary: 300 4% 19%;
-    --secondary-foreground: 60 7% 98%;
-    --muted: 300 4% 25%;
-    --muted-foreground: 300 1% 57%; /* #939293 */
-    --accent: 300 4% 30%;
-    --accent-foreground: 60 7% 98%;
-    --destructive: 344 100% 69%; /* #ff6188 */
-    --destructive-foreground: 60 7% 98%;
-    --border: 300 4% 25%;
-    --input: 300 4% 25%;
-    --ring: 191 70% 69%;
-    --radius: 0.25rem;
-  }
-  [data-theme='light'] {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 210 100% 40%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 94%;
-    --secondary-foreground: 0 0% 10%;
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%;
-    --accent: 0 0% 90%;
-    --accent-foreground: 0 0% 10%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 82%;
-    --input: 0 0% 82%;
-    --ring: 210 100% 40%;
-    --radius: 0.25rem;
-  }
+@theme {
+  --color-bg-primary: #2d2a2e;
+  --color-bg-secondary: rgba(34, 31, 34, 0.75);
+  --color-bg-tertiary: rgba(25, 24, 26, 0.85);
+  --color-text-bright: #fcfcfa;
+  --color-text-normal: #c1c0c0;
+  --color-text-dimmed: #727072;
+  
+  --color-monokai-yellow: #ffd866;
+  --color-monokai-red: #ff6188;
+  --color-monokai-green: #a9dc76;
+  --color-monokai-blue: #78dce8;
+  --color-monokai-purple: #ab9df2;
+  --color-monokai-orange: #fc9867;
+
+  --radius-standard: 6px;
+  --radius-large: 12px;
+  
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
 }
 
-/* Tauri drag region (Windows touch/pen support) */
-[data-tauri-drag-region] {
-  app-region: drag;
-}
-
-/* gitbiker Design Tokens */
 :root {
-  /* 背景 — Monokai Pro */
-  --bg-primary: #2d2a2e;
-  --bg-secondary: #221f22;
-  --bg-surface: #403e41;
-  --bg-hover: #4a474b;
-
-  /* 文字 */
-  --text-primary: #fcfcfa;
-  --text-secondary: #939293;
-  --text-muted: #727072;
-
-  /* 強調色 — Monokai Pro palette */
-  --accent: #78dce8;
-  --error: #ff6188;
-  --success: #a9dc76;
-  --warning: #ffd866;
-
-  /* Diff */
-  --diff-add-bg: rgba(169, 220, 118, 0.3);
-  --diff-del-bg: rgba(255, 97, 136, 0.3);
-  --diff-add-text: #a9dc76;
-  --diff-del-text: #ff6188;
-
-  /* 邊框 */
-  --border: #403e41;
-
-  /* 字體 */
-  --font-ui: system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
-  --font-size-sm: 12px;
-  --font-size-md: 13px;
-  --font-size-lg: 14px;
-
-  /* 間距 */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-
-  /* 圓角 */
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  --bg-primary: var(--color-bg-primary);
+  --bg-secondary: var(--color-bg-secondary);
+  --bg-tertiary: var(--color-bg-tertiary);
+  --fg-bright: var(--color-text-bright);
+  --fg-normal: var(--color-text-normal);
+  --fg-dimmed: var(--color-text-dimmed);
+  
+  --accent-blue: var(--color-monokai-blue);
+  --accent-green: var(--color-monokai-green);
+  --accent-red: var(--color-monokai-red);
 }
 
-[data-theme='dark'] {
-  --bg-primary: #2d2a2e;
-  --bg-secondary: #221f22;
-  --bg-surface: #403e41;
-  --bg-hover: #4a474b;
-  --text-primary: #fcfcfa;
-  --text-secondary: #939293;
-  --text-muted: #727072;
-  --accent: #78dce8;
-  --error: #ff6188;
-  --success: #a9dc76;
-  --warning: #ffd866;
-  --diff-add-bg: rgba(169, 220, 118, 0.3);
-  --diff-del-bg: rgba(255, 97, 136, 0.3);
-  --diff-add-text: #a9dc76;
-  --diff-del-text: #ff6188;
-  --border: #403e41;
-}
-
-[data-theme='light'] {
-  --bg-primary: #fafafa;
-  --bg-secondary: #f0f0f0;
-  --bg-surface: #ffffff;
-  --bg-hover: #e8e8e8;
-  --text-primary: #1a1a1a;
-  --text-secondary: #666;
-  --text-muted: #999;
-  --accent: #0066cc;
-  --error: #d32f2f;
-  --success: #2e7d32;
-  --warning: #f57f17;
-  --diff-add-bg: rgba(46, 160, 67, 0.15);
-  --diff-del-bg: rgba(248, 81, 73, 0.15);
-  --diff-add-text: #1a7f37;
-  --diff-del-text: #cf222e;
-  --border: #d0d0d0;
-}
-
-/* Reset */
-*,
-*::before,
-*::after {
+body {
+  background-color: var(--bg-primary);
+  color: var(--fg-normal);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-
-html,
-body {
-  height: 100%;
   overflow: hidden;
-}
-
-body {
-  font-family: var(--font-ui);
-  font-size: var(--font-size-md);
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
-}
-
-/* Focus */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
