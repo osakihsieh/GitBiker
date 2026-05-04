@@ -1,3 +1,4 @@
+use std::hash::Hasher;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -273,6 +274,7 @@ impl LocalGit {
         Self::check_index_lock(path)?;
         match Self::run_git(path, &["cherry-pick", commit_id]) {
             Ok(output) => Ok(CherryPickResult {
+                commit_id: commit_id.to_string(),
                 success: true,
                 message: output,
                 conflicts: Vec::new(),
@@ -285,6 +287,7 @@ impl LocalGit {
                         .map(|l| l.to_string())
                         .collect();
                     Ok(CherryPickResult {
+                        commit_id: commit_id.to_string(),
                         success: false,
                         message: stderr,
                         conflicts,
@@ -625,7 +628,6 @@ impl LocalGit {
         Self::run_git(path, &["lfs", "untrack", pattern])?;
         Ok(())
     }
-}
 
     pub fn get_conflict_files(&self, path: &Path) -> Result<Vec<ConflictFile>, GitError> {
         // Check MERGE_HEAD exists

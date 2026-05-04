@@ -1,6 +1,7 @@
 pub mod gemini;
 pub mod openai_compatible;
 
+use crate::git::types::ConflictHunk;
 use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
 use std::time::Duration;
