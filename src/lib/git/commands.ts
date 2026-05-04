@@ -592,6 +592,12 @@ export async function installGh(): Promise<string> {
   return await invoke('install_gh');
 }
 
-export async function getGithubPrs(): Promise<any[]> {
-  return await invoke('get_github_prs');
+
+
+export async function getGithubPrs(repoPath: string): Promise<any[]> {
+  return await invoke('get_github_prs', { repoPath });
+}
+
+export async function getGithubIssues(repoPath: string): Promise<any[]> {
+  return await invoke('get_github_issues', { repoPath });
 }
