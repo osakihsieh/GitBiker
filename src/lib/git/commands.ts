@@ -583,3 +583,15 @@ export async function generateSshKey(name: string, email: string): Promise<strin
 export async function testSshConnection(): Promise<string> {
   return await invoke('test_ssh_connection');
 }
+
+export async function checkGhStatus(): Promise<any> {
+  return await invoke('check_gh_status');
+}
+
+export async function installGh(): Promise<string> {
+  return await invoke('install_gh');
+}
+
+export async function getGithubPrs(): Promise<any[]> {
+  return await invoke('get_github_prs');
+}
