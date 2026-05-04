@@ -559,3 +559,15 @@ export async function setGitIgnoreEol(enabled: boolean): Promise<void> {
 export async function getGitIgnoreEol(): Promise<boolean> {
   return invoke('get_git_ignore_eol');
 }
+
+export async function gitCreateTag(repoPath: string, tagName: string, commitHash?: string): Promise<CommandResult> {
+  return await invoke('git_create_tag', { repoPath, tagName, commitHash });
+}
+
+export async function gitDeleteTag(repoPath: string, tagName: string): Promise<CommandResult> {
+  return await invoke('git_delete_tag', { repoPath, tagName });
+}
+
+export async function gitDiscardChanges(repoPath: string, filePath: string): Promise<CommandResult> {
+  return await invoke('git_discard_changes', { repoPath, filePath });
+}

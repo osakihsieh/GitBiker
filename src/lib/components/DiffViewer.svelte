@@ -133,6 +133,20 @@
       app.addToast(extractErrorMessage(e), 'error');
     }
   }
+
+  async function handleDiscard() {
+    if (!app.repoPath || !app.selectedFile) return;
+    const ok = await confirm(`確定要還原 ${app.selectedFile} 的所有未暫存變更嗎？此操作無法復原。`);
+    if (!ok) return;
+    
+    const result = await gitDiscardChanges(app.repoPath, app.selectedFile);
+    if (result.success) {
+      app.addToast('已還原變更', 'success');
+      await app.refreshStatus();
+    } else {
+      app.addToast(result.message, 'error');
+    }
+  }
 </script>
 
 <div class="diff-panel">
