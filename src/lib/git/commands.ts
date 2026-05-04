@@ -571,3 +571,15 @@ export async function gitDeleteTag(repoPath: string, tagName: string): Promise<C
 export async function gitDiscardChanges(repoPath: string, filePath: string): Promise<CommandResult> {
   return await invoke('git_discard_changes', { repoPath, filePath });
 }
+
+export async function getSshKeys(): Promise<any[]> {
+  return await invoke('get_ssh_keys');
+}
+
+export async function generateSshKey(name: string, email: string): Promise<string> {
+  return await invoke('generate_ssh_key', { name, email });
+}
+
+export async function testSshConnection(): Promise<string> {
+  return await invoke('test_ssh_connection');
+}

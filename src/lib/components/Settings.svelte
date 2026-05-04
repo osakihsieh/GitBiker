@@ -206,6 +206,48 @@
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') onClose();
   }
+
+  let sshKeys = $state([]);
+  let newKeyName = $state('id_gitbiker');
+  
+  $effect(() => {
+    if (activeTab === 'ssh') {
+      loadSshKeys();
+    }
+  });
+
+  async function loadSshKeys() {
+    try {
+      sshKeys = await getSshKeys();
+    } catch (e) {
+      app.addToast('無法讀取 SSH 密鑰', 'error');
+    }
+  }
+
+  async function handleGenerateKey() {
+    try {
+      const msg = await generateSshKey(newKeyName, 'user@gitbiker.local');
+      app.addToast(msg, 'success');
+      loadSshKeys();
+    } catch (e) {
+      app.addToast(String(e), 'error');
+    }
+  }
+
+  async function handleTestConnection() {
+    app.addToast('正在測試連線...', 'info');
+    try {
+      const msg = await testSshConnection();
+      app.addToast('GitHub 連線成功！', 'success');
+    } catch (e) {
+      app.addToast(`連線失敗: ${String(e)}`, 'error');
+    }
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text);
+    app.addToast('公鑰已複製到剪貼簿', 'success');
+  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
