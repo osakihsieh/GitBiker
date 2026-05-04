@@ -210,6 +210,7 @@ class AppState {
   toasts = $state<Toast[]>([]);
   useSystemNotification = $state(false);
   showTerminal = $state(false);
+  isMac = $state(false);
 
   toggleTerminal(): void {
     this.showTerminal = !this.showTerminal;
@@ -750,6 +751,7 @@ class AppState {
 
   constructor() {
     if (typeof window !== 'undefined') {
+      this.isMac = window.navigator.userAgent.includes('Mac');
       const mq = window.matchMedia('(prefers-color-scheme: dark)');
       mq.addEventListener('change', (e) => {
         this.systemPrefersDark = e.matches;

@@ -195,8 +195,8 @@
     <button
       class="multi-repo-btn"
       onclick={onOpenMultiRepo}
-      aria-label="Multi-repo manager (Ctrl+M)"
-      title="多倉庫管理 (Ctrl+M)"
+      aria-label="Multi-repo manager ({app.isMac ? 'Cmd+M' : 'Ctrl+M'})"
+      title="多倉庫管理 ({app.isMac ? 'Cmd+M' : 'Ctrl+M'})"
     >
       <svg
         width="14"
@@ -226,8 +226,8 @@
     <button
       class="repo-btn"
       onclick={onOpenPopover}
-      aria-label="Open repo switcher (Ctrl+T)"
-      title="切換倉庫 (Ctrl+T)"
+      aria-label="Open repo switcher ({app.isMac ? 'Cmd+T' : 'Ctrl+T'})"
+      title="切換倉庫 ({app.isMac ? 'Cmd+T' : 'Ctrl+T'})"
     >
       <span class="info-label">repository</span>
       <span class="info-value">
@@ -277,7 +277,7 @@
         class="conflict-badge"
         onclick={() =>
           conflicts.isInConflictMode ? conflicts.exitConflictMode() : conflicts.enterConflictMode()}
-        title="Ctrl+Shift+M"
+        title={app.isMac ? "Cmd+Shift+M" : "Ctrl+Shift+M"}
       >
         ⚠ {conflicts.files.length}
       </button>
@@ -349,7 +349,7 @@
         class="tool-btn"
         class:active={app.showTerminal}
         onclick={() => app.toggleTerminal()}
-        title="切換內建終端機 (Ctrl+`)"
+        title="切換內建終端機 ({app.isMac ? 'Cmd+`' : 'Ctrl+`'})"
         aria-label="Toggle inline terminal"
       >
         <svg

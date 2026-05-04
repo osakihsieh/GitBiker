@@ -13,8 +13,8 @@
   let showLeftArrow = $state(false);
   let showRightArrow = $state(false);
 
-  const contextMenuItems: MenuItem[] = [
-    { id: 'close', label: 'Close', shortcut: 'Ctrl+W' },
+  const contextMenuItems: MenuItem[] = $derived([
+    { id: 'close', label: 'Close', shortcut: app.isMac ? 'Cmd+W' : 'Ctrl+W' },
     { id: 'closeOthers', label: 'Close Others' },
     { id: 'closeAll', label: 'Close All' },
     { id: '_sep', label: '', separator: true },

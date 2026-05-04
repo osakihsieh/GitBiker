@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getCurrentWindow } from '@tauri-apps/api/window';
+  import { app } from '$lib/stores/app.svelte';
   import type { Snippet } from 'svelte';
 
   interface Props {
@@ -44,72 +45,84 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="titlebar">
-  <div class="titlebar-left" data-tauri-drag-region>
-    <img src="/GitBiker.png" alt="GitBiker" class="app-icon" />
-    <span class="app-name">GitBiker</span>
-  </div>
+<div class="titlebar" class:is-mac={app.isMac}>
+  {#if app.isMac}
+    <div class="titlebar-controls mac-controls">
+      <button class="control-btn mac-close" onclick={close} aria-label="Close"></button>
+      <button class="control-btn mac-minimize" onclick={minimize} aria-label="Minimize"></button>
+      <button class="control-btn mac-maximize" onclick={toggleMaximize} aria-label="Maximize"></button>
+    </div>
+  {/if}
+
+  {#if !app.isMac}
+    <div class="titlebar-left" data-tauri-drag-region>
+      <img src="/GitBiker.png" alt="GitBiker" class="app-icon" />
+      <span class="app-name">GitBiker</span>
+    </div>
+  {/if}
 
   <div class="titlebar-tabs" data-tauri-drag-region ondblclick={toggleMaximize}>
     {@render children?.()}
   </div>
 
-  <div class="titlebar-controls">
-    <button class="control-btn" onclick={minimize} aria-label="Minimize">
-      <svg width="12" height="12" viewBox="0 0 12 12"
-        ><rect x="2" y="6" width="8" height="1" fill="currentColor" /></svg
+  {#if !app.isMac}
+    <div class="titlebar-controls">
+      <button class="control-btn" onclick={minimize} aria-label="Minimize">
+        <svg width="12" height="12" viewBox="0 0 12 12"
+          ><rect x="2" y="6" width="8" height="1" fill="currentColor" /></svg
+        >
+      </button>
+      <button
+        class="control-btn"
+        onclick={toggleMaximize}
+        aria-label={maximized ? 'Restore' : 'Maximize'}
       >
-    </button>
-    <button
-      class="control-btn"
-      onclick={toggleMaximize}
-      aria-label={maximized ? 'Restore' : 'Maximize'}
-    >
-      {#if maximized}
+        {#if maximized}
+          <svg width="12" height="12" viewBox="0 0 12 12">
+            <rect
+              x="3"
+              y="1"
+              width="8"
+              height="8"
+              rx="0.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            />
+            <rect
+              x="1"
+              y="3"
+              width="8"
+              height="8"
+              rx="0.5"
+              fill="var(--bg-secondary)"
+              stroke="currentColor"
+              stroke-width="1"
+            />
+          </svg>
+        {:else}
+          <svg width="12" height="12" viewBox="0 0 12 12">
+            <rect
+              x="1.5"
+              y="1.5"
+              width="9"
+              height="9"
+              rx="0.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            />
+          </svg>
+        {/if}
+      </button>
+      <button class="control-btn close-btn" onclick={close} aria-label="Close">
         <svg width="12" height="12" viewBox="0 0 12 12">
-          <rect
-            x="3"
-            y="1"
-            width="8"
-            height="8"
-            rx="0.5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1"
-          />
-          <rect
-            x="1"
-            y="3"
-            width="8"
-            height="8"
-            rx="0.5"
-            fill="var(--bg-secondary)"
-            stroke="currentColor"
-            stroke-width="1"
-          />
+          <line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.2" />
+          <line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.2" />
         </svg>
-      {:else}
-        <svg width="12" height="12" viewBox="0 0 12 12">
-          <rect
-            x="1.5"
-            y="1.5"
-            width="9"
-            height="9"
-            rx="0.5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1"
-          />
-        </svg>
-      {/if}
-    </button>
-    <button class="control-btn close-btn" onclick={close} aria-label="Close">
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.2" />
-        <line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.2" />
-      </svg>
-    </button>
-  </div>
+      </button>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -154,6 +167,25 @@
     display: flex;
     flex-shrink: 0;
   }
+  .mac-controls {
+    padding-left: 12px;
+    gap: 8px;
+    align-items: center;
+  }
+  .mac-controls .control-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    padding: 0;
+  }
+  .mac-close { background: #ff5f56; }
+  .mac-minimize { background: #ffbd2e; }
+  .mac-maximize { background: #27c93f; }
+
+  .titlebar.is-mac {
+    height: 38px; /* Slightly taller for Mac traffic lights style */
+  }
+
   .control-btn {
     display: flex;
     align-items: center;

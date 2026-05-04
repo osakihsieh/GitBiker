@@ -131,6 +131,8 @@
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
+    const modKey = app.isMac ? e.metaKey : e.ctrlKey;
+
     // Esc: clear file selection, return to CommitLog view
     // Guard: only handle if no modal/popover/palette is open (they handle their own Esc)
     if (
@@ -158,22 +160,22 @@
       }
     }
 
-    // Ctrl+`: toggle inline terminal
-    if (e.ctrlKey && e.key === '`') {
+    // Toggle inline terminal
+    if (modKey && e.key === '`') {
       e.preventDefault();
       app.toggleTerminal();
       return;
     }
 
-    // Ctrl+Shift+P: command palette
-    if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+    // Command palette
+    if (modKey && e.shiftKey && e.key === 'P') {
       e.preventDefault();
       showCommandPalette = !showCommandPalette;
       return;
     }
 
-    // Ctrl+Shift+M: toggle conflict resolver
-    if (e.ctrlKey && e.shiftKey && e.key === 'M') {
+    // Toggle conflict resolver
+    if (modKey && e.shiftKey && e.key === 'M') {
       e.preventDefault();
       if (app.isInConflictMode) {
         app.exitConflictMode();
@@ -183,7 +185,7 @@
       return;
     }
 
-    // Ctrl+Tab / Ctrl+Shift+Tab: switch tabs
+    // Ctrl+Tab / Ctrl+Shift+Tab: switch tabs (Standard across platforms)
     if (e.ctrlKey && e.key === 'Tab') {
       e.preventDefault();
       const tabs = app.tabs;
@@ -197,22 +199,22 @@
       return;
     }
 
-    // Ctrl+W: close current tab
-    if (e.ctrlKey && e.key === 'w') {
+    // Close current tab
+    if (modKey && e.key === 'w') {
       e.preventDefault();
       if (app.activeTabId) app.closeTab(app.activeTabId);
       return;
     }
 
-    // Ctrl+T: open repo popover
-    if (e.ctrlKey && !e.shiftKey && e.key === 't') {
+    // Open repo popover
+    if (modKey && !e.shiftKey && e.key === 't') {
       e.preventDefault();
       activePopover = 'repo';
       return;
     }
 
-    // Ctrl+M: toggle multi-repo popover
-    if (e.ctrlKey && !e.shiftKey && e.key === 'm') {
+    // Toggle multi-repo popover
+    if (modKey && !e.shiftKey && e.key === 'm') {
       e.preventDefault();
       toggleMultiRepo();
       return;
@@ -247,8 +249,8 @@
       return;
     }
 
-    // Ctrl+1/2/3: focus panels
-    if (e.ctrlKey && !e.shiftKey) {
+    // Mod+1/2/3: focus panels
+    if (modKey && !e.shiftKey) {
       if (e.key === '1') {
         e.preventDefault();
         const el = document.querySelector('.sidebar') as HTMLElement | null;

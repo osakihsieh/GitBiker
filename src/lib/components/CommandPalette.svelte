@@ -92,7 +92,7 @@
       {
         id: 'settings',
         label: 'Open Settings',
-        shortcut: 'Ctrl+,',
+        shortcut: app.isMac ? 'Cmd+,' : 'Ctrl+,',
         category: 'App',
         action: () => {
           onOpenSettings();
