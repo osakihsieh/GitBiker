@@ -19,7 +19,7 @@
     { id: 'closeAll', label: 'Close All' },
     { id: '_sep', label: '', separator: true },
     { id: 'copyPath', label: 'Copy Path' },
-  ];
+  ]);
 
   function handleClick(tabId: string) {
     app.switchTab(tabId);
