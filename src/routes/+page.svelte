@@ -191,6 +191,10 @@
       <div 
         class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
         onmousedown={handleResizeStart('sidebar')}
+        role="separator"
+        aria-orientation="vertical"
+        aria-valuenow={sidebarWidth}
+        tabindex="-1"
       ></div>
 
       <!-- Center: Execution & Insight (Log, Diff) -->
@@ -216,6 +220,10 @@
       <div 
         class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
         onmousedown={handleResizeStart('right')}
+        role="separator"
+        aria-orientation="vertical"
+        aria-valuenow={rightWidth}
+        tabindex="-1"
       ></div>
 
       <!-- Right: Staging & Details -->

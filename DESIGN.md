@@ -18,35 +18,38 @@ Sublime Text 風格。最少的 chrome，最大的內容空間。無裝飾元素
 
 用戶偏好存於 `localStorage('gitbiker-theme')`。`app.html` 的 inline script 在 DOM render 前讀取偏好並設定 `data-theme`，確保零閃爍。
 
-### 色彩 — Dark Theme
+### 色彩 — Dark Theme (Monokai Pro)
 
 ```css
 :root {
   /* 背景 */
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16162a;
-  --bg-surface: #232340;
-  --bg-hover: #2a2a4a;
+  --bg-primary: #2d2a2e;
+  --bg-secondary: rgba(34, 31, 34, 0.75);
+  --bg-tertiary: rgba(25, 24, 26, 0.85);
+  --bg-surface: #403e41;
+  --bg-hover: #5b595c;
 
   /* 文字 */
-  --text-primary: #e0e0e0;
-  --text-secondary: #888888;
-  --text-muted: #555555;
+  --text-primary: #fcfcfa;
+  --text-secondary: #c1c0c0;
+  --text-muted: #727072;
 
   /* 強調色 */
-  --accent: #4fc1ff;
-  --error: #ff6b6b;
-  --success: #51cf66;
-  --warning: #ffd43b;
+  --accent: #78dce8; /* Monokai Blue */
+  --error: #ff6188;  /* Monokai Red */
+  --success: #a9dc76; /* Monokai Green */
+  --warning: #ffd866; /* Monokai Yellow */
+  --orange: #fc9867;  /* Monokai Orange */
+  --purple: #ab9df2;  /* Monokai Purple */
 
   /* Diff */
-  --diff-add-bg: rgba(46, 160, 67, 0.44);
-  --diff-del-bg: rgba(248, 81, 73, 0.44);
-  --diff-add-text: #7ee787;
-  --diff-del-text: #ffa198;
+  --diff-add-bg: rgba(169, 220, 118, 0.2);
+  --diff-del-bg: rgba(255, 97, 136, 0.2);
+  --diff-add-text: #a9dc76;
+  --diff-del-text: #ff6188;
 
   /* 邊框 */
-  --border: #2d2d50;
+  --border: rgba(255, 255, 255, 0.05);
 }
 ```
 
