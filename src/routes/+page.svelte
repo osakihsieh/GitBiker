@@ -22,7 +22,8 @@
   import RepoPopover from '$lib/components/RepoPopover.svelte';
   import MultiRepoPopover from '$lib/components/MultiRepoPopover.svelte';
   import CloneDialog from '$lib/components/CloneDialog.svelte';
-  import ConflictResolver from '$lib/components/ConflictResolver.svelte';\n  import GitHubDashboard from '$lib/components/GitHubDashboard.svelte';
+  import ConflictResolver from '$lib/components/ConflictResolver.svelte';
+  import GitHubDashboard from '$lib/components/GitHubDashboard.svelte';
   import InlineTerminal from '$lib/components/InlineTerminal.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
 
@@ -142,7 +143,6 @@
       e.preventDefault();
       showSettings = !showSettings;
     }
-  }
 
     if (modKey && e.key === '`') {
         e.preventDefault();

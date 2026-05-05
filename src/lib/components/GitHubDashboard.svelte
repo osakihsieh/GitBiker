@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app, type GitHubItem } from '$lib/stores/app.svelte';
-  import { openUrl } from '$lib/git/commands';
+  import { openUrl } from '@tauri-apps/plugin-opener';
 
   let activeTab = $state<'prs' | 'issues'>('prs');
 

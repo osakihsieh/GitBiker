@@ -7,7 +7,11 @@ export interface GitHubItem {
   author?: { login: string };
   updatedAt?: string;
 }
-import {\n  getGithubPrs,\n  getGithubIssues, extractErrorMessage } from '$lib/utils/error';
+import {
+  getGithubPrs,
+  getGithubIssues,
+  extractErrorMessage,
+} from '$lib/utils/error';
 import type {
   FileStatus,
   Commit,
@@ -21,8 +25,8 @@ import type {
   RebaseResult,
   RebaseCommit,
 } from '$lib/git/types';
-import {\n  getGithubPrs,\n  getGithubIssues, gitBranchCompare } from '$lib/git/commands';
-import {\n  getGithubPrs,\n  getGithubIssues,
+import { gitBranchCompare } from '$lib/git/commands';
+import {
   loadAppSettings as _loadAppSettings,
   addRecentRepo as _addRecentRepo,
   removeRecentRepo as _removeRecentRepo,
@@ -40,7 +44,7 @@ import {\n  getGithubPrs,\n  getGithubIssues,
   saveUseSystemNotification as _saveUseSystemNotification,
 } from './persistence.svelte';
 import type { AiProviderType, AiLanguage } from './persistence.svelte';
-import {\n  getGithubPrs,\n  getGithubIssues,
+import {
   refreshStatus as _refreshStatus,
   refreshAll as _refreshAll,
   loadDiff as _loadDiff,
