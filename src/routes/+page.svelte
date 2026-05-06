@@ -158,7 +158,7 @@
 
 <div class="h-screen flex flex-col bg-bg-primary text-text-normal overflow-hidden select-none">
   <!-- Top Bar: Navigation & Tabs -->
-  <header class="flex-shrink-0 z-50 sticky top-0 backdrop-blur-md bg-bg-primary/60 border-b border-white/5">
+  <header class="flex-shrink-0 z-50 sticky top-0 backdrop-blur-md bg-bg-primary/60 border-b border-border">
     <TitleBar>
       <TabBar onOpenPopover={() => activePopover = 'repo'} />
     </TitleBar>
@@ -181,7 +181,7 @@
       
       <!-- Left: Navigation (Branches, Tags, etc.) -->
       <aside 
-        class="bg-bg-secondary/70 backdrop-blur-xl border-r border-white/5 flex flex-col flex-shrink-0 transition-[width] duration-75"
+        class="bg-bg-secondary/70 backdrop-blur-xl border-r border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
         style:width="{sidebarWidth}px"
       >
         <BranchSidebar />
@@ -203,7 +203,7 @@
             <ConflictResolver />
         {:else if app.selectedFile || app.currentDiff}
             <!-- Breadcrumb Navigation -->
-            <div class="h-8 flex items-center px-md gap-sm bg-bg-secondary/50 border-b border-bg-tertiary text-[11px]">
+            <div class="h-8 flex items-center px-md gap-sm bg-bg-secondary/50 border-b border-border text-[11px]">
                 <button class="text-monokai-blue hover:underline" onclick={() => {app.selectedFile = null; app.currentDiff = null;}}>Commit Log</button>
                 <span class="text-text-dimmed">/</span>
                 <span class="truncate text-text-bright italic">{app.selectedFile?.split('/').pop()}</span>
@@ -228,7 +228,7 @@
 
       <!-- Right: Staging & Details -->
       <aside 
-        class="bg-bg-secondary/70 backdrop-blur-xl border-l border-white/5 flex flex-col flex-shrink-0 transition-[width] duration-75"
+        class="bg-bg-secondary/70 backdrop-blur-xl border-l border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
         style:width="{rightWidth}px"
       >
         {#if app.viewMode === 'commit-detail'}

@@ -195,7 +195,7 @@
     gap: var(--space-xs);
     padding: 0 var(--space-md);
     height: 32px;
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     color: var(--text-secondary);
     border: none;
@@ -278,7 +278,7 @@
     width: 24px;
     height: 24px;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: var(--text-lg);
     cursor: pointer;
     margin: 0 var(--space-xs);
     border-radius: var(--radius-sm);

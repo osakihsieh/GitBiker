@@ -7,11 +7,7 @@ export interface GitHubItem {
   author?: { login: string };
   updatedAt?: string;
 }
-import {
-  getGithubPrs,
-  getGithubIssues,
-  extractErrorMessage,
-} from '$lib/utils/error';
+import { extractErrorMessage } from '$lib/utils/error';
 import type {
   FileStatus,
   Commit,

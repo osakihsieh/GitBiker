@@ -540,7 +540,7 @@
     align-items: center;
     gap: var(--space-xs);
     padding: var(--space-sm) var(--space-md);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     color: var(--text-secondary);
     background: var(--bg-surface);
@@ -663,7 +663,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 13px;
+    font-size: var(--text-md);
   }
   .lfs-badge {
     font-size: 9px;

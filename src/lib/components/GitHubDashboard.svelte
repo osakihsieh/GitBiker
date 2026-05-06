@@ -21,7 +21,7 @@
 
 <div class="flex-1 flex flex-col bg-bg-primary overflow-hidden">
   <!-- Header Tabs -->
-  <div class="h-10 flex items-center px-md bg-bg-secondary/50 border-b border-bg-tertiary gap-md">
+  <div class="h-10 flex items-center px-md bg-bg-secondary/50 border-b border-border gap-md">
     <button 
       class="text-sm font-medium transition-colors {activeTab === 'prs' ? 'text-monokai-blue border-b-2 border-monokai-blue' : 'text-text-dimmed hover:text-text-bright'}"
       onclick={() => activeTab = 'prs'}
@@ -47,7 +47,7 @@
     <div class="space-y-xs">
       {#each items as item}
         <button 
-          class="w-full flex flex-col p-sm bg-bg-secondary/30 border border-white/5 rounded-large hover:bg-bg-tertiary/50 transition-colors group text-left"
+          class="w-full flex flex-col p-sm bg-bg-secondary/30 border border-white/5 rounded-large hover:bg-bg-hover/50 transition-colors group text-left"
           onclick={() => handleItemClick(item)}
         >
           <div class="flex items-start justify-between gap-sm">

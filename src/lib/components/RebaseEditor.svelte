@@ -116,7 +116,7 @@
     font-weight: 600;
   }
   .subtitle {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-muted);
     font-family: var(--font-mono);
   }
@@ -165,12 +165,12 @@
   }
   .hash {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--accent);
     min-width: 60px;
   }
   .message {
-    font-size: 13px;
+    font-size: var(--text-md);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

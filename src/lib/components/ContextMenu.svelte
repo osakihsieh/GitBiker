@@ -115,7 +115,7 @@
     justify-content: space-between;
     width: 100%;
     padding: 6px var(--space-md);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     background: none;
     border: none;

@@ -305,7 +305,7 @@
     border: none;
     color: #6c7086;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--text-lg);
     padding: 2px 6px;
     border-radius: 3px;
   }

@@ -662,7 +662,7 @@
     padding: var(--space-xs) var(--space-sm);
     padding-right: 24px;
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     outline: none;
     box-sizing: border-box;
@@ -683,7 +683,7 @@
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--text-lg);
     line-height: 1;
     padding: 0 2px;
   }
@@ -783,7 +783,7 @@
   }
 
   .branch-icon {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--accent);
     flex-shrink: 0;
   }
@@ -848,7 +848,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: var(--text-md);
     font-weight: 600;
     color: var(--text-muted);
     background: none;

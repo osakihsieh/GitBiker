@@ -123,7 +123,7 @@
   .stats {
     display: flex;
     gap: var(--space-md);
-    font-size: 12px;
+    font-size: var(--text-sm);
   }
   .stat.ahead {
     color: var(--success);
@@ -162,7 +162,7 @@
     border-bottom: 1px solid var(--border);
   }
   .commit-msg {
-    font-size: 13px;
+    font-size: var(--text-md);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -215,7 +215,7 @@
     color: var(--accent);
   }
   .file-path {
-    font-size: 13px;
+    font-size: var(--text-md);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

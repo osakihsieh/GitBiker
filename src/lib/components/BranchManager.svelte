@@ -338,7 +338,7 @@
 </script>
 
 {#if open}
-  <div class="branch-manager bg-bg-secondary border-r border-bg-tertiary h-full flex flex-col" use:clickOutside={onClose} role="dialog" aria-label="Branch manager">
+  <div class="branch-manager bg-bg-secondary border-r border-border h-full flex flex-col" use:clickOutside={onClose} role="dialog" aria-label="Branch manager">
     {#if dryRunResult}
       <!-- Dry-run preview dialog -->
       <div class="confirm-overlay">

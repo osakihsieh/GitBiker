@@ -341,7 +341,7 @@
     background: none;
     border: none;
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: var(--text-md);
     font-family: var(--font-ui);
     outline: none;
     padding: var(--space-xs) 0;
@@ -399,7 +399,7 @@
     background: none;
     border: none;
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     cursor: pointer;
     text-align: left;
@@ -438,7 +438,7 @@
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--text-lg);
     padding: 0 4px;
     opacity: 0;
     transition: opacity 0.1s;
@@ -489,7 +489,7 @@
   }
 
   .repo-name {
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     font-weight: 600;
     white-space: nowrap;
@@ -542,7 +542,7 @@
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 12px;
+    font-size: var(--text-sm);
     padding: 2px 4px;
     border-radius: var(--radius-sm);
   }
@@ -561,7 +561,7 @@
     border: none;
     color: var(--accent);
     cursor: pointer;
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     padding: var(--space-xs) 0;
   }
@@ -581,7 +581,7 @@
     font-size: 24px;
   }
   .empty-text {
-    font-size: 12px;
+    font-size: var(--text-sm);
     text-align: center;
   }
 

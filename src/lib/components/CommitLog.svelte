@@ -82,13 +82,13 @@
   const LINE_WIDTH = 2;
   const LANE_COLORS = [
     'var(--accent)',
-    '#e5c07b',
-    '#c678dd',
-    '#98c379',
-    '#e06c75',
-    '#56b6c2',
-    '#d19a66',
-    '#61afef',
+    'var(--color-lane-1)',
+    'var(--color-lane-2)',
+    'var(--color-lane-3)',
+    'var(--color-lane-4)',
+    'var(--color-lane-5)',
+    'var(--color-lane-6)',
+    'var(--color-lane-7)',
   ];
 
   interface GraphNode {
@@ -886,7 +886,7 @@
     background: none;
     border: none;
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     outline: none;
     min-width: 0;
@@ -1118,7 +1118,7 @@
     background: var(--bg-hover);
   }
   .branch-result-icon {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--accent);
     flex-shrink: 0;
   }

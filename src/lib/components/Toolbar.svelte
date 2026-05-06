@@ -189,7 +189,7 @@
 
 <svelte:window onkeydown={handleBranchKeydown} />
 
-<div class="toolbar h-12 bg-bg-tertiary border-b border-bg-primary flex items-center px-4 gap-4">
+<div class="toolbar h-12 bg-bg-secondary border-b border-border flex items-center px-4 gap-4">
   <!-- Left: repo + branch info -->
   <div class="left-section">
     <button

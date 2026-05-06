@@ -394,7 +394,7 @@
     border-bottom: 1px solid var(--border);
   }
   .search-icon {
-    font-size: 14px;
+    font-size: var(--text-lg);
     color: var(--text-muted);
   }
   .popover-search input {
@@ -402,7 +402,7 @@
     background: none;
     border: none;
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: var(--text-md);
     font-family: var(--font-ui);
     outline: none;
   }
@@ -420,7 +420,7 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-xs) var(--space-sm);
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--accent);
     background: none;
     border: 1px solid var(--border);
@@ -490,7 +490,7 @@
     color: var(--accent);
   }
   .repo-name {
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     font-weight: 500;
     flex: 1;
@@ -532,6 +532,6 @@
     padding: 24px;
     text-align: center;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: var(--text-md);
   }
 </style>

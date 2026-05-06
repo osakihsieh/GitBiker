@@ -540,7 +540,7 @@
 
   .file-icon {
     color: var(--warning);
-    font-size: 12px;
+    font-size: var(--text-sm);
     flex-shrink: 0;
   }
 
@@ -680,7 +680,7 @@
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     cursor: pointer;
     padding: var(--space-xs) var(--space-sm);

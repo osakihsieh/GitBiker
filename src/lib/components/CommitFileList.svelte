@@ -231,7 +231,7 @@
     border: none;
     border-bottom: 1px solid var(--border);
     color: var(--accent);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-family: var(--font-ui);
     cursor: pointer;
     text-align: left;
@@ -241,7 +241,7 @@
     text-decoration: underline;
   }
   .back-arrow {
-    font-size: 14px;
+    font-size: var(--text-lg);
   }
   .commit-info-block {
     padding: var(--space-sm) var(--space-md);
@@ -253,7 +253,7 @@
     color: var(--text-muted);
   }
   .commit-msg {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-primary);
     margin-top: 2px;
     white-space: nowrap;

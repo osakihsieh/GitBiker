@@ -47,11 +47,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="titlebar" class:is-mac={app.isMac}>
   {#if app.isMac}
-    <div class="titlebar-controls mac-controls">
-      <button class="control-btn mac-close" onclick={close} aria-label="Close"></button>
-      <button class="control-btn mac-minimize" onclick={minimize} aria-label="Minimize"></button>
-      <button class="control-btn mac-maximize" onclick={toggleMaximize} aria-label="Maximize"></button>
-    </div>
+    <div class="mac-traffic-lights-spacer" data-tauri-drag-region></div>
   {/if}
 
   {#if !app.isMac}
@@ -151,8 +147,8 @@
     flex-shrink: 0;
   }
   .app-name {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
     font-family: var(--font-ui);
     white-space: nowrap;
   }
@@ -167,25 +163,6 @@
     display: flex;
     flex-shrink: 0;
   }
-  .mac-controls {
-    padding-left: 12px;
-    gap: 8px;
-    align-items: center;
-  }
-  .mac-controls .control-btn {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    padding: 0;
-  }
-  .mac-close { background: #ff5f56; }
-  .mac-minimize { background: #ffbd2e; }
-  .mac-maximize { background: #27c93f; }
-
-  .titlebar.is-mac {
-    height: 38px; /* Slightly taller for Mac traffic lights style */
-  }
-
   .control-btn {
     display: flex;
     align-items: center;
@@ -204,5 +181,14 @@
   .close-btn:hover {
     background: var(--error);
     color: white;
+  }
+
+  .mac-traffic-lights-spacer {
+    width: 72px; /* Standard Mac traffic lights width */
+    flex-shrink: 0;
+  }
+
+  .titlebar.is-mac {
+    height: 38px; /* Slightly taller for Mac traffic lights style */
   }
 </style>

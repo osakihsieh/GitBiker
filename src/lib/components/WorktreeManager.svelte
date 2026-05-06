@@ -213,7 +213,7 @@
     cursor: pointer;
     padding: 4px;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: var(--text-lg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -245,7 +245,7 @@
     background: none;
     border: none;
     color: var(--text-color, #ccc);
-    font-size: 13px;
+    font-size: var(--text-md);
     cursor: pointer;
     text-align: left;
     border-radius: 4px;
@@ -257,7 +257,7 @@
   }
 
   .wt-icon {
-    font-size: 12px;
+    font-size: var(--text-sm);
     opacity: 0.7;
   }
 
@@ -290,7 +290,7 @@
   .empty-state {
     padding: 8px 32px;
     color: var(--text-muted, #666);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-style: italic;
   }
 

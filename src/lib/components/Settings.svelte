@@ -518,7 +518,7 @@
         {#each multiRepo.scanPaths as scanPath}
           <div class="setting-row">
             <div class="setting-info">
-              <span class="setting-label" style="font-family: var(--font-mono); font-size: 12px;"
+              <span class="setting-label" style="font-family: var(--font-mono); font-size: var(--text-sm);"
                 >{scanPath}</span
               >
               <span class="setting-desc">
@@ -1200,7 +1200,7 @@
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--text-lg);
     padding: 4px 6px;
     line-height: 1;
     display: flex;

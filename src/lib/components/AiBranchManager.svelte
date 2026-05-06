@@ -113,7 +113,7 @@
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: var(--text-md);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -135,7 +135,7 @@
     background: rgba(255, 193, 7, 0.1);
     border-left: 4px solid #ffc107;
     color: #ffc107;
-    font-size: 13px;
+    font-size: var(--text-md);
     margin-bottom: 16px;
   }
 
@@ -143,7 +143,7 @@
     background: var(--bg-primary, #121212);
     padding: 16px;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--text-lg);
     line-height: 1.6;
   }
 
@@ -161,7 +161,7 @@
     margin-top: 20px;
     padding-top: 12px;
     border-top: 1px solid var(--border-color, #333);
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-muted, #888);
   }
 
@@ -174,7 +174,7 @@
   .empty-state ul {
     text-align: left;
     display: inline-block;
-    font-size: 13px;
+    font-size: var(--text-md);
     margin-top: 12px;
   }
 

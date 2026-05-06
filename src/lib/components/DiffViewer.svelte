@@ -333,7 +333,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: var(--text-lg);
     font-weight: 700;
     line-height: 1;
     padding: 0;

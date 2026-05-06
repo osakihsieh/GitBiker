@@ -207,12 +207,12 @@
   >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-      class="w-[600px] max-w-[90vw] max-h-[50vh] bg-bg-secondary border border-bg-tertiary rounded-large shadow-2xl flex flex-col overflow-hidden self-start"
+      class="w-[600px] max-w-[90vw] max-h-[50vh] bg-bg-secondary border border-border rounded-large shadow-2xl flex flex-col overflow-hidden self-start"
       onclick={(e) => e.stopPropagation()}
       role="dialog"
       aria-label="Command Palette"
     >
-      <div class="px-md py-sm border-b border-bg-tertiary flex items-center gap-sm">
+      <div class="px-md py-sm border-b border-border flex items-center gap-sm">
         <span class="text-monokai-blue">⌘</span>
         <input
           type="text"
@@ -228,7 +228,7 @@
         {#each filtered() as cmd, i}
           <button
             class="flex items-center justify-between w-full px-md py-sm text-left transition-colors"
-            class:bg-bg-tertiary={i === selectedIndex}
+            class:bg-bg-hover={i === selectedIndex}
             class:text-monokai-yellow={i === selectedIndex}
             role="option"
             aria-selected={i === selectedIndex}
@@ -240,7 +240,7 @@
                 <span class="text-sm font-medium">{cmd.label}</span>
             </div>
             {#if cmd.shortcut}
-              <span class="text-[10px] font-mono opacity-50 bg-bg-primary px-1.5 py-0.5 rounded border border-bg-tertiary">
+              <span class="text-[10px] font-mono opacity-50 bg-bg-primary px-1.5 py-0.5 rounded border border-border">
                 {cmd.shortcut}
               </span>
             {/if}
@@ -251,10 +251,10 @@
         {/if}
       </div>
       
-      <div class="px-md py-xs bg-bg-tertiary/50 border-t border-bg-tertiary flex justify-between items-center">
+      <div class="px-md py-xs bg-bg-surface/50 border-t border-border flex justify-between items-center">
          <span class="text-[10px] text-text-dimmed">使用方向鍵選擇，Enter 執行</span>
          <div class="flex gap-sm">
-            <span class="text-[10px] text-text-dimmed px-1 border border-bg-tertiary rounded">ESC</span>
+            <span class="text-[10px] text-text-dimmed px-1 border border-border rounded">ESC</span>
             <span class="text-[10px] text-text-dimmed">關閉</span>
          </div>
       </div>

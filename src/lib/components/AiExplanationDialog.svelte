@@ -43,7 +43,7 @@
   .ai-explanation-content {
     max-height: 400px;
     overflow-y: auto;
-    font-size: 14px;
+    font-size: var(--text-lg);
     line-height: 1.6;
     color: var(--text-primary);
     padding: var(--space-sm);
