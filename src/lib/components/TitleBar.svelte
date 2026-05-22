@@ -129,80 +129,81 @@
   .titlebar {
     display: flex;
     align-items: stretch;
-    height: 32px;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
+    height: 38px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--color-ink-10);
     flex-shrink: 0;
     user-select: none;
     -webkit-user-select: none;
+    padding: 0 12px;
   }
   .titlebar-left {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: 0 var(--space-md) 0 var(--space-sm);
+    gap: 8px;
+    padding-right: 16px;
     flex-shrink: 0;
     cursor: default;
   }
   .app-icon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
     object-fit: contain;
-    flex-shrink: 0;
   }
   .app-name {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-family: var(--font-ui);
-    white-space: nowrap;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.2px;
   }
   .titlebar-tabs {
     flex: 1;
     min-width: 0;
     display: flex;
-    align-items: stretch;
-    overflow: hidden;
+    align-items: center;
+    justify-content: center;
   }
   .titlebar-controls {
     display: flex;
-    flex-shrink: 0;
+    align-items: center;
+    gap: 10px;
   }
   .mac-controls {
-    padding-left: 12px;
     gap: 8px;
-    align-items: center;
   }
   .mac-controls .control-btn {
     width: 12px;
     height: 12px;
     border-radius: 50%;
+    border: none;
     padding: 0;
+    transition: opacity 0.2s;
   }
+  .mac-controls .control-btn:hover { opacity: 0.8; }
   .mac-close { background: #ff5f56; }
   .mac-minimize { background: #ffbd2e; }
   .mac-maximize { background: #27c93f; }
-
-  .titlebar.is-mac {
-    height: 38px; /* Slightly taller for Mac traffic lights style */
-  }
 
   .control-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
+    width: 32px;
     height: 32px;
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: var(--color-ink-50);
     cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
   }
   .control-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
+    background: var(--color-ink-05);
+    color: var(--ink);
   }
   .close-btn:hover {
-    background: var(--error);
-    color: white;
+    background: var(--color-warn-bg);
+    color: var(--color-warn);
   }
 </style>

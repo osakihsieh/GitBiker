@@ -7,6 +7,22 @@
     openInFolder,
     openInTerminal,
   } from '$lib/git/commands';
+  import { 
+    LayoutGrid, 
+    Folders, 
+    Terminal, 
+    Settings, 
+    Plus, 
+    FolderOpen, 
+    ExternalLink, 
+    ChevronDown,
+    ArrowDown,
+    ArrowUp,
+    Tag,
+    RefreshCw,
+    Sparkles,
+    Radio
+  } from 'lucide-react';
   import TitleBar from '$lib/components/TitleBar.svelte';
   import Toolbar from '$lib/components/Toolbar.svelte';
   import TabBar from '$lib/components/TabBar.svelte';
@@ -17,13 +33,12 @@
   import DiffViewer from '$lib/components/DiffViewer.svelte';
   import Welcome from '$lib/components/Welcome.svelte';
   import CommandPalette from '$lib/components/CommandPalette.svelte';
-  import Settings from '$lib/components/Settings.svelte';
+  import SettingsComponent from '$lib/components/Settings.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import RepoPopover from '$lib/components/RepoPopover.svelte';
   import MultiRepoPopover from '$lib/components/MultiRepoPopover.svelte';
   import CloneDialog from '$lib/components/CloneDialog.svelte';
   import ConflictResolver from '$lib/components/ConflictResolver.svelte';
-  import GitHubDashboard from '$lib/components/GitHubDashboard.svelte';
   import InlineTerminal from '$lib/components/InlineTerminal.svelte';
   import AgentDashboard from '$lib/components/AgentDashboard.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
@@ -60,7 +75,6 @@
     };
   }
 
-  
   function handleGlobalKeydown(e: KeyboardEvent) {
     const modKey = app.isMac ? e.metaKey : e.ctrlKey;
     const isInput = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
@@ -97,7 +111,6 @@
     // Git Operations
     if (modKey && !e.shiftKey && e.key === 'g') {
       e.preventDefault();
-      // Logic for Pull could go here
       app.addToast('準備拉取最新代碼...', 'success');
     }
 
@@ -144,11 +157,6 @@
       e.preventDefault();
       showSettings = !showSettings;
     }
-
-    if (modKey && e.key === '`') {
-        e.preventDefault();
-        app.toggleTerminal();
-    }
   }
 
   // Init
@@ -157,17 +165,20 @@
 
 <svelte:window onkeydown={handleGlobalKeydown} />
 
-<div class="h-screen flex flex-col bg-bg-primary text-text-normal overflow-hidden select-none">
-  <!-- Top Bar: Navigation & Tabs -->
-  <header class="flex-shrink-0 z-50 sticky top-0 backdrop-blur-md bg-bg-primary/60 border-b border-white/5">
+<div class="h-screen flex flex-col bg-bg text-ink overflow-hidden select-none font-sans antialiased">
+  <!-- TitleBar & Tabs -->
+  <header class="flex-shrink-0 z-50 border-b border-ink-10 bg-bg">
     <TitleBar>
-      <TabBar onOpenPopover={() => activePopover = 'repo'} />
+      <div class="flex items-center gap-1">
+        <div class="w-6 h-6 rounded bg-ink flex items-center justify-center text-bg font-bold text-xs">G</div>
+        <span class="text-[13px] font-semibold tracking-tight">GitBiker</span>
+      </div>
     </TitleBar>
   </header>
 
   {#if showSettings}
-    <div class="flex-1 overflow-hidden">
-        <Settings onClose={() => (showSettings = false)} />
+    <div class="flex-1 overflow-hidden animate-fade-up">
+        <SettingsComponent onClose={() => (showSettings = false)} />
     </div>
   {:else if app.hasRepo}
     <!-- Secondary Tooling -->
@@ -178,78 +189,69 @@
     />
 
     {#if app.showAgentDashboard}
-      <AgentDashboard />
+      <div class="flex-1 overflow-hidden border-t border-ink-10 animate-fade-up">
+        <AgentDashboard />
+      </div>
+    {:else}
+      <!-- Main Accelerated Workspace -->
+      <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside 
+          class="bg-bg border-r border-ink-10 flex flex-col flex-shrink-0 transition-[width] duration-150 ease-in-out"
+          style:width="{sidebarWidth}px"
+        >
+          <BranchSidebar />
+        </aside>
+
+        <!-- Resize Handle -->
+        <div 
+          class="w-px bg-ink-10 hover:bg-accent hover:w-1 transition-all cursor-col-resize z-10"
+          onmousedown={handleResizeStart('sidebar')}
+        ></div>
+
+        <!-- Center View -->
+        <section class="flex-1 flex flex-col bg-bg-deep min-w-0">
+          {#if app.viewMode === 'conflict-resolution'}
+              <ConflictResolver />
+          {:else if app.selectedFile || app.currentDiff}
+              <div class="h-9 flex items-center px-6 gap-2 border-b border-ink-10 bg-bg/50 backdrop-blur-sm text-[11px] font-medium text-ink-50">
+                  <button class="hover:text-ink transition-colors" onclick={() => {app.selectedFile = null; app.currentDiff = null;}}>Commit Log</button>
+                  <span>/</span>
+                  <span class="truncate text-ink italic font-semibold">{app.selectedFile?.split('/').pop()}</span>
+              </div>
+              <div class="flex-1 overflow-hidden bg-bg">
+                  <DiffViewer />
+              </div>
+          {:else}
+              <CommitLog />
+          {/if}
+        </section>
+
+        <!-- Resize Handle -->
+        <div 
+          class="w-px bg-ink-10 hover:bg-accent hover:w-1 transition-all cursor-col-resize z-10"
+          onmousedown={handleResizeStart('right')}
+        ></div>
+
+        <!-- Right Pane -->
+        <aside 
+          class="bg-bg border-l border-ink-10 flex flex-col flex-shrink-0 transition-[width] duration-150 ease-in-out"
+          style:width="{rightWidth}px"
+        >
+          {#if app.viewMode === 'commit-detail'}
+              <CommitFileList />
+          {:else}
+              <FileTree />
+          {/if}
+        </aside>
+      </main>
     {/if}
 
-    <!-- Main Accelerated Workspace -->
-    <main class="flex-1 flex overflow-hidden">
-      
-      <!-- Left: Navigation (Branches, Tags, etc.) -->
-      <aside 
-        class="bg-bg-secondary/70 backdrop-blur-xl border-r border-white/5 flex flex-col flex-shrink-0 transition-[width] duration-75"
-        style:width="{sidebarWidth}px"
-      >
-        <BranchSidebar />
-      </aside>
-
-      <!-- Resize Handle -->
-      <div 
-        class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
-        onmousedown={handleResizeStart('sidebar')}
-        role="separator"
-        aria-orientation="vertical"
-        aria-valuenow={sidebarWidth}
-        tabindex="-1"
-      ></div>
-
-      <!-- Center: Execution & Insight (Log, Diff) -->
-      <section class="flex-1 flex flex-col bg-bg-primary min-w-0">
-        {#if app.viewMode === 'conflict-resolution'}
-            <ConflictResolver />
-        {:else if app.selectedFile || app.currentDiff}
-            <!-- Breadcrumb Navigation -->
-            <div class="h-8 flex items-center px-md gap-sm bg-bg-secondary/50 border-b border-bg-tertiary text-[11px]">
-                <button class="text-monokai-blue hover:underline" onclick={() => {app.selectedFile = null; app.currentDiff = null;}}>Commit Log</button>
-                <span class="text-text-dimmed">/</span>
-                <span class="truncate text-text-bright italic">{app.selectedFile?.split('/').pop()}</span>
-            </div>
-            <div class="flex-1 overflow-hidden">
-                <DiffViewer />
-            </div>
-        {:else}
-            <CommitLog />
-        {/if}
-      </section>
-
-      <!-- Resize Handle -->
-      <div 
-        class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
-        onmousedown={handleResizeStart('right')}
-        role="separator"
-        aria-orientation="vertical"
-        aria-valuenow={rightWidth}
-        tabindex="-1"
-      ></div>
-
-      <!-- Right: Staging & Details -->
-      <aside 
-        class="bg-bg-secondary/70 backdrop-blur-xl border-l border-white/5 flex flex-col flex-shrink-0 transition-[width] duration-75"
-        style:width="{rightWidth}px"
-      >
-        {#if app.viewMode === 'commit-detail'}
-            <CommitFileList />
-        {:else}
-            <FileTree />
-        {/if}
-      </aside>
-    </main>
-
-    <!-- Accelerated Terminal Sidecar -->
     <InlineTerminal visible={app.showTerminal} onClose={() => (app.showTerminal = false)} />
 
   {:else}
-    <!-- Welcome Screen (Factory Idle) -->
-    <div class="flex-1 flex items-center justify-center">
+    <div class="flex-1 flex items-center justify-center bg-bg-deep">
         <Welcome 
             onOpenRepo={(path) => app.openRepo(path)}
             onClone={() => showCloneDialog = true}
@@ -257,7 +259,7 @@
     </div>
   {/if}
 
-  <!-- Modals & Popovers -->
+  <!-- Modals -->
   <RepoPopover open={activePopover === 'repo'} onClose={() => activePopover = null} />
   <MultiRepoPopover open={activePopover === 'multiRepo'} onClose={() => activePopover = null} />
   <CommandPalette open={showCommandPalette} onClose={() => showCommandPalette = false} onOpenSettings={() => {showCommandPalette = false; showSettings = true;}} />
