@@ -244,6 +244,11 @@ export interface WorktreeInfo {
   lock_reason: string | null;
 }
 
+export interface CommandResult {
+  success: boolean;
+  message: string;
+}
+
 export interface GitHubItem {
   number: number;
   title: string;
@@ -251,4 +256,10 @@ export interface GitHubItem {
   url: string;
   author?: { login: string };
   updatedAt?: string;
+}
+
+export interface SshKey {
+  name: string;
+  publicKey: string;
+  path: string;
 }

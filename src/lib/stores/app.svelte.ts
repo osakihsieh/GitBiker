@@ -1,17 +1,7 @@
-
-export interface GitHubItem {
-  number: number;
-  title: string;
-  state: string;
-  url: string;
-  author?: { login: string };
-  updatedAt?: string;
-}
 import {
-  getGithubPrs,
-  getGithubIssues,
   extractErrorMessage,
 } from '$lib/utils/error';
+import { checkGitEnv, getGithubPrs, getGithubIssues, gitBranchCompare } from '$lib/git/commands';
 import type {
   FileStatus,
   Commit,
@@ -24,8 +14,12 @@ import type {
   TagInfo,
   RebaseResult,
   RebaseCommit,
+  GitLfsStatus,
+  SubmoduleInfo,
+  WorktreeInfo,
+  GitHubItem,
+  GitEnvInfo,
 } from '$lib/git/types';
-import { gitBranchCompare } from '$lib/git/commands';
 import {
   loadAppSettings as _loadAppSettings,
   addRecentRepo as _addRecentRepo,
@@ -150,28 +144,6 @@ export function createEmptyState(): RepoState {
 }
 
 // ── AppState ───────────────────────────────────────────
-//
-//  Multi-tab state management:
-//
-//  tabs[]  ◄── all open repo tabs
-//    │
-//    ├── activeTabId ── which tab is shown
-//    │       │
-//    │       └── activeTab (computed) ── convenience accessor
-//    │
-//    └── each tab holds its own RepoState
-//
-//  Sidebar modes:
-//    viewMode = 'worktree'       ← staged/unstaged + commit form
-//    viewMode = 'commit-detail'  ← selected commit's file list
-//
-//  On tab switch:
-//    1. Restore target tab state
-//    2. Restart fs watcher for new repo
-//    3. Background refresh gitStatus
-//    4. Reset viewMode to 'worktree'
-//    5. currentDiff is NOT saved (memory optimization)
-//
 
 let toastCounter = 0;
 
@@ -180,13 +152,12 @@ class AppState {
   tabs = $state<RepoTab[]>([]);
   activeTabId = $state<string | null>(null);
 
-  // ── currentDiff lives outside tabs (not persisted across tab switches) ──
+  // ── currentDiff lives outside tabs ──
   currentDiff = $state<DiffResult | null>(null);
 
-  // ── stashDiff: raw patch text from git stash show -p (not persisted) ──
+  // ── stashDiff ──
   stashDiff = $state<string | null>(null);
 
-  // ── View mode (proxied to active tab's RepoState) ──
   selectedCommit = $state<Commit | null>(null);
 
   get viewMode(): ViewMode {
@@ -198,14 +169,10 @@ class AppState {
     if (tab) tab.state.viewMode = value;
   }
 
-  // ── Repo lists ──
   recentRepos = $state<string[]>([]);
   pinnedRepos = $state<string[]>([]);
-
-  // ── Editor preference ──
   preferredEditor = $state<string | null>(null);
 
-  // ── AI Settings ──
   aiProvider = $state<AiProviderType>('gemini');
   aiApiKey = $state('');
   aiModel = $state('');
@@ -214,25 +181,22 @@ class AppState {
   aiOllamaEndpoint = $state('http://localhost:11434');
   aiReviewEnabled = $state(true);
 
-  // ── Git Settings ──
-  disableAutoCrlf = $state(true); // 預設開啟：禁止自動轉換換行符
-  ignoreEol = $state(false); // 忽略換行符差異（LF/CRLF）
+  disableAutoCrlf = $state(true);
+  ignoreEol = $state(false);
 
-  // ── Terminal Settings ──
-  terminalShell = $state<string | null>(null); // null = git-only 模式
+  terminalShell = $state<string | null>(null);
 
-  // ── Auto Fetch ──
   autoFetchEnabled = $state(false);
-  autoFetchInterval = $state(5); // minutes
+  autoFetchInterval = $state(5);
   private autoFetchTimer: ReturnType<typeof setInterval> | null = null;
 
-  // ── UI state ──
   loading = $state(false);
   toasts = $state<Toast[]>([]);
   useSystemNotification = $state(false);
   showTerminal = $state(false);
   showAgentDashboard = $state(false);
   isMac = $state(false);
+  gitEnv = $state<GitEnvInfo | null>(null);
 
   toggleTerminal(): void {
     this.showTerminal = !this.showTerminal;
@@ -242,10 +206,7 @@ class AppState {
     this.showAgentDashboard = !this.showAgentDashboard;
   }
 
-  // ── Switch guard ──
   private switchGuard = false;
-
-  // ── Computed ──
 
   get activeTab(): RepoTab | null {
     if (!this.activeTabId) return null;
@@ -299,8 +260,6 @@ class AppState {
   get selectedFile(): string | null {
     return this.activeTab?.state.selectedFile ?? null;
   }
-
-  // ── Setters that write to activeTab ──
 
   set currentBranch(value: string) {
     const tab = this.activeTab;
@@ -373,8 +332,6 @@ class AppState {
     const tab = this.activeTab;
     if (tab) tab.state.isLoadingRemote = value;
   }
-
-  // ── Tab CRUD ──
 
   selectCommit(commit: Commit): void {
     this.selectedCommit = commit;
@@ -483,7 +440,6 @@ class AppState {
 
     try {
       this.loading = true;
-      // Get commits between current HEAD and onto
       const compare = await gitBranchCompare(this.repoPath, onto, 'HEAD');
       tab.state.rebaseBase = onto;
       tab.state.rebaseCommits = [...compare.commits].reverse().map((c) => ({
@@ -509,8 +465,18 @@ class AppState {
 
   // ── Tab CRUD ──
 
+  async loadAppSettings(): Promise<void> {
+    await _loadAppSettings(this);
+    try {
+      this.gitEnv = await checkGitEnv();
+    } catch (e) {
+      console.error('Failed to check git env:', e);
+    }
+    this.syncDisableAutoCrlf();
+    this.syncIgnoreEol();
+  }
+
   async openRepo(path: string, background = false): Promise<void> {
-    // If already open, just switch to it
     const existing = this.tabs.find((t) => t.path === path);
     if (existing) {
       if (!background) await this.switchTab(existing.id);
@@ -530,7 +496,6 @@ class AppState {
     if (!background) {
       this.activeTabId = tabId;
       this.currentDiff = null;
-      // viewMode defaults to 'worktree' via createEmptyState()
       this.selectedCommit = null;
       this.loading = true;
 
@@ -539,7 +504,6 @@ class AppState {
         await _addRecentRepo(this, path);
         await setupWatcher(this, path);
       } catch (e: unknown) {
-        // Remove the tab if loading failed
         this.tabs = this.tabs.filter((t) => t.id !== tabId);
         if (this.activeTabId === tabId) {
           this.activeTabId = this.tabs.length > 0 ? this.tabs[this.tabs.length - 1].id : null;
@@ -561,12 +525,8 @@ class AppState {
     try {
       this.activeTabId = id;
       this.currentDiff = null;
-      // viewMode is now per-tab in RepoState — no reset needed
       this.selectedCommit = null;
-
       await setupWatcher(this, target.path);
-
-      // Background refresh
       _refreshStatus(this).catch(() => {});
     } finally {
       this.switchGuard = false;
@@ -587,7 +547,6 @@ class AppState {
         this.selectedCommit = null;
         teardownWatcher();
       } else {
-        // Activate adjacent tab
         const newIdx = Math.min(idx, this.tabs.length - 1);
         this.switchTab(this.tabs[newIdx].id);
       }
@@ -609,8 +568,6 @@ class AppState {
     teardownWatcher();
   }
 
-  // ── Tab info helpers ──
-
   dirtyCount(tabId: string): number {
     const tab = this.tabs.find((t) => t.id === tabId);
     if (!tab) return 0;
@@ -622,23 +579,14 @@ class AppState {
     return tab?.state.currentBranch ?? '';
   }
 
-  /** Disambiguate tab names when duplicates exist */
   displayName(tab: RepoTab): string {
     const dupes = this.tabs.filter((t) => t.name === tab.name);
     if (dupes.length <= 1) return tab.name;
-    // Show parent folder
     const parts = tab.path.replace(/\\/g, '/').split('/');
     const parent = parts.length >= 2 ? parts[parts.length - 2] : '';
     return parent ? `${parent}/${tab.name}` : tab.name;
   }
 
-  // ── Persistence wrappers (maintain existing API) ──
-
-  async loadAppSettings() {
-    await _loadAppSettings(this);
-    // 載入持久化設定後，同步 CRLF 設定到 Rust 後端
-    this.syncDisableAutoCrlf();
-  }
   async addRecentRepo(path: string) {
     return _addRecentRepo(this, path);
   }
@@ -657,8 +605,6 @@ class AppState {
   async togglePin(path: string) {
     return _togglePin(this, path);
   }
-
-  // ── LFS ──
 
   async lfsTrack(pattern: string): Promise<void> {
     if (!this.repoPath) return;
@@ -709,12 +655,9 @@ class AppState {
     return _saveUseSystemNotification(this);
   }
 
-  // ── Auto Fetch ──
-
   startAutoFetch(): void {
     this.stopAutoFetch();
     if (!this.autoFetchEnabled) return;
-
     const intervalMs = this.autoFetchInterval * 60 * 1000;
     this.autoFetchTimer = setInterval(async () => {
       const path = this.repoPath;
@@ -722,11 +665,8 @@ class AppState {
       try {
         const { gitFetch } = await import('$lib/git/commands');
         await gitFetch(path);
-        // Silently refresh commits and branches
         await _refreshAll(this);
-      } catch {
-        // Silent fail — auto fetch should not disturb the user
-      }
+      } catch {}
     }, intervalMs);
   }
 
@@ -741,19 +681,13 @@ class AppState {
     this.autoFetchEnabled = enabled;
     if (interval !== undefined) this.autoFetchInterval = interval;
     try {
-      localStorage.setItem(
-        'gitbiker-auto-fetch',
-        JSON.stringify({
-          enabled: this.autoFetchEnabled,
-          interval: this.autoFetchInterval,
-        }),
-      );
+      localStorage.setItem('gitbiker-auto-fetch', JSON.stringify({
+        enabled: this.autoFetchEnabled,
+        interval: this.autoFetchInterval,
+      }));
     } catch {}
-    if (enabled) {
-      this.startAutoFetch();
-    } else {
-      this.stopAutoFetch();
-    }
+    if (enabled) this.startAutoFetch();
+    else this.stopAutoFetch();
   }
 
   loadAutoFetchSettings(): void {
@@ -765,12 +699,8 @@ class AppState {
         this.autoFetchInterval = typeof interval === 'number' ? interval : 5;
       }
     } catch {}
-    if (this.autoFetchEnabled) {
-      this.startAutoFetch();
-    }
+    if (this.autoFetchEnabled) this.startAutoFetch();
   }
-
-  // ── Git action wrappers (maintain existing API) ──
 
   async refreshStatus() {
     return _refreshStatus(this);
@@ -782,20 +712,15 @@ class AppState {
     return _loadDiff(this, filePath);
   }
 
-  // ── Toast ──
-
   addToast(message: string, type: Toast['type'], autoDismiss = true) {
-    // 若啟用系統通知，且非需手動關閉的錯誤 → 用 OS 通知
     if (this.useSystemNotification && autoDismiss) {
       import('@tauri-apps/plugin-notification').then(({ sendNotification }) => {
         sendNotification({ title: 'GitBiker', body: message });
       });
       return;
     }
-
     const id = ++toastCounter;
     this.toasts = [...this.toasts, { id, message, type, autoDismiss }];
-
     if (autoDismiss) {
       const delay = type === 'error' ? 5000 : 2000;
       setTimeout(() => this.removeToast(id), delay);
@@ -806,24 +731,16 @@ class AppState {
     this.toasts = this.toasts.filter((t) => t.id !== id);
   }
 
-  // ── Theme ──
-
   theme = $state<'system' | 'dark' | 'light'>(
-    (typeof localStorage !== 'undefined'
-      ? (localStorage.getItem('gitbiker-theme') as 'system' | 'dark' | 'light')
-      : null) || 'system',
+    (typeof localStorage !== 'undefined' ? (localStorage.getItem('gitbiker-theme') as 'system' | 'dark' | 'light') : null) || 'system'
   );
 
   systemPrefersDark = $state(
-    typeof window !== 'undefined'
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches
-      : true,
+    typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : true
   );
 
   get resolvedTheme(): 'dark' | 'light' {
-    if (this.theme === 'system') {
-      return this.systemPrefersDark ? 'dark' : 'light';
-    }
+    if (this.theme === 'system') return this.systemPrefersDark ? 'dark' : 'light';
     return this.theme;
   }
 
@@ -842,7 +759,6 @@ class AppState {
     }
   }
 
-  /** 將 disableAutoCrlf 設定同步到 Rust 後端 */
   async syncDisableAutoCrlf(): Promise<void> {
     try {
       const { setGitDisableAutoCrlf } = await import('$lib/git/commands');
@@ -850,7 +766,6 @@ class AppState {
     } catch {}
   }
 
-  /** 將 ignoreEol 設定同步到 Rust 後端 */
   async syncIgnoreEol(): Promise<void> {
     try {
       const { setGitIgnoreEol } = await import('$lib/git/commands');

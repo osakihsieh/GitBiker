@@ -258,12 +258,13 @@
         <Welcome 
             onOpenRepo={(path) => app.openRepo(path)}
             onClone={() => showCloneDialog = true}
+            gitEnv={app.gitEnv}
         />
     </div>
   {/if}
 
   <!-- Modals -->
-  <RepoPopover open={activePopover === 'repo'} onClose={() => activePopover = null} />
+  <RepoPopover open={activePopover === 'repo'} onClose={() => activePopover = null} onClone={() => {activePopover = null; showCloneDialog = true;}} />
   <MultiRepoPopover open={activePopover === 'multiRepo'} onClose={() => activePopover = null} />
   <CommandPalette open={showCommandPalette} onClose={() => showCommandPalette = false} onOpenSettings={() => {showCommandPalette = false; showSettings = true;}} />
   {#if showCloneDialog} <CloneDialog onClose={() => showCloneDialog = false} onCloned={(path) => {showCloneDialog = false; app.openRepo(path);}} /> {/if}

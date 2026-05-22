@@ -1,7 +1,7 @@
 <script lang="ts">
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
-  import { gitStageHunk, gitUnstageHunk, gitStashHunk, generateCommitMessage } from '$lib/git/commands';
+  import { gitStageHunk, gitUnstageHunk, gitStashHunk, generateCommitMessage, gitDiscardChanges } from '$lib/git/commands';
   import type { DiffHunk } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
   import AiExplanationDialog from './AiExplanationDialog.svelte';

@@ -25,7 +25,40 @@ import type {
   GitLfsStatus,
   SubmoduleInfo,
   WorktreeInfo,
+  GitHubItem,
+  CommandResult,
+  SshKey,
 } from './types';
+
+export type {
+  FileStatus,
+  Commit,
+  DiffResult,
+  Branch,
+  PushResult,
+  PullResult,
+  RemoteInfo,
+  BranchMergeStatus,
+  MergeResult,
+  CherryPickResult,
+  StashEntry,
+  ConflictFile,
+  ConflictContent,
+  MergeDryRunResult,
+  MergeCompleteResult,
+  ResolveChoice,
+  LogFilter,
+  BranchCompareResult,
+  TagInfo,
+  RebaseResult,
+  RebaseCommit,
+  GitEnvInfo,
+  GitLfsStatus,
+  SubmoduleInfo,
+  WorktreeInfo,
+  GitHubItem,
+  SshKey,
+};
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
   return invoke('git_status', { path });

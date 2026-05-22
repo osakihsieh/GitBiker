@@ -158,8 +158,8 @@
     x={contextMenu.x}
     y={contextMenu.y}
     items={menuItems}
-    onselect={handleMenuSelect}
-    onclose={() => (contextMenu = null)}
+    onSelect={handleMenuSelect}
+    onClose={() => (contextMenu = null)}
   />
 {/if}
 

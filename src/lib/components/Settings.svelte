@@ -12,8 +12,11 @@
     listAiModels,
     setGitDisableAutoCrlf,
     setGitIgnoreEol,
+    getSshKeys,
+    generateSshKey,
+    testSshConnection,
   } from '$lib/git/commands';
-  import type { EditorInfo, ShellInfo, AiModelInfo } from '$lib/git/commands';
+  import type { EditorInfo, ShellInfo, AiModelInfo, SshKey } from '$lib/git/commands';
   import type { RemoteInfo } from '$lib/git/types';
 
   interface Props {
@@ -21,6 +24,8 @@
   }
 
   let { onClose }: Props = $props();
+
+  let activeTab = $state<'general' | 'remotes' | 'ssh' | 'ai' | 'shortcuts'>('general');
 
   // Editor settings state
   let detectedEditors = $state<EditorInfo[]>([]);
