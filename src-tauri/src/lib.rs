@@ -1,8 +1,10 @@
+mod agent_monitor;
 mod ai;
 mod commands;
 mod git;
 mod watcher;
 
+use agent_monitor::{get_agent_statuses, AgentMonitor, AgentMonitorState};
 use commands::git_commands::GitState;
 use git::LocalGit;
 use tauri::Manager;
@@ -28,6 +30,13 @@ pub fn run() {
                     let _ = window.set_icon(icon);
                 }
             }
+
+            // Initialize Agent Monitor
+            let monitor = AgentMonitor::new(app.handle().clone());
+            let statuses = monitor.statuses.clone();
+            monitor.start_monitoring();
+            app.manage(AgentMonitorState(statuses));
+
             Ok(())
         })
         .plugin(tauri_plugin_notification::init())
@@ -39,6 +48,7 @@ pub fn run() {
         })
         .manage(WatcherState::new())
         .invoke_handler(tauri::generate_handler![
+            get_agent_statuses,
             commands::git_status,
             commands::git_log,
             commands::git_diff,

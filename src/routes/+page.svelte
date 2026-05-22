@@ -25,6 +25,7 @@
   import ConflictResolver from '$lib/components/ConflictResolver.svelte';
   import GitHubDashboard from '$lib/components/GitHubDashboard.svelte';
   import InlineTerminal from '$lib/components/InlineTerminal.svelte';
+  import AgentDashboard from '$lib/components/AgentDashboard.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
 
   let showCloneDialog = $state(false);
@@ -175,6 +176,10 @@
       onOpenPopover={() => activePopover = 'repo'}
       onOpenMultiRepo={() => activePopover = 'multiRepo'}
     />
+
+    {#if app.showAgentDashboard}
+      <AgentDashboard />
+    {/if}
 
     <!-- Main Accelerated Workspace -->
     <main class="flex-1 flex overflow-hidden">

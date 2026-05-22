@@ -347,6 +347,15 @@
       </button>
       <button
         class="tool-btn"
+        class:active={app.showAgentDashboard}
+        onclick={() => app.toggleAgentDashboard()}
+        title="Agent 雷達"
+        aria-label="Toggle Agent Radar"
+      >
+        <span class="text-xs">📡</span>
+      </button>
+      <button
+        class="tool-btn"
         class:active={app.showTerminal}
         onclick={() => app.toggleTerminal()}
         title="切換內建終端機 ({app.isMac ? 'Cmd+`' : 'Ctrl+`'})"

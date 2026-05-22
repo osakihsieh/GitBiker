@@ -223,10 +223,15 @@ class AppState {
   toasts = $state<Toast[]>([]);
   useSystemNotification = $state(false);
   showTerminal = $state(false);
+  showAgentDashboard = $state(false);
   isMac = $state(false);
 
   toggleTerminal(): void {
     this.showTerminal = !this.showTerminal;
+  }
+
+  toggleAgentDashboard(): void {
+    this.showAgentDashboard = !this.showAgentDashboard;
   }
 
   // ── Switch guard ──
