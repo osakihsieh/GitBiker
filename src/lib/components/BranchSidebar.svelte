@@ -406,193 +406,118 @@
   }
 </script>
 
-<div class="branch-sidebar">
+<div class="branch-sidebar flex flex-col h-full bg-bg border-r border-ink-10">
   <!-- Search -->
-  <div class="search-bar">
-    <input
-      type="text"
-      class="search-input"
-      placeholder="過濾分支 / Tag / Stash..."
-      bind:value={searchQuery}
-    />
-    {#if searchQuery}
-      <button class="search-clear" onclick={() => (searchQuery = '')} aria-label="清除搜尋"
-        >×</button
-      >
-    {/if}
+  <div class="px-4 py-3 border-b border-ink-10">
+    <div class="relative group">
+      <input
+        type="text"
+        class="w-full bg-ink-05 border border-transparent focus:border-accent/30 rounded-lg px-3 py-1.5 text-[12px] text-ink placeholder:text-ink-35 outline-none transition-all"
+        placeholder="Filter everything..."
+        bind:value={searchQuery}
+      />
+      {#if searchQuery}
+        <button class="absolute right-2 top-1/2 -translate-y-1/2 text-ink-35 hover:text-ink" onclick={() => (searchQuery = '')}>×</button>
+      {/if}
+    </div>
   </div>
 
-  <!-- LOCAL -->
-  <button class="section-toggle" onclick={() => toggleSection('local')}>
-    <span class="toggle-icon">{isCollapsed('local') ? '▸' : '▾'}</span>
-    <span class="section-label">LOCAL</span>
-    <span class="section-count">{localBranches.length}</span>
-  </button>
-  {#if !isCollapsed('local')}
-    <div class="branch-list">
-      {#each localBranches as branch (branch.name)}
-        <button
-          class="branch-item"
-          class:current={branch.is_current}
-          class:filtered={app.logFilter.type === 'Branch' && app.logFilter.value === branch.name}
-          onclick={() => handleLocalBranchClick(branch.name)}
-          oncontextmenu={(e) => handleLocalBranchContextMenu(e, branch.name)}
-          title="{branch.name}（單擊過濾 / 雙擊 checkout）"
-        >
-          <span class="branch-icon">⎇</span>
-          <span class="branch-name">{branch.name}</span>
-          {#if branch.ahead || branch.behind}
-            <span class="sync-status">
-              {#if branch.ahead}<span class="ahead">↑{branch.ahead}</span>{/if}
-              {#if branch.behind}<span class="behind">↓{branch.behind}</span>{/if}
-            </span>
-          {/if}
-        </button>
-      {/each}
-    </div>
-  {/if}
+  <div class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+    <!-- WORKTREES (TOP PRIORITY) -->
+    <WorktreeManager />
 
-  <!-- REMOTE -->
-  {#each Object.entries(remoteGroups) as [remote, branches] (remote)}
-    <button class="section-toggle" onclick={() => toggleSection(`remote-${remote}`)}>
-      <span class="toggle-icon">{isCollapsed(`remote-${remote}`) ? '▸' : '▾'}</span>
-      <span class="section-label">REMOTE</span>
-      <span class="remote-name">{remote}</span>
-      <span class="section-count">{branches.length}</span>
-    </button>
-    {#if !isCollapsed(`remote-${remote}`)}
-      <div class="branch-list">
-        {#each branches as branch (branch.name)}
+    <div class="h-px bg-ink-10 mx-4 my-2"></div>
+
+    <!-- LOCAL -->
+    <div class="px-4 py-2 flex items-center justify-between group/header">
+      <button 
+        class="flex items-center gap-1.5 text-[10.5px] font-bold text-ink-35 uppercase tracking-[0.5px] hover:text-ink transition-colors"
+        onclick={() => toggleSection('local')}
+      >
+        <span class="w-3 text-center transition-transform duration-200" class:rotate-[-90deg]={isCollapsed('local')}>▾</span>
+        LOCAL
+        <span class="ml-1 px-1.5 py-0.5 rounded-full bg-ink-05 text-ink-35 text-[9px]">{localBranches.length}</span>
+      </button>
+    </div>
+    {#if !isCollapsed('local')}
+      <div class="flex flex-col pb-4">
+        {#each localBranches as branch (branch.name)}
           <button
-            class="branch-item"
-            class:filtered={app.logFilter.type === 'Branch' && app.logFilter.value === branch.name}
-            onclick={() => handleRemoteBranchClick(branch.name)}
-            oncontextmenu={(e) => handleRemoteBranchContextMenu(e, branch.name)}
-            title={branch.name}
+            class="flex items-center gap-2 px-8 py-1.5 hover:bg-ink-05 transition-colors text-left relative group border-l-2 border-transparent"
+            class:border-accent={branch.is_current}
+            class:bg-accent-bg={branch.is_current}
+            onclick={() => handleLocalBranchClick(branch.name)}
+            oncontextmenu={(e) => handleLocalBranchContextMenu(e, branch.name)}
           >
-            <span class="branch-icon remote-icon">☁</span>
-            <span class="branch-name">{shortRemoteBranch(branch.name)}</span>
+            <span class="text-[10px] text-accent opacity-60">⑇</span>
+            <span class="text-[13px] font-medium text-ink truncate shrink min-w-0" class:font-bold={branch.is_current}>{branch.name}</span>
+            {#if branch.ahead || branch.behind}
+              <div class="ml-auto flex items-center gap-1 text-[9px] font-bold">
+                {#if branch.ahead}<span class="text-accent">↑{branch.ahead}</span>{/if}
+                {#if branch.behind}<span class="text-warn">↓{branch.behind}</span>{/if}
+              </div>
+            {/if}
           </button>
         {/each}
       </div>
     {/if}
-  {/each}
 
-  <!-- TAGS -->
-  <div class="section-header-row">
-    <button class="section-toggle tag-toggle" onclick={() => toggleSection('tags')}>
-      <span class="toggle-icon">{isCollapsed('tags') ? '▸' : '▾'}</span>
-      <span class="section-label">TAGS</span>
-      <span class="section-count">{filteredTags.length}</span>
-    </button>
-    <div class="section-actions">
-      {#if app.tags.length > 0}
-        <button class="section-action-btn" title="推送所有 Tags" onclick={handlePushAllTags}
-          >↑</button
+    <!-- REMOTE -->
+    {#each Object.entries(remoteGroups) as [remote, branches] (remote)}
+      <div class="px-4 py-2 flex items-center justify-between group/header">
+        <button 
+          class="flex items-center gap-1.5 text-[10.5px] font-bold text-ink-35 uppercase tracking-[0.5px] hover:text-ink transition-colors"
+          onclick={() => toggleSection(`remote-${remote}`)}
         >
-      {/if}
-      <button class="section-action-btn" title="建立 Tag" onclick={handleCreateTag}>+</button>
-    </div>
-  </div>
-  {#if !isCollapsed('tags')}
-    <div class="branch-list">
-      {#each filteredTags as tag (tag.name)}
-        <button
-          class="branch-item tag-item"
-          title="{tag.name} ({tag.commit_id}){tag.message ? '\n' + tag.message : ''}"
-          oncontextmenu={(e) => handleTagContextMenu(e, tag.name)}
-        >
-          <span class="branch-icon tag-icon">🏷</span>
-          <span class="branch-name">{tag.name}</span>
-          <span class="tag-commit">{tag.commit_id}</span>
+          <span class="w-3 text-center transition-transform duration-200" class:rotate-[-90deg]={isCollapsed(`remote-${remote}`)}>▾</span>
+          REMOTE / {remote}
+          <span class="ml-1 px-1.5 py-0.5 rounded-full bg-ink-05 text-ink-35 text-[9px]">{branches.length}</span>
         </button>
-      {/each}
-      {#if filteredTags.length === 0}
-        <div class="empty-hint">{searchQuery ? '無符合結果' : '尚無 Tags'}</div>
-      {/if}
-    </div>
-  {/if}
-
-  <!-- STASHES -->
-  <div class="section-header-row">
-    <button class="section-toggle stash-toggle" onclick={() => toggleSection('stashes')}>
-      <span class="toggle-icon">{isCollapsed('stashes') ? '▸' : '▾'}</span>
-      <span class="section-label">STASHES</span>
-      <span class="section-count">{filteredStashes.length}</span>
-    </button>
-    <div class="section-actions">
-      <button
-        class="section-action-btn"
-        title="Stash 所有變更"
-        onclick={() => (showPushForm = !showPushForm)}>+</button
-      >
-    </div>
-  </div>
-  {#if !isCollapsed('stashes')}
-    <div class="branch-list">
-      {#if showPushForm}
-        <div class="push-form">
-          <input
-            type="text"
-            placeholder="Stash 描述（選填）..."
-            bind:value={pushMessage}
-            class="push-input"
-            autofocus
-            onkeydown={(e) => {
-              if (e.key === 'Enter') handleStashPush();
-              if (e.key === 'Escape') {
-                showPushForm = false;
-                pushMessage = '';
-              }
-            }}
-          />
-          <div class="push-actions">
-            <button class="btn-create" onclick={handleStashPush} disabled={pushing}>
-              {#if pushing}<span class="spinner"></span>{:else}Stash{/if}
-            </button>
+      </div>
+      {#if !isCollapsed(`remote-${remote}`)}
+        <div class="flex flex-col pb-4">
+          {#each branches as branch (branch.name)}
             <button
-              class="btn-text"
-              onclick={() => {
-                showPushForm = false;
-                pushMessage = '';
-              }}>取消</button
+              class="flex items-center gap-2 px-8 py-1.5 hover:bg-ink-05 transition-colors text-left border-l-2 border-transparent"
+              onclick={() => handleRemoteBranchClick(branch.name)}
+              oncontextmenu={(e) => handleRemoteBranchContextMenu(e, branch.name)}
             >
-          </div>
+              <span class="text-[10px] text-ink-35">☁</span>
+              <span class="text-[13px] font-medium text-ink-70 truncate shrink min-w-0">{shortRemoteBranch(branch.name)}</span>
+            </button>
+          {/each}
         </div>
       {/if}
-      {#if loadingStashes}
-        <div class="empty-hint"><span class="spinner"></span></div>
-      {:else if filteredStashes.length === 0}
-        <div class="empty-hint">{searchQuery ? '無符合結果' : '尚無 Stash'}</div>
-      {:else}
-        {#each filteredStashes as stash (stash.index)}
+    {/each}
+
+    <!-- TAGS -->
+    <div class="px-4 py-2 flex items-center justify-between group/header">
+      <button 
+        class="flex items-center gap-1.5 text-[10.5px] font-bold text-ink-35 uppercase tracking-[0.5px] hover:text-ink transition-colors"
+        onclick={() => toggleSection('tags')}
+      >
+        <span class="w-3 text-center transition-transform duration-200" class:rotate-[-90deg]={isCollapsed('tags')}>▾</span>
+        TAGS
+        <span class="ml-1 px-1.5 py-0.5 rounded-full bg-ink-05 text-ink-35 text-[9px]">{filteredTags.length}</span>
+      </button>
+      <div class="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
+        <button class="p-1 rounded hover:bg-ink-05 text-ink-35 hover:text-ink" onclick={handleCreateTag}>+</button>
+      </div>
+    </div>
+    {#if !isCollapsed('tags')}
+      <div class="flex flex-col pb-4">
+        {#each filteredTags as tag (tag.name)}
           <button
-            class="branch-item stash-item"
-            class:stash-selected={selectedStashIndex === stash.index}
-            onclick={() => handleStashClick(stash.index)}
-            oncontextmenu={(e) => handleStashContextMenu(e, stash.index)}
-            title="stash@{'{' + stash.index + '}'}: {stash.message}（點擊預覽 diff）"
+            class="flex items-center gap-2 px-8 py-1.5 hover:bg-ink-05 transition-colors text-left border-l-2 border-transparent"
+            oncontextmenu={(e) => handleTagContextMenu(e, tag.name)}
           >
-            <span class="branch-icon stash-icon">📦</span>
-            <div class="stash-info">
-              <span class="stash-ref">stash@{'{' + stash.index + '}'}</span>
-              <span class="branch-name stash-msg">{stash.message}</span>
-            </div>
+            <span class="text-[10px] text-ink-35">🏷</span>
+            <span class="text-[13px] font-medium text-ink-70 truncate shrink min-w-0">{tag.name}</span>
           </button>
         {/each}
-      {/if}
-    </div>
-  {/if}
-
-  <div class="sidebar-divider"></div>
-
-  <!-- SUBMODULES -->
-  <SubmoduleManager />
-
-  <div class="sidebar-divider"></div>
-
-  <!-- WORKTREES -->
-  <WorktreeManager />
+      </div>
+    {/if}
+  </div>
 </div>
 
 <!-- Context menus -->

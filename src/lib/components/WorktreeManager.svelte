@@ -1,9 +1,11 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import { agentStore } from '$lib/stores/agentStore.svelte';
   import { extractErrorMessage } from '$lib/utils/error';
   import { gitGetWorktrees, gitAddWorktree, gitRemoveWorktree, openInFolder } from '$lib/git/commands';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
   import type { WorktreeInfo } from '$lib/git/types';
+  import { HardDrive, Plus, RefreshCw, Lock, Trash2, FolderOpen, ExternalLink, Activity } from 'lucide-react';
 
   // ── State ──────────────────────────────────────────────
   let searchQuery = $state('');
@@ -19,6 +21,10 @@
       w.branch?.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
+
+  function getAgentForWorktree(path: string) {
+    return agentStore.statuses.find(a => a.worktree === path || a.worktree?.startsWith(path));
+  }
 
   // ── Operations ──────────────────────────────────────────
   async function refreshWorktrees() {
@@ -105,39 +111,65 @@
   }
 </script>
 
-<div class="worktree-manager">
-  <div class="section-header-row">
-    <button class="section-toggle" onclick={() => (collapsed = !collapsed)}>
-      <span class="toggle-icon">{collapsed ? '▸' : '▾'}</span>
-      <span class="section-label">WORKTREES</span>
-      <span class="section-count">{app.worktrees.length}</span>
+<div class="worktree-section flex flex-col">
+  <div class="px-4 py-2 flex items-center justify-between group/header">
+    <button 
+      class="flex items-center gap-1.5 text-[10.5px] font-bold text-ink-35 uppercase tracking-[0.5px] hover:text-ink transition-colors"
+      onclick={() => (collapsed = !collapsed)}
+    >
+      <span class="w-3 text-center transition-transform duration-200" class:rotate-[-90deg]={collapsed}>▾</span>
+      WORKTREES
+      <span class="ml-1 px-1.5 py-0.5 rounded-full bg-ink-05 text-ink-35 text-[9px]">{app.worktrees.length}</span>
     </button>
-    <div class="section-actions">
-      <button class="section-action-btn" title="重新整理" onclick={refreshWorktrees} disabled={loading}>
-        <span class:spinning={loading}>↻</span>
+    <div class="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
+      <button class="p-1 rounded hover:bg-ink-05 text-ink-35 hover:text-ink transition-colors" onclick={refreshWorktrees} disabled={loading}>
+        <RefreshCw size={12} strokeWidth={2} class={loading ? 'animate-spin' : ''} />
       </button>
-      <button class="section-action-btn" title="新增 Worktree" onclick={handleAdd} disabled={loading}>+</button>
+      <button class="p-1 rounded hover:bg-ink-05 text-ink-35 hover:text-ink transition-colors" onclick={handleAdd}>
+        <Plus size={12} strokeWidth={2} />
+      </button>
     </div>
   </div>
 
   {#if !collapsed}
-    <div class="worktree-list">
+    <div class="flex flex-col pb-4">
       {#if app.worktrees.length === 0}
-        <div class="empty-state">尚無 Worktrees</div>
+        <div class="px-8 py-3 text-[12px] text-ink-35 italic">No worktrees found</div>
       {:else}
         {#each filteredWorktrees as wt (wt.path)}
+          {@const agent = getAgentForWorktree(wt.path)}
           <button
-            class="worktree-item"
+            class="flex flex-col px-8 py-2.5 hover:bg-ink-05 transition-colors text-left relative group border-l-2 border-transparent hover:border-accent/30"
             oncontextmenu={(e) => handleContextMenu(e, wt)}
-            title="{wt.name}\nBranch: {wt.branch}\nPath: {wt.path}"
+            onclick={() => app.openRepo(wt.path)}
           >
-            <span class="wt-icon">🌿</span>
-            <div class="wt-info">
-              <span class="wt-name">{wt.name}</span>
-              <span class="wt-branch">{wt.branch || '(no branch)'}</span>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <HardDrive size={13} strokeWidth={1.5} class="text-ink-50 shrink-0" />
+                <span class="text-[13.5px] font-medium text-ink truncate tracking-tight">{wt.name}</span>
+              </div>
+              {#if agent}
+                <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-accent-bg text-accent text-[9px] font-bold animate-pulse">
+                  <Activity size={8} strokeWidth={3} />
+                  AGENT
+                </div>
+              {/if}
             </div>
-            {#if wt.is_locked}
-              <span class="wt-lock" title={wt.lock_reason || 'Locked'}>🔒</span>
+            
+            <div class="flex items-center gap-1.5 mt-1">
+              <span class="text-[11px] font-mono text-ink-50 flex items-center gap-1">
+                <span class="text-[10px] opacity-40">⑇</span> {wt.branch || '(no branch)'}
+              </span>
+              {#if wt.is_locked}
+                <Lock size={10} class="text-warn opacity-60" />
+              {/if}
+            </div>
+
+            {#if agent}
+              <div class="mt-2 p-2 rounded-lg bg-bg-deep/50 border border-accent/10 flex flex-col gap-1">
+                <span class="text-[9px] font-bold text-accent uppercase tracking-wider">{agent.profile}</span>
+                <span class="text-[10px] text-ink-50 line-clamp-1 italic font-mono">{agent.last_action}</span>
+              </div>
             {/if}
           </button>
         {/each}
@@ -151,156 +183,7 @@
     x={contextMenu.x}
     y={contextMenu.y}
     items={menuItems}
-    onselect={handleMenuSelect}
-    onclose={() => (contextMenu = null)}
+    onSelect={handleMenuSelect}
+    onClose={() => (contextMenu = null)}
   />
 {/if}
-
-<style>
-  .worktree-manager {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .section-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-right: 8px;
-  }
-
-  .section-toggle {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    background: none;
-    border: none;
-    color: var(--text-muted, #aaa);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    text-align: left;
-  }
-
-  .section-toggle:hover {
-    color: var(--text-color, #eee);
-  }
-
-  .toggle-icon {
-    width: 10px;
-    font-size: 10px;
-  }
-
-  .section-count {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 1px 6px;
-    border-radius: 10px;
-    font-size: 10px;
-  }
-
-  .section-actions {
-    display: flex;
-    gap: 4px;
-  }
-
-  .section-action-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted, #aaa);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-  }
-
-  .section-action-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-color, #eee);
-  }
-
-  .section-action-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .worktree-list {
-    display: flex;
-    flex-direction: column;
-    padding: 0 4px 8px 4px;
-  }
-
-  .worktree-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px 6px 28px;
-    background: none;
-    border: none;
-    color: var(--text-color, #ccc);
-    font-size: 13px;
-    cursor: pointer;
-    text-align: left;
-    border-radius: 4px;
-    width: 100%;
-  }
-
-  .worktree-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .wt-icon {
-    font-size: 12px;
-    opacity: 0.7;
-  }
-
-  .wt-info {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .wt-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .wt-branch {
-    font-size: 10px;
-    color: var(--text-muted, #888);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .wt-lock {
-    font-size: 10px;
-    opacity: 0.6;
-  }
-
-  .empty-state {
-    padding: 8px 32px;
-    color: var(--text-muted, #666);
-    font-size: 12px;
-    font-style: italic;
-  }
-
-  .spinning {
-    display: inline-block;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-</style>

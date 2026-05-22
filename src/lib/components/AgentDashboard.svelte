@@ -74,7 +74,15 @@
                 </div>
                 <div class="flex flex-col">
                   <h3 class="text-[17px] font-semibold tracking-[-0.4px] leading-tight">{agent.profile}</h3>
-                  <span class="text-[10.5px] font-medium text-ink-35 uppercase tracking-[0.3px]">PID: {agent.pid || 'N/A'}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10.5px] font-medium text-ink-35 uppercase tracking-[0.3px]">PID: {agent.pid || 'N/A'}</span>
+                    {#if agent.worktree}
+                      <span class="text-ink-10 text-[10px]">|</span>
+                      <span class="text-[10px] font-mono text-accent truncate max-w-[120px]" title={agent.worktree}>
+                        {agent.worktree.split('/').pop()}
+                      </span>
+                    {/if}
+                  </div>
                 </div>
               </div>
               <div class="px-2 py-0.5 rounded-md bg-ink-05 text-ink-50 text-[9px] font-mono">

@@ -8,6 +8,7 @@ export interface AgentStatus {
   status: 'thinking' | 'searching' | 'patching' | 'idle' | 'working' | 'orchestrating';
   last_update: number;
   history: string[];
+  worktree?: string;
 }
 
 class AgentStore {

@@ -16,6 +16,7 @@ pub struct AgentStatus {
     pub status: String, 
     pub last_update: u64,
     pub history: Vec<String>,
+    pub worktree: Option<String>,
 }
 
 pub struct AgentMonitor {
@@ -95,6 +96,9 @@ impl AgentMonitor {
 
                         if let Some(p) = agent_proc {
                             status.pid = Some(p.pid().as_u32());
+                            if let Some(cwd) = p.cwd() {
+                                status.worktree = Some(cwd.to_string_lossy().to_string());
+                            }
                         } else {
                             status.pid = None;
                         }
@@ -144,6 +148,7 @@ fn parse_jsonl(path: &Path) -> Option<AgentStatus> {
         status,
         last_update: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
         history: Vec::new(),
+        worktree: None,
     })
 }
 
