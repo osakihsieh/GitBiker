@@ -41,6 +41,7 @@
   import ConflictResolver from '$lib/components/ConflictResolver.svelte';
   import InlineTerminal from '$lib/components/InlineTerminal.svelte';
   import AgentDashboard from '$lib/components/AgentDashboard.svelte';
+  import GitHubDashboard from '$lib/components/GitHubDashboard.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
 
   let showCloneDialog = $state(false);
@@ -212,7 +213,9 @@
 
         <!-- Center View -->
         <section class="flex-1 flex flex-col bg-bg-deep min-w-0">
-          {#if app.viewMode === 'conflict-resolution'}
+          {#if app.viewMode === 'github'}
+              <GitHubDashboard />
+          {:else if app.viewMode === 'conflict-resolution'}
               <ConflictResolver />
           {:else if app.selectedFile || app.currentDiff}
               <div class="h-9 flex items-center px-6 gap-2 border-b border-ink-10 bg-bg/50 backdrop-blur-sm text-[11px] font-medium text-ink-50">

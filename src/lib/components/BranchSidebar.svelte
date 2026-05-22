@@ -120,6 +120,7 @@
       // Single click → filter log
       lastClickBranch = branchName;
       lastClickTime = now;
+      app.viewMode = 'worktree';
       app.setLogFilter({ type: 'Branch', value: branchName });
     }
   }
@@ -135,8 +136,9 @@
   }
 
   // ── Remote branch ─────────────────────────────────────
-
+  // ── Remote branch ─────────────────────────────────────
   function handleRemoteBranchClick(branchName: string) {
+    app.viewMode = 'worktree';
     app.setLogFilter({ type: 'Branch', value: branchName });
   }
 
@@ -517,6 +519,24 @@
         {/each}
       </div>
     {/if}
+
+    <div class="h-px bg-ink-10 mx-4 my-2"></div>
+
+    <!-- GITHUB -->
+    <div class="px-4 py-2">
+      <button 
+        class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-ink-50 hover:bg-ink-05 hover:text-ink transition-all group"
+        class:bg-ink-05={app.viewMode === 'github'}
+        class:text-ink={app.viewMode === 'github'}
+        onclick={() => app.showGitHub()}
+      >
+        <span class="text-[12px] opacity-70 group-hover:scale-110 transition-transform">🐙</span>
+        <span class="text-[13px] font-semibold tracking-tight">GitHub Pulse</span>
+        {#if app.prs.length > 0}
+          <span class="ml-auto px-1.5 py-0.5 rounded-md bg-accent text-bg text-[9px] font-bold">{app.prs.length}</span>
+        {/if}
+      </button>
+    </div>
   </div>
 </div>
 

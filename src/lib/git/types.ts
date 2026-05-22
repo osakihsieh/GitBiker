@@ -243,3 +243,12 @@ export interface WorktreeInfo {
   is_locked: boolean;
   lock_reason: string | null;
 }
+
+export interface GitHubItem {
+  number: number;
+  title: string;
+  state: string;
+  url: string;
+  author?: { login: string };
+  updatedAt?: string;
+}

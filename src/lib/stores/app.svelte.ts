@@ -69,7 +69,8 @@ export type ViewMode =
   | 'file-history'
   | 'branch-compare'
   | 'rebase-editor'
-  | 'ai-branch-manager';
+  | 'ai-branch-manager'
+  | 'github';
 
 export interface RepoState {
   stagedFiles: FileStatus[];
@@ -101,6 +102,10 @@ export interface RepoState {
   submodules: SubmoduleInfo[];
   // Worktrees
   worktrees: WorktreeInfo[];
+  // GitHub
+  prs: GitHubItem[];
+  issues: GitHubItem[];
+  isLoadingRemote: boolean;
 }
 export interface RepoTab {
   id: string;
@@ -138,6 +143,9 @@ export function createEmptyState(): RepoState {
     lfsStatus: null,
     submodules: [],
     worktrees: [],
+    prs: [],
+    issues: [],
+    isLoadingRemote: false,
   };
 }
 
@@ -339,6 +347,33 @@ class AppState {
     if (tab) tab.state.worktrees = value;
   }
 
+  get prs(): GitHubItem[] {
+    return this.activeTab?.state.prs ?? [];
+  }
+
+  set prs(value: GitHubItem[]) {
+    const tab = this.activeTab;
+    if (tab) tab.state.prs = value;
+  }
+
+  get issues(): GitHubItem[] {
+    return this.activeTab?.state.issues ?? [];
+  }
+
+  set issues(value: GitHubItem[]) {
+    const tab = this.activeTab;
+    if (tab) tab.state.issues = value;
+  }
+
+  get isLoadingRemote(): boolean {
+    return this.activeTab?.state.isLoadingRemote ?? false;
+  }
+
+  set isLoadingRemote(value: boolean) {
+    const tab = this.activeTab;
+    if (tab) tab.state.isLoadingRemote = value;
+  }
+
   // ── Tab CRUD ──
 
   selectCommit(commit: Commit): void {
@@ -410,6 +445,31 @@ class AppState {
         this.addToast(extractErrorMessage(e), 'error');
       }
     }
+  }
+
+  async loadGitHubData(): Promise<void> {
+    const path = this.repoPath;
+    const tab = this.activeTab;
+    if (!path || !tab) return;
+
+    tab.state.isLoadingRemote = true;
+    try {
+      const [prs, issues] = await Promise.all([
+        getGithubPrs(path),
+        getGithubIssues(path)
+      ]);
+      tab.state.prs = prs;
+      tab.state.issues = issues;
+    } catch (e: unknown) {
+      this.addToast('GitHub data failed to load. Check "gh" CLI auth.', 'error');
+    } finally {
+      tab.state.isLoadingRemote = false;
+    }
+  }
+
+  showGitHub(): void {
+    this.viewMode = 'github';
+    this.loadGitHubData();
   }
 
   get branchCompareResult(): BranchCompareResult | null {
