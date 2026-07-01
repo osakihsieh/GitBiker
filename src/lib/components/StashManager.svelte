@@ -303,7 +303,7 @@
     gap: 2px;
   }
   .stash-index {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
     color: var(--text-muted);
   }
