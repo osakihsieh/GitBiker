@@ -717,7 +717,7 @@
   }
 
   .toggle-icon {
-    font-size: 10px;
+    font-size: var(--text-xs);
     width: 12px;
     flex-shrink: 0;
   }
@@ -738,7 +738,7 @@
     background: var(--bg-surface);
     padding: 1px 6px;
     border-radius: 8px;
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
   }
 
