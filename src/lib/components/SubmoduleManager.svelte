@@ -276,7 +276,7 @@
   }
 
   .sub-status {
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
 
   .empty-state {
