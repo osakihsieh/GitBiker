@@ -442,7 +442,7 @@
     padding: var(--space-sm) var(--space-md);
   }
   .popover-section-header {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -475,7 +475,7 @@
     margin-top: -2px;
   }
   .pin-icon {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     flex-shrink: 0;
     width: 14px;
