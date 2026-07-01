@@ -269,7 +269,7 @@
     flex-shrink: 0;
   }
   .terminal-title {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: #6c7086;
     font-family: var(--font-ui);
   }
@@ -282,7 +282,7 @@
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: #a6adc8;
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-ui);
     padding: 1px 4px;
     border-radius: 3px;
