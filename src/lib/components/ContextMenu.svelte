@@ -132,7 +132,7 @@
   }
   .shortcut {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
   }
   .context-divider {
