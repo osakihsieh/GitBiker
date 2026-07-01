@@ -578,7 +578,7 @@
     color: var(--text-muted);
   }
   .section-action {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--accent);
     cursor: pointer;
     background: none;
@@ -630,7 +630,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: var(--text-xs);
     cursor: pointer;
   }
   .checkbox.checked {
@@ -829,7 +829,7 @@
     cursor: not-allowed;
   }
   .shortcut-hint {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     margin-top: var(--space-xs);
     text-align: right;
