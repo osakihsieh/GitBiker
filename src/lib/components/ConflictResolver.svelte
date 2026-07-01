@@ -786,7 +786,7 @@
   }
 
   .section-tag {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
     text-transform: uppercase;
     padding: 1px 6px;
@@ -881,7 +881,7 @@
     background: rgba(79, 193, 255, 0.15);
   }
   .custom-hint {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     font-style: italic;
   }
