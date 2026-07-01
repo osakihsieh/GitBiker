@@ -327,7 +327,7 @@
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 11px;
+    font-size: var(--text-xs);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
   }
