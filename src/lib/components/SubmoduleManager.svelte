@@ -185,7 +185,7 @@
     background: none;
     border: none;
     color: var(--text-muted, #aaa);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: 0.05em;
     cursor: pointer;
@@ -198,14 +198,14 @@
 
   .toggle-icon {
     width: 10px;
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
 
   .section-count {
     background: rgba(255, 255, 255, 0.1);
     padding: 1px 6px;
     border-radius: 10px;
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
 
   .section-actions {
