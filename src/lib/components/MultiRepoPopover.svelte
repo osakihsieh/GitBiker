@@ -507,7 +507,7 @@
     gap: var(--space-xs);
     margin-left: auto;
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
   }
   .stat-dirty {
