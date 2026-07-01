@@ -475,7 +475,7 @@
   }
 
   .section-label {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-family: var(--font-ui);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -502,7 +502,7 @@
   }
 
   .progress-text {
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
     color: var(--text-muted);
     display: block;
@@ -552,7 +552,7 @@
   }
 
   .file-tag {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     padding: 0 4px;
     background: var(--bg-hover);
