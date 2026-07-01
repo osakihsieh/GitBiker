@@ -179,7 +179,7 @@
         language: app.aiLanguage,
         ollamaEndpoint: app.aiProvider === 'ollama' ? app.aiOllamaEndpoint : undefined,
       });
-      
+
       // Use app global state to show explanation/review (recycling AiExplanationDialog if possible)
       // Or just a toast for now? No, a review needs a dialog.
       app.stashDiff = review; // Reuse stashDiff or similar to display in a fixed area
@@ -504,16 +504,16 @@
         {/if}
       </button>
     </div>
-      <button
-        class="commit-btn"
-        onclick={handleCommit}
-        disabled={!commitTitle.trim() || committing || app.stagedFiles.length === 0}
-      >
-        {#if committing}
-          <span class="spinner"></span>
-        {/if}
-        Commit ({app.stagedFiles.length} files)
-      </button>
+    <button
+      class="commit-btn"
+      onclick={handleCommit}
+      disabled={!commitTitle.trim() || committing || app.stagedFiles.length === 0}
+    >
+      {#if committing}
+        <span class="spinner"></span>
+      {/if}
+      Commit ({app.stagedFiles.length} files)
+    </button>
     <div class="shortcut-hint">Ctrl+Enter</div>
   </div>
 
@@ -561,7 +561,7 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-sm) var(--space-md);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -574,7 +574,7 @@
     background: var(--bg-surface);
     padding: 1px 6px;
     border-radius: 8px;
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
   }
   .section-action {
@@ -602,7 +602,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-xs) var(--space-md);
+    padding: 8px var(--space-md);
     cursor: pointer;
     font-size: var(--font-size-sm);
     font-family: var(--font-mono);
@@ -612,6 +612,7 @@
     color: var(--text-primary);
     width: 100%;
     text-align: left;
+    min-height: 40px;
   }
   .file-item:hover {
     background: var(--bg-hover);
@@ -621,8 +622,8 @@
     border-left-color: var(--accent);
   }
   .checkbox {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border: 1px solid var(--text-muted);
     border-radius: var(--radius-sm);
     display: flex;
@@ -638,7 +639,7 @@
     color: var(--bg-primary);
   }
   .status {
-    font-size: 11px;
+    font-size: var(--text-xs);
     flex-shrink: 0;
     width: 12px;
     text-align: center;
@@ -658,24 +659,25 @@
   .status-c {
     color: var(--error);
     font-weight: bold;
-  .filename {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: var(--text-md);
-  }
-  .lfs-badge {
-    font-size: 9px;
-    padding: 1px 3px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    border-radius: 3px;
-    font-weight: 600;
-    margin-left: var(--space-xs);
-    flex-shrink: 0;
-  }
+    .filename {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: var(--text-sm);
+      line-height: 1.4;
+    }
+    .lfs-badge {
+      font-size: 9px;
+      padding: 1px 3px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 3px;
+      font-weight: 600;
+      margin-left: var(--space-xs);
+      flex-shrink: 0;
+    }
 
     padding: var(--space-md);
     color: var(--text-muted);
@@ -795,8 +797,12 @@
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .commit-btn {

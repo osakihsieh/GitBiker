@@ -78,8 +78,9 @@
   // ── Commit Graph ──
 
   const LANE_WIDTH = 16;
-  const DOT_RADIUS = 5;
+  const DOT_RADIUS = 6;
   const LINE_WIDTH = 2;
+
   const LANE_COLORS = [
     'var(--accent)',
     'var(--color-lane-1)',
@@ -176,7 +177,6 @@
     return lane * LANE_WIDTH + LANE_WIDTH / 2 + 4;
   }
 
-
   // ── Drag & Drop ──
   let draggingCommit = $state<Commit | null>(null);
   let dragOverCommit = $state<Commit | null>(null);
@@ -228,7 +228,7 @@
     ];
   });
 
-    async function handleDragMenuSelect(actionId: string) {
+  async function handleDragMenuSelect(actionId: string) {
     if (!dragMenu || !app.repoPath) return;
     const { source, target } = dragMenu;
 
@@ -659,7 +659,8 @@
   {/if}
 
   <div class="history-header">
-    <span class="header-title">Commits</span>
+    <span class="header-title">COMMITS</span>
+
     <select class="filter-select" value={currentFilterValue} onchange={handleFilterChange}>
       <option value="head">Current Branch</option>
       <option value="all">All Branches</option>
@@ -872,7 +873,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--text-xs);
     padding: 1px 2px;
     outline: none;
     cursor: pointer;
@@ -899,7 +900,7 @@
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 10px;
+    font-size: var(--text-xs);
     padding: 2px 4px;
   }
   .search-clear:hover {
@@ -926,7 +927,7 @@
     gap: var(--space-sm);
   }
   .header-title {
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -939,7 +940,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: 11px;
+    font-size: var(--text-xs);
     padding: 2px 4px;
     outline: none;
     max-width: 150px;
@@ -1014,7 +1015,8 @@
     flex-wrap: wrap;
   }
   .ref-tag {
-    font-size: 10px;
+    flex-shrink: 0;
+    font-size: var(--text-xs);
     padding: 1px 4px;
     border-radius: var(--radius-sm);
     font-weight: 600;
@@ -1036,7 +1038,7 @@
     cursor: context-menu;
   }
   .ref-overflow {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     padding: 1px 4px;
   }
@@ -1057,7 +1059,7 @@
   }
   .commit-hash {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
   .empty-state {
     display: flex;
@@ -1084,7 +1086,7 @@
   }
   .wip-badge {
     display: inline-block;
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-weight: 700;
     font-family: var(--font-mono);
     color: var(--accent);
@@ -1125,7 +1127,7 @@
   .branch-result-name {
     flex: 1;
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--text-xs);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

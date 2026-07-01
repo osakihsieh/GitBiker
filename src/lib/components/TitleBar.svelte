@@ -45,7 +45,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="titlebar" class:is-mac={app.isMac}>
+<div class="titlebar" class:is-mac={app.isMac} data-tauri-drag-region>
   {#if app.isMac}
     <div class="mac-traffic-lights-spacer" data-tauri-drag-region></div>
   {/if}
@@ -184,11 +184,12 @@
   }
 
   .mac-traffic-lights-spacer {
-    width: 72px; /* Standard Mac traffic lights width */
+    width: 88px; /* Correct width for padding [0, 16, 0, 20] + icons in design.pen */
     flex-shrink: 0;
   }
 
   .titlebar.is-mac {
-    height: 38px; /* Slightly taller for Mac traffic lights style */
+    height: 38px;
   }
+
 </style>

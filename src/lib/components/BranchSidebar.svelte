@@ -439,8 +439,9 @@
           oncontextmenu={(e) => handleLocalBranchContextMenu(e, branch.name)}
           title="{branch.name}（單擊過濾 / 雙擊 checkout）"
         >
-          <span class="branch-icon">⎇</span>
+          <span class="branch-icon">⑇</span>
           <span class="branch-name">{branch.name}</span>
+
           {#if branch.ahead || branch.behind}
             <span class="sync-status">
               {#if branch.ahead}<span class="ahead">↑{branch.ahead}</span>{/if}
@@ -470,7 +471,7 @@
             oncontextmenu={(e) => handleRemoteBranchContextMenu(e, branch.name)}
             title={branch.name}
           >
-            <span class="branch-icon remote-icon">☁</span>
+            <span class="branch-icon remote-icon">⑇</span>
             <span class="branch-name">{shortRemoteBranch(branch.name)}</span>
           </button>
         {/each}
@@ -698,7 +699,7 @@
     align-items: center;
     gap: var(--space-xs);
     padding: var(--space-sm) var(--space-md);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -753,7 +754,7 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-xs) var(--space-md) var(--space-xs) calc(var(--space-md) + 12px);
-    font-size: var(--font-size-sm);
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     color: var(--text-primary);
     background: none;
@@ -794,7 +795,7 @@
     color: var(--warning);
   }
   .stash-icon {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
   }
 
@@ -808,7 +809,7 @@
   .sync-status {
     display: flex;
     gap: 2px;
-    font-size: 10px;
+    font-size: var(--text-xs);
     flex-shrink: 0;
   }
   .ahead {
@@ -866,7 +867,7 @@
   }
 
   .tag-commit {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     font-family: var(--font-mono);
     flex-shrink: 0;
@@ -888,7 +889,7 @@
   }
 
   .stash-ref {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     font-family: var(--font-mono);
   }

@@ -1,12 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { app } from '$lib/stores/app.svelte';
-  import {
-    gitDiff,
-    openInEditor,
-    openInFolder,
-    openInTerminal,
-  } from '$lib/git/commands';
+  import { gitDiff, openInEditor, openInFolder, openInTerminal } from '$lib/git/commands';
   import TitleBar from '$lib/components/TitleBar.svelte';
   import Toolbar from '$lib/components/Toolbar.svelte';
   import TabBar from '$lib/components/TabBar.svelte';
@@ -33,8 +28,30 @@
   let activePopover = $state<'repo' | 'multiRepo' | null>(null);
 
   // Resize state
-  let sidebarWidth = $state(260);
+  let sidebarWidth = $state(240);
   let rightWidth = $state(320);
+
+  // Responsive layout
+  function updateResponsiveLayout() {
+    const w = window.innerWidth;
+    if (w < 1200) {
+      sidebarWidth = 200;
+      rightWidth = 240;
+    } else if (w < 1600) {
+      sidebarWidth = 240;
+      rightWidth = 280;
+    } else {
+      sidebarWidth = 300;
+      rightWidth = 360;
+    }
+  }
+
+  // Initialize responsive layout
+  $effect(() => {
+    updateResponsiveLayout();
+    window.addEventListener('resize', updateResponsiveLayout);
+    return () => window.removeEventListener('resize', updateResponsiveLayout);
+  });
   let resizing = $state<'sidebar' | 'right' | null>(null);
 
   function handleResizeStart(panel: 'sidebar' | 'right') {
@@ -59,7 +76,6 @@
     };
   }
 
-  
   function handleGlobalKeydown(e: KeyboardEvent) {
     const modKey = app.isMac ? e.metaKey : e.ctrlKey;
     const isInput = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
@@ -133,9 +149,18 @@
 
     // Quick Panel Focus (1: Branch, 2: Log, 3: Files)
     if (modKey && !e.shiftKey) {
-        if (e.key === '1') { e.preventDefault(); sidebarWidth = sidebarWidth > 0 ? sidebarWidth : 260; }
-        if (e.key === '2') { e.preventDefault(); app.selectedFile = null; }
-        if (e.key === '3') { e.preventDefault(); rightWidth = rightWidth > 0 ? rightWidth : 320; }
+      if (e.key === '1') {
+        e.preventDefault();
+        sidebarWidth = sidebarWidth > 0 ? sidebarWidth : 260;
+      }
+      if (e.key === '2') {
+        e.preventDefault();
+        app.selectedFile = null;
+      }
+      if (e.key === '3') {
+        e.preventDefault();
+        rightWidth = rightWidth > 0 ? rightWidth : 320;
+      }
     }
 
     // Settings
@@ -145,8 +170,8 @@
     }
 
     if (modKey && e.key === '`') {
-        e.preventDefault();
-        app.toggleTerminal();
+      e.preventDefault();
+      app.toggleTerminal();
     }
   }
 
@@ -158,29 +183,30 @@
 
 <div class="h-screen flex flex-col bg-bg-primary text-text-normal overflow-hidden select-none">
   <!-- Top Bar: Navigation & Tabs -->
-  <header class="flex-shrink-0 z-50 sticky top-0 backdrop-blur-md bg-bg-primary/60 border-b border-border">
+  <header
+    class="flex-shrink-0 z-50 sticky top-0 backdrop-blur-md bg-bg-primary/60 border-b border-border"
+  >
     <TitleBar>
-      <TabBar onOpenPopover={() => activePopover = 'repo'} />
+      <TabBar onOpenPopover={() => (activePopover = 'repo')} />
     </TitleBar>
   </header>
 
   {#if showSettings}
     <div class="flex-1 overflow-hidden">
-        <Settings onClose={() => (showSettings = false)} />
+      <Settings onClose={() => (showSettings = false)} />
     </div>
   {:else if app.hasRepo}
     <!-- Secondary Tooling -->
     <Toolbar
       onOpenSettings={() => (showSettings = true)}
-      onOpenPopover={() => activePopover = 'repo'}
-      onOpenMultiRepo={() => activePopover = 'multiRepo'}
+      onOpenPopover={() => (activePopover = 'repo')}
+      onOpenMultiRepo={() => (activePopover = 'multiRepo')}
     />
 
     <!-- Main Accelerated Workspace -->
     <main class="flex-1 flex overflow-hidden">
-      
       <!-- Left: Navigation (Branches, Tags, etc.) -->
-      <aside 
+      <aside
         class="bg-bg-secondary/70 backdrop-blur-xl border-r border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
         style:width="{sidebarWidth}px"
       >
@@ -188,7 +214,7 @@
       </aside>
 
       <!-- Resize Handle -->
-      <div 
+      <div
         class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
         onmousedown={handleResizeStart('sidebar')}
         role="separator"
@@ -200,24 +226,34 @@
       <!-- Center: Execution & Insight (Log, Diff) -->
       <section class="flex-1 flex flex-col bg-bg-primary min-w-0">
         {#if app.viewMode === 'conflict-resolution'}
-            <ConflictResolver />
+          <ConflictResolver />
         {:else if app.selectedFile || app.currentDiff}
-            <!-- Breadcrumb Navigation -->
-            <div class="h-8 flex items-center px-md gap-sm bg-bg-secondary/50 border-b border-border text-[11px]">
-                <button class="text-monokai-blue hover:underline" onclick={() => {app.selectedFile = null; app.currentDiff = null;}}>Commit Log</button>
-                <span class="text-text-dimmed">/</span>
-                <span class="truncate text-text-bright italic">{app.selectedFile?.split('/').pop()}</span>
-            </div>
-            <div class="flex-1 overflow-hidden">
-                <DiffViewer />
-            </div>
+          <!-- Breadcrumb Navigation -->
+          <div
+            class="h-8 flex items-center px-md gap-sm bg-bg-secondary/50 border-b border-border text-[11px]"
+          >
+            <button
+              class="text-monokai-blue hover:underline"
+              onclick={() => {
+                app.selectedFile = null;
+                app.currentDiff = null;
+              }}>Commit Log</button
+            >
+            <span class="text-text-dimmed">/</span>
+            <span class="truncate text-text-bright italic"
+              >{app.selectedFile?.split('/').pop()}</span
+            >
+          </div>
+          <div class="flex-1 overflow-hidden">
+            <DiffViewer />
+          </div>
         {:else}
-            <CommitLog />
+          <CommitLog />
         {/if}
       </section>
 
       <!-- Resize Handle -->
-      <div 
+      <div
         class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
         onmousedown={handleResizeStart('right')}
         role="separator"
@@ -227,35 +263,46 @@
       ></div>
 
       <!-- Right: Staging & Details -->
-      <aside 
+      <aside
         class="bg-bg-secondary/70 backdrop-blur-xl border-l border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
         style:width="{rightWidth}px"
       >
         {#if app.viewMode === 'commit-detail'}
-            <CommitFileList />
+          <CommitFileList />
         {:else}
-            <FileTree />
+          <FileTree />
         {/if}
       </aside>
     </main>
 
     <!-- Accelerated Terminal Sidecar -->
     <InlineTerminal visible={app.showTerminal} onClose={() => (app.showTerminal = false)} />
-
   {:else}
     <!-- Welcome Screen (Factory Idle) -->
     <div class="flex-1 flex items-center justify-center">
-        <Welcome 
-            onOpenRepo={(path) => app.openRepo(path)}
-            onClone={() => showCloneDialog = true}
-        />
+      <Welcome onOpenRepo={(path) => app.openRepo(path)} onClone={() => (showCloneDialog = true)} />
     </div>
   {/if}
 
   <!-- Modals & Popovers -->
-  <RepoPopover open={activePopover === 'repo'} onClose={() => activePopover = null} />
-  <MultiRepoPopover open={activePopover === 'multiRepo'} onClose={() => activePopover = null} />
-  <CommandPalette open={showCommandPalette} onClose={() => showCommandPalette = false} onOpenSettings={() => {showCommandPalette = false; showSettings = true;}} />
-  {#if showCloneDialog} <CloneDialog onClose={() => showCloneDialog = false} onCloned={(path) => {showCloneDialog = false; app.openRepo(path);}} /> {/if}
+  <RepoPopover open={activePopover === 'repo'} onClose={() => (activePopover = null)} />
+  <MultiRepoPopover open={activePopover === 'multiRepo'} onClose={() => (activePopover = null)} />
+  <CommandPalette
+    open={showCommandPalette}
+    onClose={() => (showCommandPalette = false)}
+    onOpenSettings={() => {
+      showCommandPalette = false;
+      showSettings = true;
+    }}
+  />
+  {#if showCloneDialog}
+    <CloneDialog
+      onClose={() => (showCloneDialog = false)}
+      onCloned={(path) => {
+        showCloneDialog = false;
+        app.openRepo(path);
+      }}
+    />
+  {/if}
   <Toast />
 </div>

@@ -1,4 +1,3 @@
-
 export interface GitHubItem {
   number: number;
   title: string;
@@ -18,8 +17,10 @@ import type {
   LogFilter,
   BranchCompareResult,
   TagInfo,
-  RebaseResult,
+  GitLfsStatus,
   RebaseCommit,
+  SubmoduleInfo,
+  WorktreeInfo,
 } from '$lib/git/types';
 import { gitBranchCompare } from '$lib/git/commands';
 import {
@@ -273,6 +274,10 @@ class AppState {
 
   get worktrees(): WorktreeInfo[] {
     return this.activeTab?.state.worktrees ?? [];
+  }
+
+  get lfsStatus(): GitLfsStatus | null {
+    return this.activeTab?.state.lfsStatus ?? null;
   }
 
   get currentBranch(): string {

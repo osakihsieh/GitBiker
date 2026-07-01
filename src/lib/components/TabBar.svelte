@@ -111,14 +111,14 @@
 </script>
 
 {#if app.tabs.length > 0}
-  <div class="tab-bar" role="tablist" aria-label="Open repositories">
+  <div class="tab-bar" role="tablist" aria-label="Open repositories" data-tauri-drag-region>
     {#if showLeftArrow}
       <button class="scroll-arrow left" onclick={() => scrollBy(-120)} aria-label="Scroll tabs left"
         >◀</button
       >
     {/if}
 
-    <div class="tabs-scroll" bind:this={scrollContainer}>
+    <div class="tabs-scroll" bind:this={scrollContainer} data-tauri-drag-region>
       {#each app.tabs as tab (tab.id)}
         {@const dirty = app.dirtyCount(tab.id) > 0}
         <button
@@ -173,8 +173,9 @@
     display: flex;
     align-items: center;
     background: transparent;
-    height: 32px;
+    height: 100%;
     flex-shrink: 0;
+
     user-select: none;
     position: relative;
     width: 100%;
@@ -194,7 +195,8 @@
     align-items: center;
     gap: var(--space-xs);
     padding: 0 var(--space-md);
-    height: 32px;
+    height: 100%;
+
     font-size: var(--text-sm);
     font-family: var(--font-ui);
     color: var(--text-secondary);
@@ -212,8 +214,9 @@
   }
   .tab.active {
     color: var(--text-primary);
-    border-bottom-color: var(--accent);
+    border-bottom-color: var(--border);
   }
+
   .dot {
     width: 6px;
     height: 6px;

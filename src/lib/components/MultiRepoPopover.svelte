@@ -361,7 +361,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-ui);
     padding: 2px 8px;
     cursor: pointer;
@@ -426,7 +426,7 @@
     margin-top: var(--space-xs);
   }
   .group-path {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -498,7 +498,7 @@
     max-width: 140px;
   }
   .repo-branch {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     white-space: nowrap;
   }

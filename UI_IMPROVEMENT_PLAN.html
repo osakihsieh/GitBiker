@@ -1,0 +1,2737 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitBiker UI 改進計畫 — 當前 vs 計畫</title>
+    <style>
+      :root {
+        /* 清新藍灰白配色 (Fresh Blue-Gray) */
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8fafc;
+        --bg-surface: #ffffff;
+        --bg-hover: #f1f5f9;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --accent-light: rgba(59, 130, 246, 0.1);
+        --success: #10b981;
+        --success-light: rgba(16, 185, 129, 0.1);
+        --error: #ef4444;
+        --error-light: rgba(239, 68, 68, 0.1);
+        --warning: #f59e0b;
+        --warning-light: rgba(245, 158, 11, 0.1);
+        --diff-add: rgba(16, 185, 129, 0.15);
+        --diff-del: rgba(239, 68, 68, 0.15);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        line-height: 1.6;
+        padding: 40px 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 48px;
+        padding-bottom: 32px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      h1 {
+        font-size: 32px;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+      .subtitle {
+        color: var(--text-muted);
+        font-size: 16px;
+      }
+
+      .design-principle {
+        margin-top: 16px;
+        padding: 12px;
+        background: rgba(0, 179, 230, 0.1);
+        border-radius: 8px;
+        border: 1px solid var(--accent);
+        color: var(--text-primary);
+      }
+
+      .section {
+        margin-bottom: 64px;
+      }
+
+      .section-title {
+        font-size: 24px;
+        color: var(--accent);
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .section-icon {
+        font-size: 28px;
+      }
+
+      /* 比較容器 */
+      .comparison-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 48px;
+      }
+
+      .comparison-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 16px 20px;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .panel-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .panel-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .badge-current {
+        background: rgba(242, 84, 93, 0.2);
+        color: var(--error);
+        border: 1px solid var(--error);
+      }
+
+      .badge-planned {
+        background: rgba(40, 200, 64, 0.2);
+        color: var(--success);
+        border: 1px solid var(--success);
+      }
+
+      .panel-content {
+        padding: 20px;
+      }
+
+      /* 模擬佈局 */
+      .mock-layout {
+        display: flex;
+        height: 500px;
+        background: var(--bg-primary);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .mock-sidebar {
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .mock-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .mock-right {
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* 側邊欄項目 */
+      .mock-section {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .mock-section-title {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+
+      .mock-branch {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        margin: 2px 0;
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--text-primary);
+        background: var(--bg-hover);
+      }
+
+      .mock-branch.active {
+        background: rgba(0, 179, 230, 0.15);
+        border-left: 3px solid var(--accent);
+      }
+
+      /* 差異查看器 */
+      .mock-diff {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .mock-diff-header {
+        padding: 8px 16px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+        font-size: 11px;
+        font-family: monospace;
+        color: var(--text-primary);
+      }
+
+      .mock-diff-content {
+        flex: 1;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .mock-diff-line {
+        display: flex;
+        min-height: 20px;
+      }
+
+      .mock-line-num {
+        width: 36px;
+        text-align: right;
+        padding-right: 8px;
+        color: var(--text-muted);
+        user-select: none;
+        background: var(--bg-surface);
+        flex-shrink: 0;
+      }
+
+      .mock-line-num-new {
+        width: 36px;
+        text-align: right;
+        padding-right: 8px;
+        color: var(--text-muted);
+        border-right: 1px solid var(--border);
+        margin-right: 8px;
+        flex-shrink: 0;
+      }
+
+      .mock-code {
+        flex: 1;
+        padding: 0 8px;
+        white-space: pre;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mock-diff-line.add {
+        background: var(--diff-add);
+      }
+      .mock-diff-line.del {
+        background: var(--diff-del);
+      }
+      .mock-diff-line.add .mock-code {
+        color: var(--success);
+      }
+      .mock-diff-line.del .mock-code {
+        color: var(--error);
+      }
+
+      .mock-hunk {
+        background: var(--bg-surface);
+        padding: 4px 16px;
+        color: var(--accent);
+        font-size: 11px;
+      }
+
+      /* 文件列表 */
+      .mock-file-list {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .mock-file-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-family: monospace;
+        color: var(--text-primary);
+        border-left: 2px solid transparent;
+      }
+
+      .mock-file-item:hover {
+        background: var(--bg-hover);
+      }
+      .mock-file-item.active {
+        background: var(--bg-surface);
+        border-left-color: var(--accent);
+      }
+
+      .mock-checkbox {
+        width: 14px;
+        height: 14px;
+        border: 1px solid var(--text-muted);
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      .mock-checkbox.checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .mock-status {
+        font-size: 11px;
+        flex-shrink: 0;
+        width: 12px;
+        text-align: center;
+      }
+
+      .mock-filename {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* 提交表單 */
+      .mock-commit-form {
+        border-top: 1px solid var(--border);
+        padding: 12px;
+      }
+
+      .mock-input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .mock-input {
+        flex: 1;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px;
+        color: var(--text-primary);
+        font-size: 12px;
+      }
+
+      .mock-btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+      }
+
+      .mock-btn-primary {
+        background: var(--accent);
+        color: var(--bg-primary);
+      }
+
+      .mock-btn-secondary {
+        background: var(--bg-surface);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+
+      /* 尺寸標註 */
+      .dimension-label {
+        position: absolute;
+        background: var(--accent);
+        color: var(--bg-primary);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      /* 問題卡片 */
+      .problem-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+      }
+
+      .problem-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .problem-title {
+        font-size: 18px;
+        color: var(--text-primary);
+      }
+
+      .severity-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .severity-high {
+        background: rgba(242, 84, 93, 0.2);
+        color: var(--error);
+      }
+
+      .problem-description {
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+      }
+
+      .problem-list {
+        list-style: none;
+        background: var(--bg-surface);
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      .problem-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .problem-list li:last-child {
+        border-bottom: none;
+      }
+
+      .problem-icon {
+        color: var(--error);
+        flex-shrink: 0;
+      }
+
+      /* 解決方案卡片 */
+      .solution-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .solution-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), var(--success));
+      }
+
+      .solution-title {
+        font-size: 18px;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+      }
+
+      .solution-list {
+        list-style: none;
+      }
+
+      .solution-list li {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .solution-list li:last-child {
+        border-bottom: none;
+      }
+
+      .solution-icon {
+        color: var(--success);
+        flex-shrink: 0;
+      }
+
+      /* 代碼對比 */
+      .code-comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin: 24px 0;
+      }
+
+      .code-block {
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .code-header {
+        padding: 8px 16px;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .code-content {
+        padding: 16px;
+        overflow-x: auto;
+      }
+
+      .code-content pre {
+        color: var(--text-primary);
+        font-family: monospace;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .code-content .comment {
+        color: var(--text-muted);
+      }
+      .code-content .property {
+        color: var(--accent);
+      }
+      .code-content .value {
+        color: var(--success);
+      }
+
+      /* 尺寸對比表 */
+      .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 24px 0;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .comparison-table th {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      .comparison-table tr:last-child td {
+        border-bottom: none;
+      }
+      .comparison-table tr:hover td {
+        background: var(--bg-hover);
+      }
+
+      .current-value {
+        color: var(--error);
+        text-decoration: line-through;
+        margin-right: 8px;
+      }
+
+      .new-value {
+        color: var(--success);
+        font-weight: 600;
+      }
+
+      /* 時間線 */
+      .timeline {
+        position: relative;
+        padding-left: 32px;
+        margin: 32px 0;
+      }
+
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 12px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border);
+      }
+
+      .timeline-item {
+        position: relative;
+        margin-bottom: 32px;
+      }
+
+      .timeline-dot {
+        position: absolute;
+        left: -32px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--bg-surface);
+        border: 2px solid var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--accent);
+      }
+
+      .timeline-content {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+      }
+
+      .timeline-title {
+        font-size: 16px;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+
+      .timeline-desc {
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      .priority-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-left: 8px;
+      }
+
+      .priority-p0 {
+        background: var(--error);
+        color: white;
+      }
+      .priority-p1 {
+        background: var(--warning);
+        color: black;
+      }
+      .priority-p2 {
+        background: var(--accent);
+        color: white;
+      }
+
+      /* 高亮框 */
+      .highlight-box {
+        background: linear-gradient(135deg, rgba(0, 179, 230, 0.1), rgba(40, 200, 64, 0.1));
+        border: 1px solid var(--accent);
+        border-radius: 12px;
+        padding: 24px;
+        margin: 24px 0;
+      }
+
+      .highlight-title {
+        color: var(--accent);
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+
+      footer {
+        margin-top: 64px;
+        padding-top: 32px;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      /* 標籤 */
+      .tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        background: var(--bg-surface);
+        color: var(--text-muted);
+        margin: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>GitBiker UI 改進計畫</h1>
+        <p class="subtitle">基於實際代碼庫的對比分析</p>
+        <div class="design-principle">
+          <strong style="color: var(--accent)">📌 設計原則：</strong>採用 MiMo 風格淺色主題 (方案
+          A)，藍色強調色 #3B82F6，專注於核心可用性優化。
+        </div>
+      </header>
+
+      <!-- 一、佈局對比 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">📐</span>
+          佈局對比：當前 vs 計畫
+        </h2>
+
+        <div class="comparison-container">
+          <!-- 當前佈局 -->
+          <div class="comparison-panel">
+            <div class="panel-header">
+              <span class="panel-title">當前佈局</span>
+              <span class="panel-badge badge-current">Current</span>
+            </div>
+            <div class="panel-content">
+              <div class="mock-layout">
+                <!-- 左側欄 240px -->
+                <div class="mock-sidebar" style="width: 240px">
+                  <div class="mock-section">
+                    <div class="mock-section-title">LOCAL</div>
+                    <div class="mock-branch active">⎇ main</div>
+                    <div class="mock-branch">⎇ feature/ui-fix</div>
+                  </div>
+                  <div class="mock-section">
+                    <div class="mock-section-title">REMOTE</div>
+                    <div class="mock-branch">⎇ origin/main</div>
+                    <div class="mock-branch">⎇ origin/develop</div>
+                  </div>
+                  <div class="mock-section">
+                    <div class="mock-section-title">TAGS</div>
+                    <div class="mock-branch">🏷 v0.3.1</div>
+                    <div class="mock-branch">🏷 v0.3.0</div>
+                  </div>
+                </div>
+
+                <!-- 中間區域 -->
+                <div class="mock-main">
+                  <div class="mock-diff">
+                    <div class="mock-diff-header">src/components/DiffViewer.svelte</div>
+                    <div class="mock-diff-content">
+                      <div class="mock-hunk">@@ -240,8 +240,12 @@</div>
+                      <div class="mock-diff-line">
+                        <span class="mock-line-num">240</span>
+                        <span class="mock-line-num-new">240</span>
+                        <span class="mock-code"> .line-num,</span>
+                      </div>
+                      <div class="mock-diff-line">
+                        <span class="mock-line-num">241</span>
+                        <span class="mock-line-num-new">241</span>
+                        <span class="mock-code"> .line-num-new {</span>
+                      </div>
+                      <div class="mock-diff-line del">
+                        <span class="mock-line-num">242</span>
+                        <span class="mock-line-num-new"></span>
+                        <span class="mock-code">- width: 40px;</span>
+                      </div>
+                      <div class="mock-diff-line del">
+                        <span class="mock-line-num">243</span>
+                        <span class="mock-line-num-new"></span>
+                        <span class="mock-code">- min-width: 40px;</span>
+                      </div>
+                      <div class="mock-diff-line add">
+                        <span class="mock-line-num"></span>
+                        <span class="mock-line-num-new">242</span>
+                        <span class="mock-code">+ width: 36px;</span>
+                      </div>
+                      <div class="mock-diff-line add">
+                        <span class="mock-line-num"></span>
+                        <span class="mock-line-num-new">243</span>
+                        <span class="mock-code">+ min-width: 36px;</span>
+                      </div>
+                      <div class="mock-diff-line">
+                        <span class="mock-line-num">244</span>
+                        <span class="mock-line-num-new">244</span>
+                        <span class="mock-code"> }</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 右側欄 320px -->
+                <div class="mock-right" style="width: 320px">
+                  <div class="mock-section">
+                    <div class="mock-section-title">Staged <span class="tag">2</span></div>
+                  </div>
+                  <div class="mock-file-list">
+                    <div class="mock-file-item active">
+                      <span class="mock-checkbox checked"></span>
+                      <span class="mock-status" style="color: var(--success)">M</span>
+                      <span class="mock-filename">DiffViewer.svelte</span>
+                    </div>
+                    <div class="mock-file-item">
+                      <span class="mock-checkbox checked"></span>
+                      <span class="mock-status" style="color: var(--warning)">M</span>
+                      <span class="mock-filename">FileTree.svelte</span>
+                    </div>
+                  </div>
+                  <div class="mock-commit-form">
+                    <div class="mock-input-row">
+                      <select class="mock-input" style="width: 60px; flex: none">
+                        <option>feat:</option>
+                      </select>
+                      <input class="mock-input" placeholder="簡述變更" />
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px">
+                      <button class="mock-btn mock-btn-secondary">AI 生成</button>
+                      <button class="mock-btn mock-btn-primary" style="flex: 1">Commit (2)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 計畫佈局 -->
+          <div class="comparison-panel">
+            <div class="panel-header">
+              <span class="panel-title">計畫佈局</span>
+              <span class="panel-badge badge-planned">Planned</span>
+            </div>
+            <div class="panel-content">
+              <div class="mock-layout">
+                <!-- 左側欄 280px -->
+                <div class="mock-sidebar" style="width: 280px">
+                  <div class="mock-section">
+                    <div class="mock-section-title">LOCAL</div>
+                    <div class="mock-branch active">⎇ main</div>
+                    <div class="mock-branch">⎇ feature/ui-improvement</div>
+                    <div class="mock-branch">⎇ fix/readability</div>
+                  </div>
+                  <div class="mock-section">
+                    <div class="mock-section-title">REMOTE</div>
+                    <div class="mock-branch">⎇ origin/main</div>
+                    <div class="mock-branch">⎇ origin/develop</div>
+                    <div class="mock-branch">⎇ origin/feature/new-ui</div>
+                  </div>
+                  <div class="mock-section">
+                    <div class="mock-section-title">TAGS</div>
+                    <div class="mock-branch">🏷 v0.3.1</div>
+                    <div class="mock-branch">🏷 v0.3.0</div>
+                  </div>
+                </div>
+
+                <!-- 中間區域 -->
+                <div class="mock-main">
+                  <div class="mock-diff">
+                    <div class="mock-diff-header">src/components/DiffViewer.svelte</div>
+                    <div class="mock-diff-content">
+                      <div class="mock-hunk">@@ -240,8 +240,12 @@</div>
+                      <div class="mock-diff-line">
+                        <span class="mock-line-num">240</span>
+                        <span class="mock-line-num-new">240</span>
+                        <span class="mock-code"> .line-num,</span>
+                      </div>
+                      <div class="mock-diff-line">
+                        <span class="mock-line-num">241</span>
+                        <span class="mock-line-num-new">241</span>
+                        <span class="mock-code"> .line-num-new {</span>
+                      </div>
+                      <div class="mock-diff-line del">
+                        <span class="mock-line-num">242</span>
+                        <span class="mock-line-num-new"></span>
+                        <span class="mock-code">- width: 40px;</span>
+                      </div>
+                      <div class="mock-diff-line del">
+                        <span class="mock-line-num">243</span>
+                        <span class="mock-line-num-new"></span>
+                        <span class="mock-code">- min-width: 40px;</span>
+                      </div>
+                      <div class="mock-diff-line add">
+                        <span class="mock-line-num"></span>
+                        <span class="mock-line-num-new">242</span>
+                        <span class="mock-code">+ width: 36px;</span>
+                      </div>
+                      <div class="mock-diff-line add">
+                        <span class="mock-line-num"></span>
+                        <span class="mock-line-num-new">243</span>
+                        <span class="mock-code">+ min-width: 36px;</span>
+                      </div>
+                      <div class="mock-diff-line">
+                        <span class="mock-line-num">244</span>
+                        <span class="mock-line-num-new">244</span>
+                        <span class="mock-code"> }</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 右側欄 360px -->
+                <div class="mock-right" style="width: 360px">
+                  <div class="mock-section">
+                    <div class="mock-section-title">Staged <span class="tag">2</span></div>
+                  </div>
+                  <div class="mock-file-list">
+                    <div class="mock-file-item active">
+                      <span class="mock-checkbox checked"></span>
+                      <span class="mock-status" style="color: var(--success)">M</span>
+                      <span class="mock-filename">DiffViewer.svelte</span>
+                    </div>
+                    <div class="mock-file-item">
+                      <span class="mock-checkbox checked"></span>
+                      <span class="mock-status" style="color: var(--warning)">M</span>
+                      <span class="mock-filename">FileTree.svelte</span>
+                    </div>
+                  </div>
+                  <div class="mock-commit-form">
+                    <div class="mock-input-row">
+                      <select class="mock-input" style="width: 60px; flex: none">
+                        <option>feat:</option>
+                      </select>
+                      <input class="mock-input" placeholder="簡述變更" />
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px">
+                      <button class="mock-btn mock-btn-secondary">AI 生成</button>
+                      <button class="mock-btn mock-btn-primary" style="flex: 1">Commit (2)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 二、核心問題 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">🔍</span>
+          核心問題分析
+        </h2>
+
+        <div class="problem-card">
+          <div class="problem-header">
+            <h3 class="problem-title">操作不易</h3>
+            <span class="severity-badge severity-high">高優先級</span>
+          </div>
+          <p class="problem-description">
+            三欄佈局太擁擠，默認寬度不足，導致交互困難。按鈕和控制項太小，難以點擊。
+          </p>
+          <ul class="problem-list">
+            <li>
+              <span class="problem-icon">✗</span>
+              <span>左側欄寬度僅 240px，分支名稱被截斷</span>
+            </li>
+            <li>
+              <span class="problem-icon">✗</span>
+              <span>右側欄寬度僅 320px，文件列表擁擠</span>
+            </li>
+            <li>
+              <span class="problem-icon">✗</span>
+              <span>按鈕高度不足 48px，不符合 Fitts 定律</span>
+            </li>
+            <li>
+              <span class="problem-icon">✗</span>
+              <span>Checkbox 僅 14x14px，難以精準點擊</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="problem-card">
+          <div class="problem-header">
+            <h3 class="problem-title">信息無法正確看到內文</h3>
+            <span class="severity-badge severity-high">高優先級</span>
+          </div>
+          <p class="problem-description">
+            差異查看器、文件列表、提交信息等關鍵內容因空間不足而被截斷。
+          </p>
+          <ul class="problem-list">
+            <li>
+              <span class="problem-icon">✗</span>
+              <span>差異查看器行號佔用 80px (40px × 2)，代碼區域被壓縮</span>
+            </li>
+            <li>
+              <span class="problem-icon">✗</span>
+              <span>文件名使用 text-overflow: ellipsis 但無 tooltip</span>
+            </li>
+            <li>
+              <span class="problem-icon">✗</span>
+              <span>提交信息單行顯示，多行內容被隱藏</span>
+            </li>
+            <li>
+              <span class="problem-icon">✗</span>
+              <span>代碼長行無法換行，需要水平滾動</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 二、DiffViewer 對比 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">📝</span>
+          DiffViewer 详细对比
+        </h2>
+
+        <div class="comparison-container">
+          <!-- 当前 DiffViewer -->
+          <div class="comparison-panel">
+            <div class="panel-header">
+              <span class="panel-title">当前 DiffViewer</span>
+              <span class="panel-badge badge-current">Current</span>
+            </div>
+            <div class="panel-content">
+              <div style="background: var(--bg-primary); border-radius: 8px; overflow: hidden">
+                <!-- Header -->
+                <div
+                  style="
+                    padding: 8px 16px;
+                    background: var(--bg-secondary);
+                    border-bottom: 1px solid var(--border);
+                    font-size: 11px;
+                    font-family: monospace;
+                    color: var(--text-primary);
+                    display: flex;
+                    justify-content: space-between;
+                  "
+                >
+                  <span>src/components/DiffViewer.svelte</span>
+                  <span
+                    ><span style="color: var(--success)">+12</span>
+                    <span style="color: var(--error)">-8</span></span
+                  >
+                </div>
+                <!-- Diff Content -->
+                <div style="font-family: monospace; font-size: 12px; line-height: 1.6">
+                  <!-- Hunk Header -->
+                  <div
+                    style="
+                      background: var(--bg-surface);
+                      padding: 4px 16px;
+                      color: var(--accent);
+                      font-size: 11px;
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                    "
+                  >
+                    <span
+                      style="
+                        background: var(--accent);
+                        color: var(--bg-primary);
+                        padding: 2px 6px;
+                        border-radius: 3px;
+                        font-size: 10px;
+                      "
+                      >+</span
+                    >
+                    <span>@@ -240,8 +240,12 @@</span>
+                  </div>
+                  <!-- Code Lines -->
+                  <div style="display: flex; min-height: 20px">
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                      >240</span
+                    >
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                      >240</span
+                    >
+                    <span style="flex: 1; padding: 0 8px; white-space: pre"> .line-num,</span>
+                  </div>
+                  <div style="display: flex; min-height: 20px">
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                      >241</span
+                    >
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                      >241</span
+                    >
+                    <span style="flex: 1; padding: 0 8px; white-space: pre"> .line-num-new {</span>
+                  </div>
+                  <div style="display: flex; min-height: 20px; background: var(--diff-del)">
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                      >242</span
+                    >
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                    ></span>
+                    <span style="flex: 1; padding: 0 8px; color: var(--error); white-space: pre"
+                      >- width: 40px;</span
+                    >
+                  </div>
+                  <div style="display: flex; min-height: 20px; background: var(--diff-del)">
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                      >243</span
+                    >
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                    ></span>
+                    <span style="flex: 1; padding: 0 8px; color: var(--error); white-space: pre"
+                      >- min-width: 40px;</span
+                    >
+                  </div>
+                  <div style="display: flex; min-height: 20px; background: var(--diff-add)">
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                    ></span>
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                      >242</span
+                    >
+                    <span style="flex: 1; padding: 0 8px; color: var(--success); white-space: pre"
+                      >+ width: 36px;</span
+                    >
+                  </div>
+                  <div style="display: flex; min-height: 20px; background: var(--diff-add)">
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                    ></span>
+                    <span
+                      style="
+                        width: 40px;
+                        text-align: right;
+                        padding-right: 8px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                      >243</span
+                    >
+                    <span style="flex: 1; padding: 0 8px; color: var(--success); white-space: pre"
+                      >+ min-width: 36px;</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- 尺寸标注 -->
+              <div
+                style="
+                  margin-top: 16px;
+                  padding: 12px;
+                  background: var(--bg-surface);
+                  border-radius: 8px;
+                "
+              >
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px">
+                  尺寸分析
+                </div>
+                <div style="font-size: 14px; color: var(--text-primary)">
+                  • 行号宽度: <span style="color: var(--error)">40px × 2 = 80px</span><br />
+                  • 代码区域: <span style="color: var(--warning)">受压缩</span><br />
+                  • 长行处理: <span style="color: var(--error)">水平滚动</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 计划 DiffViewer -->
+          <div class="comparison-panel">
+            <div class="panel-header">
+              <span class="panel-title">计划 DiffViewer</span>
+              <span class="panel-badge badge-planned">Planned</span>
+            </div>
+            <div class="panel-content">
+              <div style="background: var(--bg-primary); border-radius: 8px; overflow: hidden">
+                <!-- Header -->
+                <div
+                  style="
+                    padding: 8px 16px;
+                    background: var(--bg-secondary);
+                    border-bottom: 1px solid var(--border);
+                    font-size: 11px;
+                    font-family: monospace;
+                    color: var(--text-primary);
+                    display: flex;
+                    justify-content: space-between;
+                  "
+                >
+                  <span>src/components/DiffViewer.svelte</span>
+                  <span
+                    ><span style="color: var(--success)">+12</span>
+                    <span style="color: var(--error)">-8</span></span
+                  >
+                </div>
+                <!-- Diff Content -->
+                <div style="font-family: monospace; font-size: 12px; line-height: 1.6">
+                  <!-- Hunk Header -->
+                  <div
+                    style="
+                      background: var(--bg-surface);
+                      padding: 4px 16px;
+                      color: var(--accent);
+                      font-size: 11px;
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                    "
+                  >
+                    <span
+                      style="
+                        background: var(--accent);
+                        color: var(--bg-primary);
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-size: 10px;
+                        cursor: pointer;
+                      "
+                      >Stage</span
+                    >
+                    <span>@@ -240,8 +240,12 @@</span>
+                  </div>
+                  <!-- Code Lines -->
+                  <div style="display: flex; min-height: 20px">
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                      >240</span
+                    >
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                      >240</span
+                    >
+                    <span
+                      style="flex: 1; padding: 0 8px; white-space: pre-wrap; word-break: break-all"
+                    >
+                      .line-num,</span
+                    >
+                  </div>
+                  <div style="display: flex; min-height: 20px">
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                      >241</span
+                    >
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                      >241</span
+                    >
+                    <span
+                      style="flex: 1; padding: 0 8px; white-space: pre-wrap; word-break: break-all"
+                    >
+                      .line-num-new {</span
+                    >
+                  </div>
+                  <div style="display: flex; min-height: 20px; background: var(--diff-del)">
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                      >242</span
+                    >
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                    ></span>
+                    <span
+                      style="
+                        flex: 1;
+                        padding: 0 8px;
+                        color: var(--error);
+                        white-space: pre-wrap;
+                        word-break: break-all;
+                      "
+                      >- width: 40px;</span
+                    >
+                  </div>
+                  <div style="display: flex; min-height: 20px; background: var(--diff-del)">
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                      >243</span
+                    >
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                    ></span>
+                    <span
+                      style="
+                        flex: 1;
+                        padding: 0 8px;
+                        color: var(--error);
+                        white-space: pre-wrap;
+                        word-break: break-all;
+                      "
+                      >- min-width: 40px;</span
+                    >
+                  </div>
+                  <div style="display: flex; min-height: 20px; background: var(--diff-add)">
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                    ></span>
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                      >242</span
+                    >
+                    <span
+                      style="
+                        flex: 1;
+                        padding: 0 8px;
+                        color: var(--success);
+                        white-space: pre-wrap;
+                        word-break: break-all;
+                      "
+                      >+ width: 36px;</span
+                    >
+                  </div>
+                  <div style="display: flex; min-height: 20px; background: var(--diff-add)">
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        background: var(--bg-surface);
+                        flex-shrink: 0;
+                      "
+                    ></span>
+                    <span
+                      style="
+                        width: 36px;
+                        text-align: right;
+                        padding-right: 6px;
+                        color: var(--text-muted);
+                        border-right: 1px solid var(--border);
+                        margin-right: 8px;
+                        flex-shrink: 0;
+                      "
+                      >243</span
+                    >
+                    <span
+                      style="
+                        flex: 1;
+                        padding: 0 8px;
+                        color: var(--success);
+                        white-space: pre-wrap;
+                        word-break: break-all;
+                      "
+                      >+ min-width: 36px;</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- 尺寸标注 -->
+              <div
+                style="
+                  margin-top: 16px;
+                  padding: 12px;
+                  background: var(--bg-surface);
+                  border-radius: 8px;
+                "
+              >
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px">
+                  尺寸分析
+                </div>
+                <div style="font-size: 14px; color: var(--text-primary)">
+                  • 行号宽度: <span style="color: var(--success)">36px × 2 = 72px (节省 8px)</span
+                  ><br />
+                  • 代码区域: <span style="color: var(--success)">增加 8px 显示空间</span><br />
+                  • 长行处理: <span style="color: var(--success)">自动换行</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 关键差异对比 -->
+        <div
+          style="
+            margin-top: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+          "
+        >
+          <h3 style="color: var(--text-primary); margin-bottom: 16px">关键差异总结</h3>
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>属性</th>
+                <th>当前值</th>
+                <th>计划值</th>
+                <th>改善效果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>.line-num width</td>
+                <td><span class="current-value">40px</span></td>
+                <td><span class="new-value">36px</span></td>
+                <td style="color: var(--success)">节省 4px/列</td>
+              </tr>
+              <tr>
+                <td>.line-num-new width</td>
+                <td><span class="current-value">40px</span></td>
+                <td><span class="new-value">36px</span></td>
+                <td style="color: var(--success)">节省 4px/列</td>
+              </tr>
+              <tr>
+                <td>总行号占用</td>
+                <td><span class="current-value">80px</span></td>
+                <td><span class="new-value">72px</span></td>
+                <td style="color: var(--success)">节省 8px (10%)</td>
+              </tr>
+              <tr>
+                <td>.code white-space</td>
+                <td><span class="current-value">pre</span></td>
+                <td><span class="new-value">pre-wrap</span></td>
+                <td style="color: var(--success)">支持自动换行</td>
+              </tr>
+              <tr>
+                <td>.code word-break</td>
+                <td><span class="current-value">(无)</span></td>
+                <td><span class="new-value">break-all</span></td>
+                <td style="color: var(--success)">长单词也能换行</td>
+              </tr>
+              <tr>
+                <td>.code min-width</td>
+                <td><span class="current-value">(无)</span></td>
+                <td><span class="new-value">0</span></td>
+                <td style="color: var(--success)">允许内容收缩</td>
+              </tr>
+              <tr>
+                <td>.hunk-btn size</td>
+                <td><span class="current-value">22×22px</span></td>
+                <td><span class="new-value">28×28px</span></td>
+                <td style="color: var(--success)">增大 27%，更易点击</td>
+              </tr>
+              <tr>
+                <td>.hunk-btn border-radius</td>
+                <td><span class="current-value">2px</span></td>
+                <td><span class="new-value">4px</span></td>
+                <td style="color: var(--success)">更圆润现代</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 三、CSS 對比 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">⚙️</span>
+          CSS 實現對比
+        </h2>
+
+        <h3 style="color: var(--text-primary); margin-bottom: 16px">差異查看器行號</h3>
+        <div class="code-comparison">
+          <div class="code-block">
+            <div class="code-header">當前實現</div>
+            <div class="code-content">
+              <pre><span class="comment">/* DiffViewer.svelte */</span>
+<span class="property">.line-num</span>,
+<span class="property">.line-num-new</span> {
+  <span class="property">width</span>: <span class="value">40px</span>;
+  <span class="property">min-width</span>: <span class="value">40px</span>;
+  <span class="property">text-align</span>: <span class="value">right</span>;
+  <span class="property">padding-right</span>: <span class="value">var(--space-sm)</span>;
+}
+<span class="comment">/* 總計佔用: 80px */</span></pre>
+            </div>
+          </div>
+          <div class="code-block">
+            <div class="code-header">計畫實現</div>
+            <div class="code-content">
+              <pre><span class="comment">/* 優化後 */</span>
+<span class="property">.line-num</span>,
+<span class="property">.line-num-new</span> {
+  <span class="property">width</span>: <span class="value">36px</span>;
+  <span class="property">min-width</span>: <span class="value">36px</span>;
+  <span class="property">text-align</span>: <span class="value">right</span>;
+  <span class="property">padding-right</span>: <span class="value">6px</span>;
+}
+<span class="comment">/* 總計佔用: 72px (節省 8px) */</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="color: var(--text-primary); margin-bottom: 16px">文件列表項目</h3>
+        <div class="code-comparison">
+          <div class="code-block">
+            <div class="code-header">當前實現</div>
+            <div class="code-content">
+              <pre><span class="comment">/* FileTree.svelte */</span>
+<span class="property">.file-item</span> {
+  <span class="property">display</span>: <span class="value">flex</span>;
+  <span class="property">padding</span>: <span class="value">var(--space-xs) var(--space-md)</span>;
+  <span class="comment">/* padding: 4px 12px */</span>
+}
+
+<span class="property">.checkbox</span> {
+  <span class="property">width</span>: <span class="value">14px</span>;
+  <span class="property">height</span>: <span class="value">14px</span>;
+}
+
+<span class="property">.filename</span> {
+  <span class="property">font-size</span>: <span class="value">var(--text-md)</span>;
+  <span class="comment">/* 13px */</span>
+}</pre>
+            </div>
+          </div>
+          <div class="code-block">
+            <div class="code-header">計畫實現</div>
+            <div class="code-content">
+              <pre><span class="comment">/* 優化後 */</span>
+<span class="property">.file-item</span> {
+  <span class="property">display</span>: <span class="value">flex</span>;
+  <span class="property">padding</span>: <span class="value">8px 12px</span>;
+  <span class="property">min-height</span>: <span class="value">48px</span>;
+}
+
+<span class="property">.checkbox</span> {
+  <span class="property">width</span>: <span class="value">16px</span>;
+  <span class="property">height</span>: <span class="value">16px</span>;
+}
+
+<span class="property">.filename</span> {
+  <span class="property">font-size</span>: <span class="value">14px</span>;
+  <span class="property">line-height</span>: <span class="value">1.4</span>;
+}</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 四、響應式設計 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">📱</span>
+          響應式設計（不同窗口大小）
+        </h2>
+
+        <div class="problem-card">
+          <h3 class="problem-title">窗口尺寸適應策略</h3>
+          <p class="problem-description">
+            針對不同窗口大小，提供彈性的佈局調整方案，確保在各種設備上都有良好的使用體驗。
+          </p>
+        </div>
+
+        <!-- 小窗口 (< 1200px) - 彈性佈局 -->
+        <div class="comparison-container">
+          <div class="comparison-panel">
+            <div class="panel-header">
+              <span class="panel-title">小窗口 (< 1200px) - 彈性佈局</span>
+              <span class="panel-badge badge-current">Compact</span>
+            </div>
+            <div class="panel-content">
+              <div style="background: var(--bg-primary); border-radius: 8px; padding: 16px">
+                <!-- 方案 A: Tab 切換模式 -->
+                <div style="margin-bottom: 20px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: var(--accent);
+                      margin-bottom: 10px;
+                      font-weight: 600;
+                    "
+                  >
+                    方案 A: Tab 切換模式
+                  </div>
+                  <div style="display: flex; gap: 10px; height: 180px">
+                    <div
+                      style="
+                        flex: 0 0 44px;
+                        background: var(--bg-secondary);
+                        border-radius: 8px;
+                        padding: 8px 4px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                      "
+                    >
+                      <div
+                        style="
+                          background: var(--accent);
+                          color: var(--bg-primary);
+                          padding: 8px;
+                          border-radius: 4px;
+                          font-size: 14px;
+                          text-align: center;
+                          cursor: pointer;
+                        "
+                      >
+                        ⎇
+                      </div>
+                      <div
+                        style="
+                          background: var(--bg-hover);
+                          padding: 8px;
+                          border-radius: 4px;
+                          font-size: 14px;
+                          text-align: center;
+                          cursor: pointer;
+                        "
+                      >
+                        📝
+                      </div>
+                      <div
+                        style="
+                          background: var(--bg-hover);
+                          padding: 8px;
+                          border-radius: 4px;
+                          font-size: 14px;
+                          text-align: center;
+                          cursor: pointer;
+                        "
+                      >
+                        📁
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        background: var(--bg-secondary);
+                        border-radius: 8px;
+                        padding: 12px;
+                        display: flex;
+                        flex-direction: column;
+                      "
+                    >
+                      <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                        分支列表 (全寬)
+                      </div>
+                      <div
+                        style="
+                          flex: 1;
+                          background: var(--bg-hover);
+                          border-radius: 4px;
+                          padding: 8px;
+                        "
+                      >
+                        <div style="font-size: 11px; margin-bottom: 4px">⎇ main</div>
+                        <div style="font-size: 11px">⎇ feature/ui</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 方案 B: 側欄可折疊 -->
+                <div style="margin-bottom: 20px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: var(--accent);
+                      margin-bottom: 10px;
+                      font-weight: 600;
+                    "
+                  >
+                    方案 B: 側欄可折疊
+                  </div>
+                  <div style="display: flex; gap: 10px; height: 180px">
+                    <div
+                      style="
+                        flex: 0 0 180px;
+                        background: var(--bg-secondary);
+                        border-radius: 8px;
+                        padding: 12px;
+                        position: relative;
+                      "
+                    >
+                      <div
+                        style="
+                          position: absolute;
+                          right: -14px;
+                          top: 50%;
+                          transform: translateY(-50%);
+                          background: var(--bg-surface);
+                          border: 1px solid var(--border);
+                          border-radius: 4px;
+                          padding: 6px 4px;
+                          font-size: 10px;
+                          cursor: pointer;
+                          z-index: 1;
+                        "
+                      >
+                        ◀
+                      </div>
+                      <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                        分支 (可折疊)
+                      </div>
+                      <div
+                        style="
+                          background: var(--bg-hover);
+                          padding: 6px 8px;
+                          border-radius: 4px;
+                          font-size: 11px;
+                          margin-bottom: 4px;
+                        "
+                      >
+                        ⎇ main
+                      </div>
+                      <div
+                        style="
+                          background: var(--bg-hover);
+                          padding: 6px 8px;
+                          border-radius: 4px;
+                          font-size: 11px;
+                        "
+                      >
+                        ⎇ feature
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        background: var(--bg-secondary);
+                        border-radius: 8px;
+                        padding: 12px;
+                        display: flex;
+                        flex-direction: column;
+                      "
+                    >
+                      <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                        中央區域
+                      </div>
+                      <div
+                        style="
+                          flex: 1;
+                          background: var(--bg-hover);
+                          border-radius: 4px;
+                          padding: 8px;
+                          font-family: monospace;
+                          font-size: 11px;
+                          line-height: 1.5;
+                        "
+                      >
+                        <div style="display: flex">
+                          <span style="width: 24px; color: var(--text-muted)">1</span
+                          ><span style="flex: 1"> .line-num {</span>
+                        </div>
+                        <div style="display: flex; background: var(--diff-add)">
+                          <span style="width: 24px; color: var(--text-muted)">2</span
+                          ><span style="flex: 1; color: var(--success)">+ width: 32px;</span>
+                        </div>
+                        <div style="display: flex">
+                          <span style="width: 24px; color: var(--text-muted)">3</span
+                          ><span style="flex: 1"> }</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 方案 C: 單欄 + 側邊抽屜 -->
+                <div style="margin-bottom: 16px">
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: var(--accent);
+                      margin-bottom: 10px;
+                      font-weight: 600;
+                    "
+                  >
+                    方案 C: 單欄 + 側邊抽屜
+                  </div>
+                  <div style="display: flex; gap: 10px; height: 180px">
+                    <div
+                      style="
+                        flex: 1;
+                        background: var(--bg-secondary);
+                        border-radius: 8px;
+                        padding: 12px;
+                        display: flex;
+                        flex-direction: column;
+                      "
+                    >
+                      <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                        差異查看器 (全寬)
+                      </div>
+                      <div
+                        style="
+                          flex: 1;
+                          background: var(--bg-hover);
+                          border-radius: 4px;
+                          padding: 8px;
+                          font-family: monospace;
+                          font-size: 11px;
+                          line-height: 1.5;
+                        "
+                      >
+                        <div style="display: flex">
+                          <span style="width: 24px; color: var(--text-muted)">1</span
+                          ><span style="flex: 1"> .line-num {</span>
+                        </div>
+                        <div style="display: flex; background: var(--diff-add)">
+                          <span style="width: 24px; color: var(--text-muted)">2</span
+                          ><span style="flex: 1; color: var(--success)">+ width: 32px;</span>
+                        </div>
+                        <div style="display: flex">
+                          <span style="width: 24px; color: var(--text-muted)">3</span
+                          ><span style="flex: 1"> }</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 0 0 200px;
+                        background: var(--bg-secondary);
+                        border-radius: 8px;
+                        padding: 12px;
+                        margin-left: -200px;
+                        opacity: 0.95;
+                        z-index: 10;
+                      "
+                    >
+                      <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                        抽屜選單
+                      </div>
+                      <div
+                        style="
+                          background: var(--bg-hover);
+                          padding: 6px 8px;
+                          border-radius: 4px;
+                          font-size: 11px;
+                          margin-bottom: 4px;
+                        "
+                      >
+                        ✓ DiffViewer.svelte
+                      </div>
+                      <div
+                        style="
+                          background: var(--bg-hover);
+                          padding: 6px 8px;
+                          border-radius: 4px;
+                          font-size: 11px;
+                        "
+                      >
+                        M FileTree.svelte
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style="
+                    padding: 10px 14px;
+                    background: var(--bg-surface);
+                    border-radius: 6px;
+                    font-size: 12px;
+                    color: var(--text-secondary);
+                  "
+                >
+                  <strong style="color: var(--accent)">策略：</strong
+                  >不強制三欄佈局，根據窗口大小動態調整：Tab 切換、可折疊側欄、或單欄+抽屜模式
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 中窗口 (1200-1600px) -->
+          <div class="comparison-panel">
+            <div class="panel-header">
+              <span class="panel-title">中窗口 (1200-1600px)</span>
+              <span class="panel-badge badge-planned">Standard</span>
+            </div>
+            <div class="panel-content">
+              <div style="background: var(--bg-primary); border-radius: 8px; padding: 16px">
+                <div style="display: flex; gap: 16px; margin-bottom: 16px">
+                  <div
+                    style="
+                      flex: 0 0 240px;
+                      background: var(--bg-secondary);
+                      border-radius: 8px;
+                      padding: 12px;
+                    "
+                  >
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                      左欄 240px
+                    </div>
+                    <div
+                      style="
+                        background: var(--bg-hover);
+                        padding: 8px 10px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        margin-bottom: 6px;
+                      "
+                    >
+                      ⎇ main
+                    </div>
+                    <div
+                      style="
+                        background: var(--bg-hover);
+                        padding: 8px 10px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                      "
+                    >
+                      ⎇ feature/ui
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex: 1;
+                      background: var(--bg-secondary);
+                      border-radius: 8px;
+                      padding: 12px;
+                    "
+                  >
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                      中央區域 (自動)
+                    </div>
+                    <div style="font-family: monospace; font-size: 12px; line-height: 1.5">
+                      <div style="display: flex">
+                        <span style="width: 32px; color: var(--text-muted)">1</span
+                        ><span style="flex: 1"> .line-num,</span>
+                      </div>
+                      <div style="display: flex">
+                        <span style="width: 32px; color: var(--text-muted)">2</span
+                        ><span style="flex: 1"> .line-num-new {</span>
+                      </div>
+                      <div style="display: flex; background: var(--diff-add)">
+                        <span style="width: 32px; color: var(--text-muted)">3</span
+                        ><span style="flex: 1; color: var(--success)">+ width: 36px;</span>
+                      </div>
+                      <div style="display: flex">
+                        <span style="width: 32px; color: var(--text-muted)">4</span
+                        ><span style="flex: 1"> }</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex: 0 0 280px;
+                      background: var(--bg-secondary);
+                      border-radius: 8px;
+                      padding: 12px;
+                    "
+                  >
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                      右欄 280px
+                    </div>
+                    <div
+                      style="
+                        background: var(--bg-hover);
+                        padding: 8px 10px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                      "
+                    >
+                      ✓ DiffViewer.svelte
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    padding: 8px 12px;
+                    background: var(--bg-surface);
+                    border-radius: 6px;
+                    font-size: 12px;
+                    color: var(--text-secondary);
+                  "
+                >
+                  <strong style="color: var(--accent)">策略：</strong>標準佈局，平衡信息密度與可讀性
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 大窗口 (> 1600px) -->
+        <div class="comparison-panel" style="margin-top: 24px">
+          <div class="panel-header">
+            <span class="panel-title">大窗口 (> 1600px)</span>
+            <span class="panel-badge badge-planned">Expanded</span>
+          </div>
+          <div class="panel-content">
+            <div style="background: var(--bg-primary); border-radius: 8px; padding: 16px">
+              <div style="display: flex; gap: 20px; margin-bottom: 16px">
+                <div
+                  style="
+                    flex: 0 0 300px;
+                    background: var(--bg-secondary);
+                    border-radius: 8px;
+                    padding: 12px;
+                  "
+                >
+                  <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                    左欄 300px
+                  </div>
+                  <div
+                    style="
+                      background: var(--bg-hover);
+                      padding: 10px 12px;
+                      border-radius: 4px;
+                      font-size: 13px;
+                      margin-bottom: 8px;
+                    "
+                  >
+                    ⎇ main
+                  </div>
+                  <div
+                    style="
+                      background: var(--bg-hover);
+                      padding: 10px 12px;
+                      border-radius: 4px;
+                      font-size: 13px;
+                      margin-bottom: 8px;
+                    "
+                  >
+                    ⎇ feature/ui-improvement
+                  </div>
+                  <div
+                    style="
+                      background: var(--bg-hover);
+                      padding: 10px 12px;
+                      border-radius: 4px;
+                      font-size: 13px;
+                    "
+                  >
+                    ⎇ fix/readability
+                  </div>
+                </div>
+                <div
+                  style="
+                    flex: 1;
+                    background: var(--bg-secondary);
+                    border-radius: 8px;
+                    padding: 16px;
+                  "
+                >
+                  <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                    中央區域 (自動)
+                  </div>
+                  <div style="font-family: monospace; font-size: 13px; line-height: 1.5">
+                    <div style="display: flex">
+                      <span style="width: 36px; color: var(--text-muted)">1</span
+                      ><span style="flex: 1"> .line-num,</span>
+                    </div>
+                    <div style="display: flex">
+                      <span style="width: 36px; color: var(--text-muted)">2</span
+                      ><span style="flex: 1"> .line-num-new {</span>
+                    </div>
+                    <div style="display: flex; background: var(--diff-add)">
+                      <span style="width: 36px; color: var(--text-muted)">3</span
+                      ><span style="flex: 1; color: var(--success)">+ width: 36px;</span>
+                    </div>
+                    <div style="display: flex; background: var(--diff-add)">
+                      <span style="width: 36px; color: var(--text-muted)">4</span
+                      ><span style="flex: 1; color: var(--success)">+ min-width: 36px;</span>
+                    </div>
+                    <div style="display: flex">
+                      <span style="width: 36px; color: var(--text-muted)">5</span
+                      ><span style="flex: 1"> }</span>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    flex: 0 0 360px;
+                    background: var(--bg-secondary);
+                    border-radius: 8px;
+                    padding: 12px;
+                  "
+                >
+                  <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px">
+                    右欄 360px
+                  </div>
+                  <div
+                    style="
+                      background: var(--bg-hover);
+                      padding: 10px 12px;
+                      border-radius: 4px;
+                      font-size: 13px;
+                    "
+                  >
+                    ✓ DiffViewer.svelte
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  padding: 8px 12px;
+                  background: var(--bg-surface);
+                  border-radius: 6px;
+                  font-size: 12px;
+                  color: var(--text-secondary);
+                "
+              >
+                <strong style="color: var(--accent)">策略：</strong
+                >展開佈局，顯示完整信息，提供最佳體驗
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 響應式斷點表 -->
+        <div
+          style="
+            margin-top: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+          "
+        >
+          <h3 style="color: var(--text-primary); margin-bottom: 16px">響應式斷點定義</h3>
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>窗口寬度</th>
+                <th>左欄</th>
+                <th>右欄</th>
+                <th>行號寬度</th>
+                <th>字體大小</th>
+                <th>策略</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>< 1200px</td>
+                <td colspan="2" style="text-align: center">Tab 切換 / 可折疊 / 抽屜</td>
+                <td>32px × 2</td>
+                <td>11px</td>
+                <td>彈性佈局</td>
+              </tr>
+              <tr>
+                <td>1200-1600px</td>
+                <td>240px</td>
+                <td>280px</td>
+                <td>36px × 2</td>
+                <td>12px</td>
+                <td>標準模式</td>
+              </tr>
+              <tr>
+                <td>> 1600px</td>
+                <td>300px</td>
+                <td>360px</td>
+                <td>36px × 2</td>
+                <td>13px</td>
+                <td>展開模式</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 佈局模式說明 -->
+        <div
+          style="
+            margin-top: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+          "
+        >
+          <h3 style="color: var(--text-primary); margin-bottom: 16px">佈局模式切換邏輯</h3>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px">
+            <div style="background: var(--bg-surface); border-radius: 8px; padding: 16px">
+              <div
+                style="font-size: 14px; color: var(--accent); margin-bottom: 8px; font-weight: 600"
+              >
+                Tab 切換模式
+              </div>
+              <div style="font-size: 12px; color: var(--text-secondary)">
+                • 左側欄變為垂直 Tab 列<br />
+                • 點擊 Tab 切換顯示分支/提交/文件<br />
+                • 中央區域最大化<br />
+                • 適用場景：筆記型電腦、小屏幕
+              </div>
+            </div>
+            <div style="background: var(--bg-surface); border-radius: 8px; padding: 16px">
+              <div
+                style="font-size: 14px; color: var(--accent); margin-bottom: 8px; font-weight: 600"
+              >
+                可折疊側欄模式
+              </div>
+              <div style="font-size: 12px; color: var(--text-secondary)">
+                • 左側欄可收合為圖標列<br />
+                • 懸停或點擊展開完整內容<br />
+                • 保持三欄結構但更靈活<br />
+                • 適用場景：需要快速切換的開發者
+              </div>
+            </div>
+            <div style="background: var(--bg-surface); border-radius: 8px; padding: 16px">
+              <div
+                style="font-size: 14px; color: var(--accent); margin-bottom: 8px; font-weight: 600"
+              >
+                單欄 + 抽屜模式
+              </div>
+              <div style="font-size: 12px; color: var(--text-secondary)">
+                • 默認只顯示中央工作區域<br />
+                • 右側欄變為抽屜，點擊按鈕展開<br />
+                • 最大化代碼查看空間<br />
+                • 適用場景：專注於代碼審查
+              </div>
+            </div>
+            <div style="background: var(--bg-surface); border-radius: 8px; padding: 16px">
+              <div
+                style="font-size: 14px; color: var(--accent); margin-bottom: 8px; font-weight: 600"
+              >
+                標準三欄模式
+              </div>
+              <div style="font-size: 12px; color: var(--text-secondary)">
+                • 保持現有三欄佈局<br />
+                • 根據窗口大小調整欄寬<br />
+                • 適用場景：大屏幕、外接顯示器
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CSS 實現 -->
+        <div
+          style="
+            margin-top: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+          "
+        >
+          <h3 style="color: var(--text-primary); margin-bottom: 16px">CSS 實現方案</h3>
+          <div class="code-comparison">
+            <div class="code-block">
+              <div class="code-header">+page.svelte (Svelte)</div>
+              <div class="code-content">
+                <pre><span class="comment">// 響應式寬度計算</span>
+<span class="keyword">let</span> sidebarWidth = <span class="value">240</span>;
+<span class="keyword">let</span> rightWidth = <span class="value">320</span>;
+
+<span class="comment">// 根據窗口大小選擇佈局模式</span>
+<span class="keyword">function</span> <span class="property">updateLayout</span>() {
+  <span class="keyword">const</span> w = window.innerWidth;
+  <span class="keyword">if</span> (w < <span class="value">1200</span>) {
+    sidebarWidth = <span class="value">180</span>;
+    rightWidth = <span class="value">200</span>;
+  } <span class="keyword">else if</span> (w < <span class="value">1600</span>) {
+    sidebarWidth = <span class="value">240</span>;
+    rightWidth = <span class="value">280</span>;
+  } <span class="keyword">else</span> {
+    sidebarWidth = <span class="value">300</span>;
+    rightWidth = <span class="value">360</span>;
+  }
+}</pre>
+              </div>
+            </div>
+            <div class="code-block">
+              <div class="code-header">DiffViewer.svelte (CSS)</div>
+              <div class="code-content">
+                <pre><span class="comment">/* 響應式行號寬度 */</span>
+<span class="property">.line-num</span>,
+<span class="property">.line-num-new</span> {
+  <span class="property">width</span>: <span class="value">36px</span>;
+  <span class="property">min-width</span>: <span class="value">36px</span>;
+}
+
+<span class="comment">/* 小窗口 */</span>
+<span class="keyword">@media</span> (<span class="property">max-width</span>: <span class="value">1200px</span>) {
+  <span class="property">.line-num</span>,
+  <span class="property">.line-num-new</span> {
+    <span class="property">width</span>: <span class="value">32px</span>;
+    <span class="property">min-width</span>: <span class="value">32px</span>;
+  }
+}
+
+<span class="comment">/* 大窗口 */</span>
+<span class="keyword">@media</span> (<span class="property">min-width</span>: <span class="value">1600px</span>) {
+  <span class="property">.line-num</span>,
+  <span class="property">.line-num-new</span> {
+    <span class="property">width</span>: <span class="value">40px</span>;
+    <span class="property">min-width</span>: <span class="value">40px</span>;
+  }
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 五、尺寸對比表 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">📏</span>
+          尺寸對比表
+        </h2>
+
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>元素</th>
+              <th>當前值</th>
+              <th>計畫值</th>
+              <th>改善</th>
+              <th>依據</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>左側欄寬度</td>
+              <td><span class="current-value">240px</span></td>
+              <td><span class="new-value">280px</span></td>
+              <td>+16.7%</td>
+              <td>Fitts 定律：增大目標區域</td>
+            </tr>
+            <tr>
+              <td>右側欄寬度</td>
+              <td><span class="current-value">320px</span></td>
+              <td><span class="new-value">360px</span></td>
+              <td>+12.5%</td>
+              <td>信息密度：顯示更多內容</td>
+            </tr>
+            <tr>
+              <td>行號寬度 (×2)</td>
+              <td><span class="current-value">40px × 2 = 80px</span></td>
+              <td><span class="new-value">36px × 2 = 72px</span></td>
+              <td>-10%</td>
+              <td>空間優化：增加代碼區域</td>
+            </tr>
+            <tr>
+              <td>Checkbox 尺寸</td>
+              <td><span class="current-value">14 × 14px</span></td>
+              <td><span class="new-value">16 × 16px</span></td>
+              <td>+4.3%</td>
+              <td>可點擊性：更易精準操作</td>
+            </tr>
+            <tr>
+              <td>文件項目高度</td>
+              <td><span class="current-value">~28px</span></td>
+              <td><span class="new-value">48px (min)</span></td>
+              <td>+71%</td>
+              <td>Apple HIG：觸控區域標準</td>
+            </tr>
+            <tr>
+              <td>文件名字體</td>
+              <td><span class="current-value">13px</span></td>
+              <td><span class="new-value">14px</span></td>
+              <td>+7.7%</td>
+              <td>可讀性：提升文字清晰度</td>
+            </tr>
+            <tr>
+              <td>AI 按鈕高度</td>
+              <td><span class="current-value">~32px</span></td>
+              <td><span class="new-value">40px</span></td>
+              <td>+25%</td>
+              <td>可點擊性：更舒適的操作</td>
+            </tr>
+            <tr>
+              <td>Commit 按鈕高度</td>
+              <td><span class="current-value">~32px</span></td>
+              <td><span class="new-value">44px</span></td>
+              <td>+37.5%</td>
+              <td>主操作：需要更顯眼</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 六、解決方案 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">💡</span>
+          解決方案
+        </h2>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px">
+          <div class="solution-card">
+            <h3 class="solution-title">1. 優化佈局結構</h3>
+            <ul class="solution-list">
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>增加默認欄寬：左 280px → 右 360px</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>實現響應式佈局，根據窗口大小自動調整</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>支持面板折叠和隐藏</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="solution-card">
+            <h3 class="solution-title">2. 提升可讀性</h3>
+            <ul class="solution-list">
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>差異查看器：合併行號，減少空間佔用</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>文件列表：顯示完整路徑，支持多行預覽</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>添加懸浮預覽（Hover Preview）</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="solution-card">
+            <h3 class="solution-title">3. 改善交互體驗</h3>
+            <ul class="solution-list">
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>按鈕最小高度 44px，符合觸控標準</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>Checkbox 擴大至 16x16px</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>添加鍵盤快捷鍵提示</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="solution-card">
+            <h3 class="solution-title">4. 強化視覺層次</h3>
+            <ul class="solution-list">
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>建立清晰的字體層次系統</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>優化顏色語義，區分狀態和優先級</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>添加焦點狀態和懸停效果</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 七、實施計畫 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">📅</span>
+          實施計畫
+        </h2>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot">1</div>
+            <div class="timeline-content">
+              <div class="timeline-title">
+                第一階段：佈局優化
+                <span class="priority-badge priority-p0">P0</span>
+              </div>
+              <div class="timeline-desc">
+                調整默認欄寬 (240→280, 320→360)，優化差異查看器佈局。<br />
+                <strong>預計時間：</strong>1 天<br />
+                <strong>影響文件：</strong>+page.svelte, DiffViewer.svelte
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-dot">2</div>
+            <div class="timeline-content">
+              <div class="timeline-title">
+                第二階段：交互優化
+                <span class="priority-badge priority-p0">P0</span>
+              </div>
+              <div class="timeline-desc">
+                增大按鈕和 Checkbox 尺寸，添加工具提示。<br />
+                <strong>預計時間：</strong>1-2 天<br />
+                <strong>影響文件：</strong>FileTree.svelte, DiffViewer.svelte, 所有按鈕組件
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-dot">3</div>
+            <div class="timeline-content">
+              <div class="timeline-title">
+                第三階段：視覺優化
+                <span class="priority-badge priority-p1">P1</span>
+              </div>
+              <div class="timeline-desc">
+                優化字體層次，調整顏色語義，添加動畫過渡效果。<br />
+                <strong>預計時間：</strong>1-2 天<br />
+                <strong>影響文件：</strong>app.css, 所有組件樣式
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-dot">4</div>
+            <div class="timeline-content">
+              <div class="timeline-title">
+                第四階段：測試與調優
+                <span class="priority-badge priority-p2">P2</span>
+              </div>
+              <div class="timeline-desc">
+                用戶測試，收集反饋，細節調整。<br />
+                <strong>預計時間：</strong>1 天<br />
+                <strong>影響文件：</strong>全局
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 八、預期效果 -->
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon">🎯</span>
+          預期效果
+        </h2>
+
+        <div class="highlight-box">
+          <div class="highlight-title">核心指標改善</div>
+          <div style="color: var(--text-secondary); line-height: 2">
+            • <strong>操作效率：</strong>提升 30%（減少點擊次數，增大點擊區域）<br />
+            • <strong>信息可讀性：</strong>提升 40%（增加顯示空間，優化文字層次）<br />
+            • <strong>用戶滿意度：</strong>預期從 6/10 提升至 8/10<br />
+            • <strong>學習曲線：</strong>降低 20%（更清晰的視覺引導）
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px">
+          <div class="solution-card">
+            <h3 class="solution-title">短期收益（1 週內）</h3>
+            <ul class="solution-list">
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>立即改善空間擁擠問題</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>提升基本信息可讀性</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>減少用戶操作疲勞</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="solution-card">
+            <h3 class="solution-title">長期收益（1 個月內）</h3>
+            <ul class="solution-list">
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>建立統一的設計語言</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>提升品牌專業形象</span>
+              </li>
+              <li>
+                <span class="solution-icon">✓</span>
+                <span>為未來功能擴展奠定基礎</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <p>GitBiker UI 改進計畫 | 基於實際代碼庫分析 | 2026 年 7 月</p>
+        <p style="margin-top: 8px; font-size: 12px">
+          參考：Apple HIG · Nielsen Norman Group · Material Design 3
+        </p>
+        <div
+          style="
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+          "
+        >
+          <strong>設計範圍：</strong>採用清新藍灰白配色，強調色 #3B82F6，參考 Arctic Minimal
+          配色方案。
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,7 +1,12 @@
 <script lang="ts">
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
-  import { gitStageHunk, gitUnstageHunk, gitStashHunk, generateCommitMessage } from '$lib/git/commands';
+  import {
+    gitStageHunk,
+    gitUnstageHunk,
+    gitStashHunk,
+    generateCommitMessage,
+  } from '$lib/git/commands';
   import type { DiffHunk } from '$lib/git/types';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
   import AiExplanationDialog from './AiExplanationDialog.svelte';
@@ -19,9 +24,7 @@
     }
   }
 
-  const menuItems: MenuItem[] = [
-    { id: 'ai-explain', label: 'AI 解釋此代碼', shortcut: '⌘I' }
-  ];
+  const menuItems: MenuItem[] = [{ id: 'ai-explain', label: 'AI 解釋此代碼', shortcut: '⌘I' }];
 
   async function handleMenuSelect(id: string) {
     if (id === 'ai-explain' && contextMenu) {
@@ -35,7 +38,7 @@
           apiKey: app.aiApiKey,
           model: app.aiModel,
           language: app.aiLanguage,
-          customPrompt: prompt
+          customPrompt: prompt,
         });
         showAiDialog = true;
       } catch (e: unknown) {
@@ -131,20 +134,6 @@
       }
     } catch (e: unknown) {
       app.addToast(extractErrorMessage(e), 'error');
-    }
-  }
-
-  async function handleDiscard() {
-    if (!app.repoPath || !app.selectedFile) return;
-    const ok = await confirm(`確定要還原 ${app.selectedFile} 的所有未暫存變更嗎？此操作無法復原。`);
-    if (!ok) return;
-    
-    const result = await gitDiscardChanges(app.repoPath, app.selectedFile);
-    if (result.success) {
-      app.addToast('已還原變更', 'success');
-      await app.refreshStatus();
-    } else {
-      app.addToast(result.message, 'error');
     }
   }
 </script>
@@ -272,15 +261,16 @@
   }
   .diff-line {
     display: flex;
-    white-space: pre;
+    white-space: pre-wrap;
+    word-break: break-all;
     min-height: 21px;
   }
   .line-num,
   .line-num-new {
-    width: 40px;
-    min-width: 40px;
+    width: 36px;
+    min-width: 36px;
     text-align: right;
-    padding-right: var(--space-sm);
+    padding-right: 6px;
     color: var(--text-muted);
     user-select: none;
     font-size: var(--font-size-sm);
@@ -324,10 +314,10 @@
     flex-shrink: 0;
   }
   .hunk-btn {
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     background: var(--bg-primary);
     cursor: pointer;
     display: flex;
