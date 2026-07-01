@@ -243,7 +243,7 @@
     margin-left: auto;
     display: flex;
     gap: var(--space-sm);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
   }
   .add {
