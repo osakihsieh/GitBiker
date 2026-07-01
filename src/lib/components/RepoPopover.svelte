@@ -503,12 +503,12 @@
     color: var(--accent);
   }
   .repo-branch {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     flex-shrink: 0;
   }
   .repo-status {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     flex-shrink: 0;
     min-width: 36px;
@@ -518,7 +518,7 @@
     color: var(--warning);
   }
   .repo-time {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     flex-shrink: 0;
     min-width: 50px;
