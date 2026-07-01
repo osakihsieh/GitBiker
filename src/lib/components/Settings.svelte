@@ -920,7 +920,7 @@
     margin-bottom: 32px;
   }
   .section-title {
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -944,7 +944,7 @@
     font-size: var(--font-size-md);
   }
   .setting-desc {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
   }
   .theme-segmented {
@@ -994,7 +994,7 @@
     border-radius: var(--radius-sm);
     padding: 2px 8px;
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-primary);
   }
   .shortcut-action {
@@ -1052,7 +1052,7 @@
     color: var(--text-primary);
   }
   .remote-url {
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
     color: var(--text-muted);
     overflow: hidden;
@@ -1065,7 +1065,7 @@
     flex-shrink: 0;
   }
   .remote-action-btn {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--accent);
     background: none;
     border: none;
