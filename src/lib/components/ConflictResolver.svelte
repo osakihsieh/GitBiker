@@ -661,12 +661,12 @@
   }
 
   .content-counter {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
   }
 
   .content-error {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--error);
   }
 
@@ -748,7 +748,7 @@
   }
 
   .hunk-label {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-family: var(--font-ui);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -811,7 +811,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 2px var(--space-sm);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-ui);
     cursor: pointer;
     color: var(--text-secondary);
@@ -842,7 +842,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 2px var(--space-sm);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-ui);
     cursor: pointer;
     color: var(--text-muted);
@@ -907,7 +907,7 @@
     margin: 0;
   }
   .base-toggle {
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-family: var(--font-ui);
     color: var(--text-muted);
     padding: var(--space-xs) var(--space-sm);
