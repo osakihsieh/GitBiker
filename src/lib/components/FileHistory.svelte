@@ -149,7 +149,7 @@
     min-width: 0;
   }
   .label {
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -224,7 +224,7 @@
     line-height: 1.4;
   }
   .commit-meta {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     display: flex;
     gap: var(--space-sm);
@@ -232,6 +232,6 @@
   }
   .commit-hash {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
 </style>
