@@ -234,11 +234,11 @@
   }
   .branch-hint {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: var(--text-xs);
     flex-shrink: 0;
   }
   .close {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     margin-left: 2px;
     opacity: 0;
@@ -267,7 +267,7 @@
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 10px;
+    font-size: var(--text-xs);
     flex-shrink: 0;
   }
   .scroll-arrow:hover {
