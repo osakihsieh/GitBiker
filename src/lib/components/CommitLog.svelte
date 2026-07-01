@@ -1051,7 +1051,7 @@
     line-height: 1.4;
   }
   .commit-meta {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     display: flex;
     gap: var(--space-sm);
