@@ -112,7 +112,7 @@
     gap: var(--space-xs);
   }
   .title {
-    font-size: 18px;
+    font-size: var(--text-lg);
     font-weight: 600;
   }
   .subtitle {
@@ -159,7 +159,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: 11px;
+    font-size: var(--text-xs);
     padding: 2px 4px;
     outline: none;
   }
