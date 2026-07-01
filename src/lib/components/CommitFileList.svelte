@@ -248,7 +248,7 @@
     flex-shrink: 0;
   }
   .commit-hash {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
     color: var(--text-muted);
   }
@@ -261,7 +261,7 @@
     text-overflow: ellipsis;
   }
   .commit-meta {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     margin-top: 2px;
   }
@@ -272,7 +272,7 @@
   }
   .section-header {
     padding: var(--space-sm) var(--space-md);
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -284,7 +284,7 @@
     background: var(--bg-surface);
     padding: 1px 6px;
     border-radius: 8px;
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
   }
   .file-list {
@@ -314,7 +314,7 @@
     border-left-color: var(--accent);
   }
   .status {
-    font-size: 11px;
+    font-size: var(--text-xs);
     flex-shrink: 0;
     width: 12px;
     text-align: center;
