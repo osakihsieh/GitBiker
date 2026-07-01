@@ -110,7 +110,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 16px;
+    font-size: var(--text-lg);
     font-weight: 500;
   }
   .branch-name {
@@ -146,7 +146,7 @@
   }
   .section-title {
     padding: var(--space-sm) var(--space-md);
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     color: var(--text-secondary);
@@ -168,7 +168,7 @@
     text-overflow: ellipsis;
   }
   .commit-meta {
-    font-size: 11px;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     display: flex;
     gap: 8px;
@@ -198,7 +198,7 @@
   .status-icon {
     width: 16px;
     height: 16px;
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-weight: 800;
     display: flex;
     align-items: center;
