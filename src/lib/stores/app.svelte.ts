@@ -95,6 +95,10 @@ export interface RepoState {
   rebaseCommits: RebaseCommit[];
   // LFS
   lfsStatus: GitLfsStatus | null;
+  // GitHub
+  prs: GitHubItem[];
+  issues: GitHubItem[];
+  isLoadingRemote: boolean;
   // Submodules
   submodules: SubmoduleInfo[];
   // Worktrees
@@ -134,6 +138,9 @@ export function createEmptyState(): RepoState {
     rebaseBase: null,
     rebaseCommits: [],
     lfsStatus: null,
+    prs: [],
+    issues: [],
+    isLoadingRemote: false,
     submodules: [],
     worktrees: [],
   };
@@ -284,6 +291,33 @@ class AppState {
 
   get lfsStatus(): GitLfsStatus | null {
     return this.activeTab?.state.lfsStatus ?? null;
+  }
+
+  get prs(): GitHubItem[] {
+    return this.activeTab?.state.prs ?? [];
+  }
+
+  set prs(value: GitHubItem[]) {
+    const tab = this.activeTab;
+    if (tab) tab.state.prs = value;
+  }
+
+  get issues(): GitHubItem[] {
+    return this.activeTab?.state.issues ?? [];
+  }
+
+  set issues(value: GitHubItem[]) {
+    const tab = this.activeTab;
+    if (tab) tab.state.issues = value;
+  }
+
+  get isLoadingRemote(): boolean {
+    return this.activeTab?.state.isLoadingRemote ?? false;
+  }
+
+  set isLoadingRemote(value: boolean) {
+    const tab = this.activeTab;
+    if (tab) tab.state.isLoadingRemote = value;
   }
 
   get currentBranch(): string {
