@@ -82,6 +82,7 @@ export async function loadAppSettings(state: PersistableState): Promise<void> {
       store.get<string>(AI_CUSTOM_PROMPT_KEY),
       store.get<AiLanguage>(AI_LANGUAGE_KEY),
       store.get<string>(AI_OLLAMA_ENDPOINT_KEY),
+      store.get<boolean>(AI_REVIEW_ENABLED_KEY),
       store.get<boolean>(DISABLE_AUTO_CRLF_KEY),
       store.get<boolean>(IGNORE_EOL_KEY),
       store.get<string | null>(TERMINAL_SHELL_KEY),

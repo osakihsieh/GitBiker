@@ -25,7 +25,40 @@ import type {
   GitLfsStatus,
   SubmoduleInfo,
   WorktreeInfo,
+  GitHubItem,
+  CommandResult,
+  SshKey,
 } from './types';
+
+export type {
+  FileStatus,
+  Commit,
+  DiffResult,
+  Branch,
+  PushResult,
+  PullResult,
+  RemoteInfo,
+  BranchMergeStatus,
+  MergeResult,
+  CherryPickResult,
+  StashEntry,
+  ConflictFile,
+  ConflictContent,
+  MergeDryRunResult,
+  MergeCompleteResult,
+  ResolveChoice,
+  LogFilter,
+  BranchCompareResult,
+  TagInfo,
+  RebaseResult,
+  RebaseCommit,
+  GitEnvInfo,
+  GitLfsStatus,
+  SubmoduleInfo,
+  WorktreeInfo,
+  GitHubItem,
+  SshKey,
+};
 
 export async function gitStatus(path: string): Promise<FileStatus[]> {
   return invoke('git_status', { path });
@@ -594,10 +627,10 @@ export async function installGh(): Promise<string> {
 
 
 
-export async function getGithubPrs(repoPath: string): Promise<any[]> {
+export async function getGithubPrs(repoPath: string): Promise<GitHubItem[]> {
   return await invoke('get_github_prs', { repoPath });
 }
 
-export async function getGithubIssues(repoPath: string): Promise<any[]> {
+export async function getGithubIssues(repoPath: string): Promise<GitHubItem[]> {
   return await invoke('get_github_issues', { repoPath });
 }
