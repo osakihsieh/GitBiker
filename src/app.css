@@ -116,8 +116,8 @@ body {
 }
 
 /* ── Toolbar action button feedback ─────────────────────────────
-   點擊立即回饋：按下時微縮 + accent 底色閃一下，讓用戶明確知道點擊已生效。
-   載入中：圖示換成旋轉載入器、文字轉 accent 色、按鈕 disabled。
+   按下回饋：用 Tailwind active:scale-90 + active:bg-accent/20（寫在 class 上）。
+   載入中：圖示換成旋轉載入器、文字轉 accent 色、按鈕 disabled、accent 底色閃一下。
    ──────────────────────────────────────────────────────────────── */
 @keyframes action-flash {
   0% {
@@ -128,15 +128,10 @@ body {
   }
 }
 
-.toolbar-action {
-  transition:
-    transform 80ms ease-out,
-    background-color 120ms ease-out,
-    color 120ms ease-out;
-}
-
-.toolbar-action:active:not(:disabled) {
-  transform: scale(0.9);
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .toolbar-action.is-loading {
@@ -149,6 +144,7 @@ body {
 
 .toolbar-action .action-spinner {
   display: none;
+  color: var(--accent);
 }
 
 .toolbar-action.is-loading .action-spinner {
@@ -168,10 +164,4 @@ body {
   border-radius: inherit;
   pointer-events: none;
   animation: action-flash 0.5s ease-out forwards;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

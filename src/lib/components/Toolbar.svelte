@@ -245,7 +245,7 @@
   icon: Snippet;
 })}
   <button
-    class="toolbar-action relative flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 hover:text-accent {loading
+    class="toolbar-action relative flex flex-col items-center justify-center w-14 h-14 rounded transition-all duration-100 active:scale-90 active:bg-accent/20 hover:bg-white/5 hover:text-accent {loading
       ? 'is-loading'
       : ''}"
     {onclick}
@@ -253,7 +253,7 @@
     {title}
   >
     <span class="action-icon">{@render icon()}</span>
-    <span class="action-spinner text-accent">{@render spinnerIcon()}</span>
+    <span class="action-spinner">{@render spinnerIcon()}</span>
     <span class="text-[10px] uppercase font-bold text-text-muted mt-1 action-label">{label}</span>
   </button>
 {/snippet}
@@ -560,7 +560,7 @@
       <div class="toolbar-sep w-[1px] h-8 bg-border mx-1"></div>
 
       <button
-        class="toolbar-action flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 hover:text-accent"
+        class="toolbar-action flex flex-col items-center justify-center w-14 h-14 rounded transition-all duration-100 active:scale-90 active:bg-accent/20 hover:bg-white/5 hover:text-accent"
         onclick={handleCleanup}
         title="AI 分支管理"
       >
