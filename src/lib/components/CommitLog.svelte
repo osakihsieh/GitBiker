@@ -956,6 +956,11 @@
   .history-list {
     overflow-y: auto;
     flex: 1;
+    /* Push the first row down so it isn't flush against (or clipped by)
+       the header above. padding-top (not scroll-padding-top) actually
+       offsets the content; the virtual list + graph SVG live in
+       .commit-list-inner, so they shift together and stay aligned. */
+    padding-top: var(--space-md);
   }
   .commit-list-inner {
     position: relative;
