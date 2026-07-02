@@ -7,114 +7,102 @@
     agentStore.init();
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'thinking': return 'var(--color-accent)';
-      case 'patching': return 'var(--color-accent)';
-      case 'searching': return '#3d6a8c'; // Bank blue from Ginga
-      case 'orchestrating': return '#7a4a8c'; // Wallet purple
-      case 'working': return '#a16b3d'; // Card brown
-      default: return 'var(--color-ink-35)';
-    }
+  const statusColors: Record<string, string> = {
+    thinking: 'var(--accent)',
+    patching: 'var(--accent)',
+    searching: '#3B82F6',
+    orchestrating: '#8B5CF6',
+    working: '#F59E0B',
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'thinking': return Brain;
-      case 'patching': return Cpu;
-      case 'searching': return Search;
-      case 'orchestrating': return HardDrive;
-      case 'working': return Activity;
-      default: return Terminal;
-    }
+  const statusIcons: Record<string, typeof Brain> = {
+    thinking: Brain,
+    patching: Cpu,
+    searching: Search,
+    orchestrating: HardDrive,
+    working: Activity,
   };
+
+  function getStatusColor(status: string): string {
+    return statusColors[status] || 'var(--text-muted)';
+  }
+
+  function getStatusIcon(status: string) {
+    return statusIcons[status] || Terminal;
+  }
 </script>
 
-<div class="h-full flex flex-col bg-bg overflow-hidden animate-fade-up">
+<div class="agent-dashboard">
   <!-- Header -->
-  <header class="px-8 py-6 flex justify-between items-end border-b border-ink-10">
-    <div class="flex flex-col gap-1">
-      <div class="flex items-center gap-2">
-        <div class="w-7 h-7 rounded-lg bg-ink flex items-center justify-center text-bg font-bold text-lg">G</div>
-        <h1 class="text-[26px] font-semibold tracking-[-0.6px] leading-tight">Agent Radar</h1>
-      </div>
-      <p class="text-[10.5px] font-medium text-ink-35 uppercase tracking-[0.5px]">PASSIVE MONITORING SYSTEM V2.0</p>
+  <div class="dashboard-header">
+    <div class="header-left">
+      <h1 class="header-title">Agent Radar</h1>
+      <p class="header-subtitle">PASSIVE MONITORING SYSTEM V2.0</p>
     </div>
-    <div class="flex items-center gap-3">
-      <div class="px-3 py-1.5 rounded-full bg-accent-bg text-accent text-[11px] font-semibold flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
-        {agentStore.statuses.filter(s => s.pid).length} ONLINE
-      </div>
+    <div class="online-badge">
+      <span class="online-dot"></span>
+      <span>{agentStore.statuses.filter(s => s.pid).length} ONLINE</span>
     </div>
-  </header>
-  
-  <div class="flex-1 p-8 overflow-auto">
+  </div>
+
+  <!-- Content -->
+  <div class="dashboard-content">
     {#if agentStore.statuses.length === 0}
-      <div class="h-64 flex flex-col items-center justify-center border-2 border-dashed border-ink-10 rounded-[20px] bg-bg-deep/30">
-        <p class="text-[13.5px] text-ink-35 font-medium italic">Waiting for agent footprints...</p>
+      <div class="empty-state">
+        <p class="empty-text">Waiting for agent footprints...</p>
       </div>
     {:else}
-      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div class="agent-grid">
         {#each agentStore.statuses as agent}
-          <div class="group bg-card p-6 rounded-[20px] shadow-card hover:shadow-float transition-all duration-300 border border-ink-05 flex flex-col gap-5 relative overflow-hidden">
+          <div class="agent-card">
             {#if !agent.pid}
-              <div class="absolute inset-0 bg-bg/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
-                <span class="bg-ink text-bg px-3 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider">Disconnected</span>
+              <div class="disconnected-overlay">
+                <span class="disconnected-badge">Disconnected</span>
               </div>
             {/if}
 
-            <!-- Header -->
-            <div class="flex justify-between items-start">
-              <div class="flex items-center gap-4">
-                <div 
-                  class="w-12 h-12 rounded-xl flex items-center justify-center transition-colors"
-                  style="background-color: {getStatusColor(agent.status)}15; color: {getStatusColor(agent.status)};"
-                >
+            <div class="card-header">
+              <div class="card-header-left">
+                <div class="icon-box" style="background-color: {getStatusColor(agent.status)}18; color: {getStatusColor(agent.status)};">
                   <svelte:component this={getStatusIcon(agent.status)} size={24} strokeWidth={1.5} />
                 </div>
-                <div class="flex flex-col">
-                  <h3 class="text-[17px] font-semibold tracking-[-0.4px] leading-tight">{agent.profile}</h3>
-                  <div class="flex items-center gap-2">
-                    <span class="text-[10.5px] font-medium text-ink-35 uppercase tracking-[0.3px]">PID: {agent.pid || 'N/A'}</span>
+                <div class="agent-info">
+                  <h3 class="agent-name">{agent.profile}</h3>
+                  <div class="agent-meta">
+                    <span class="meta-pid">PID: {agent.pid || 'N/A'}</span>
                     {#if agent.worktree}
-                      <span class="text-ink-10 text-[10px]">|</span>
-                      <span class="text-[10px] font-mono text-accent truncate max-w-[120px]" title={agent.worktree}>
-                        {agent.worktree.split('/').pop()}
-                      </span>
+                      <span class="meta-sep">|</span>
+                      <span class="meta-worktree" title={agent.worktree}>{agent.worktree.split('/').pop()}</span>
                     {/if}
                   </div>
                 </div>
               </div>
-              <div class="px-2 py-0.5 rounded-md bg-ink-05 text-ink-50 text-[9px] font-mono">
-                {new Date(agent.last_update * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              <div class="timestamp">
+                {new Date(agent.last_update * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
-            
-            <!-- Status Detail -->
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center justify-between">
-                <span class="text-[10px] font-medium text-ink-35 uppercase tracking-[0.5px]">Current Action</span>
-                <div class="flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: {getStatusColor(agent.status)}"></span>
-                  <span class="text-[11px] font-semibold uppercase text-ink-70 tracking-tight">{agent.status}</span>
+
+            <div class="card-body">
+              <div class="action-row">
+                <span class="action-label">Current Action</span>
+                <div class="status-indicator">
+                  <span class="status-dot" style="background-color: {getStatusColor(agent.status)}"></span>
+                  <span class="status-text">{agent.status}</span>
                 </div>
               </div>
-              <div class="bg-bg-deep/50 p-4 rounded-xl border border-ink-10 min-h-[70px]">
-                <p class="text-[13.5px] font-mono leading-relaxed text-ink-70">
-                  <span class="text-accent opacity-60 font-bold mr-2">$</span>{agent.last_action}
+              <div class="action-box">
+                <p class="action-command">
+                  <span class="prompt">$</span>{agent.last_action}
                 </p>
               </div>
             </div>
 
-            <!-- History -->
             {#if agent.history.length > 0}
-              <div class="flex flex-col gap-2">
-                <span class="text-[10px] font-medium text-ink-35 uppercase tracking-[0.5px]">Recent Chain</span>
-                <div class="flex flex-wrap gap-1.5">
+              <div class="card-footer">
+                <span class="footer-label">Recent Chain</span>
+                <div class="history-tags">
                   {#each agent.history.slice(-3).reverse() as hist}
-                    <div class="px-2.5 py-1 rounded-full bg-ink-05 text-ink-50 text-[10.5px] font-medium border border-ink-05">
-                      {hist}
-                    </div>
+                    <span class="history-tag">{hist}</span>
                   {/each}
                 </div>
               </div>
@@ -127,18 +115,254 @@
 </div>
 
 <style>
-  /* Custom scrollbar matching Ginga design */
-  ::-webkit-scrollbar {
+  .agent-dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-primary);
+    overflow: hidden;
+  }
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: var(--space-lg) var(--space-lg) var(--space-sm);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .header-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .header-subtitle {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .online-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .online-dot {
     width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
   }
-  ::-webkit-scrollbar-track {
-    background: transparent;
+  .dashboard-content {
+    flex: 1;
+    padding: var(--space-lg);
+    overflow-y: auto;
   }
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-ink-10);
-    border-radius: 10px;
+  .empty-state {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-ink-20);
+  .empty-text {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 13px;
+  }
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: var(--space-lg);
+  }
+  .agent-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    transition: box-shadow 0.2s;
+  }
+  .agent-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .disconnected-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(1px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+  }
+  .disconnected-badge {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .card-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  .icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .agent-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .agent-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .agent-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .meta-pid {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .meta-sep {
+    color: var(--border);
+    font-size: 10px;
+  }
+  .meta-worktree {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+  }
+  .timestamp {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: 9px;
+    font-family: var(--font-mono);
+  }
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  .action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .action-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .status-text {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+  .action-box {
+    background: var(--bg-hover);
+    padding: var(--space-md);
+    border-radius: 8px;
+    min-height: 60px;
+  }
+  .action-command {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    line-height: 1.5;
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+  .prompt {
+    color: var(--accent);
+    opacity: 0.6;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+  .card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+  .footer-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .history-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .history-tag {
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
   }
 </style>
