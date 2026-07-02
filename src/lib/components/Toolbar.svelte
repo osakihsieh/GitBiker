@@ -22,6 +22,11 @@
   let pulling = $state(false);
   let fetching = $state(false);
 
+  /** 保證 loading 狀態至少顯示 minMs，避免操作太快完成時動畫一閃即逝 */
+  function withMinDuration(promise: Promise<unknown>, minMs = 500): Promise<unknown> {
+    return Promise.all([promise, new Promise((r) => setTimeout(r, minMs))]).then(([v]) => v);
+  }
+
   // Derive repo display name from path
   let repoName = $derived(
     app.repoPath ? (app.repoPath.split(/[/\\]/).filter(Boolean).pop() ?? app.repoPath) : 'No repo',
@@ -58,7 +63,9 @@
     if (!app.repoPath || pushing) return;
     pushing = true;
     try {
-      const result = await gitPush(app.repoPath);
+      const result = (await withMinDuration(gitPush(app.repoPath))) as Awaited<
+        ReturnType<typeof gitPush>
+      >;
       if (result.success) {
         app.addToast(`Pushed to ${result.remote}/${result.branch}`, 'success');
       } else {
@@ -76,7 +83,9 @@
     if (!app.repoPath || pulling) return;
     pulling = true;
     try {
-      const result = await gitPull(app.repoPath);
+      const result = (await withMinDuration(gitPull(app.repoPath))) as Awaited<
+        ReturnType<typeof gitPull>
+      >;
       if (result.success) {
         app.addToast('Pull 完成', 'success');
       } else if (result.conflicts.length > 0) {
@@ -99,7 +108,7 @@
     if (!app.repoPath || fetching) return;
     fetching = true;
     try {
-      await gitFetch(app.repoPath);
+      await withMinDuration(gitFetch(app.repoPath));
       await app.refreshAll();
       app.addToast('Fetch 完成', 'success');
     } catch (e: unknown) {
@@ -245,7 +254,7 @@
   icon: Snippet;
 })}
   <button
-    class="toolbar-action relative flex flex-col items-center justify-center w-14 h-14 rounded transition-all duration-100 active:scale-90 active:bg-accent/20 hover:bg-white/5 hover:text-accent {loading
+    class="toolbar-action relative flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 hover:text-accent {loading
       ? 'is-loading'
       : ''}"
     {onclick}
@@ -560,7 +569,7 @@
       <div class="toolbar-sep w-[1px] h-8 bg-border mx-1"></div>
 
       <button
-        class="toolbar-action flex flex-col items-center justify-center w-14 h-14 rounded transition-all duration-100 active:scale-90 active:bg-accent/20 hover:bg-white/5 hover:text-accent"
+        class="toolbar-action flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 hover:text-accent"
         onclick={handleCleanup}
         title="AI 分支管理"
       >

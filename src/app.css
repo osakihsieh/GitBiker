@@ -116,8 +116,8 @@ body {
 }
 
 /* ── Toolbar action button feedback ─────────────────────────────
-   按下回饋：用 Tailwind active:scale-90 + active:bg-accent/20（寫在 class 上）。
-   載入中：圖示換成旋轉載入器、文字轉 accent 色、按鈕 disabled、accent 底色閃一下。
+   按下回饋：CSS transition 讓 scale 漸變（按下與放開都平滑）。
+   載入中：圖示換成旋轉 refresh icon、文字轉 accent 色、按鈕 disabled、accent 底色閃一下。
    ──────────────────────────────────────────────────────────────── */
 @keyframes action-flash {
   0% {
@@ -134,22 +134,39 @@ body {
   }
 }
 
+.toolbar-action {
+  transition:
+    transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+/* 按下時平滑縮小（cubic-bezier 帶微彈性，按下與放開都漸變） */
+.toolbar-action:active:not(:disabled) {
+  transform: scale(0.88);
+}
+
+/* 載入中狀態 */
 .toolbar-action.is-loading {
   pointer-events: none;
 }
 
+/* 原圖示隱藏 */
 .toolbar-action.is-loading .action-icon {
   display: none;
 }
 
+/* refresh icon：預設隱藏，loading 時顯示並旋轉 */
 .toolbar-action .action-spinner {
   display: none;
   color: var(--accent);
 }
 
 .toolbar-action.is-loading .action-spinner {
-  display: block;
-  animation: spin 0.8s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 0.7s linear infinite;
 }
 
 .toolbar-action.is-loading .action-label {
