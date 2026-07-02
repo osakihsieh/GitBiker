@@ -315,6 +315,16 @@
         </svg>
       </button>
       <button
+        class="w-9 h-9 flex items-center justify-center rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors {app.showAgentDashboard ? 'text-accent bg-white/5' : ''}"
+        onclick={() => app.toggleAgentDashboard()}
+        title="Agent Radar"
+        aria-label="Toggle Agent Dashboard"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="1" />
+        </svg>
+      </button>
+      <button
         class="w-9 h-9 flex items-center justify-center rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors"
         onclick={handleOpenTerminal}
         title="開啟外部終端機 (Alt+T)"

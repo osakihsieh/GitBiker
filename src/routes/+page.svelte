@@ -18,6 +18,7 @@
   import MultiRepoPopover from '$lib/components/MultiRepoPopover.svelte';
   import CloneDialog from '$lib/components/CloneDialog.svelte';
   import ConflictResolver from '$lib/components/ConflictResolver.svelte';
+  import AgentDashboard from '$lib/components/AgentDashboard.svelte';
   import GitHubDashboard from '$lib/components/GitHubDashboard.svelte';
   import InlineTerminal from '$lib/components/InlineTerminal.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
@@ -203,8 +204,13 @@
       onOpenMultiRepo={() => (activePopover = 'multiRepo')}
     />
 
-    <!-- Main Accelerated Workspace -->
-    <main class="flex-1 flex overflow-hidden">
+    {#if app.showAgentDashboard}
+      <div class="flex-1 overflow-hidden">
+        <AgentDashboard />
+      </div>
+    {:else}
+      <!-- Main Accelerated Workspace -->
+      <main class="flex-1 flex overflow-hidden">
       <!-- Left: Navigation (Branches, Tags, etc.) -->
       <aside
         class="bg-bg-secondary/70 backdrop-blur-xl border-r border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
@@ -225,7 +231,9 @@
 
       <!-- Center: Execution & Insight (Log, Diff) -->
       <section class="flex-1 flex flex-col bg-bg-primary min-w-0">
-        {#if app.viewMode === 'conflict-resolution'}
+        {#if app.viewMode === 'github'}
+          <GitHubDashboard />
+        {:else if app.viewMode === 'conflict-resolution'}
           <ConflictResolver />
         {:else if app.selectedFile || app.currentDiff}
           <!-- Breadcrumb Navigation -->
@@ -277,6 +285,8 @@
 
     <!-- Accelerated Terminal Sidecar -->
     <InlineTerminal visible={app.showTerminal} onClose={() => (app.showTerminal = false)} />
+  {/if}
+
   {:else}
     <!-- Welcome Screen (Factory Idle) -->
     <div class="flex-1 flex items-center justify-center">

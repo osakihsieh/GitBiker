@@ -66,7 +66,8 @@ export type ViewMode =
   | 'file-history'
   | 'branch-compare'
   | 'rebase-editor'
-  | 'ai-branch-manager';
+  | 'ai-branch-manager'
+  | 'github';
 
 export interface RepoState {
   stagedFiles: FileStatus[];
@@ -221,9 +222,14 @@ class AppState {
   useSystemNotification = $state(false);
   showTerminal = $state(false);
   isMac = $state(false);
+  showAgentDashboard = $state(false);
 
   toggleTerminal(): void {
     this.showTerminal = !this.showTerminal;
+  }
+
+  toggleAgentDashboard(): void {
+    this.showAgentDashboard = !this.showAgentDashboard;
   }
 
   // ── Switch guard ──
