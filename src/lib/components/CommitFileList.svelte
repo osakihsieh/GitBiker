@@ -295,7 +295,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-xs) var(--space-md);
+    padding: 6px var(--space-md);
     cursor: pointer;
     font-size: var(--font-size-sm);
     font-family: var(--font-mono);
@@ -305,6 +305,7 @@
     color: var(--text-primary);
     width: 100%;
     text-align: left;
+    min-height: 32px;
   }
   .file-item:hover {
     background: var(--bg-hover);

@@ -209,7 +209,7 @@
 
   let sshKeys = $state([]);
   let newKeyName = $state('id_gitbiker');
-  
+
   $effect(() => {
     if (activeTab === 'ssh') {
       loadSshKeys();
@@ -518,8 +518,9 @@
         {#each multiRepo.scanPaths as scanPath}
           <div class="setting-row">
             <div class="setting-info">
-              <span class="setting-label" style="font-family: var(--font-mono); font-size: var(--text-sm);"
-                >{scanPath}</span
+              <span
+                class="setting-label"
+                style="font-family: var(--font-mono); font-size: var(--text-sm);">{scanPath}</span
               >
               <span class="setting-desc">
                 {multiRepo.repos.filter((r) => r.scanPath === scanPath).length} repos

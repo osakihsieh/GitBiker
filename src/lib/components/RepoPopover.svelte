@@ -439,7 +439,7 @@
     flex: 1;
   }
   .popover-section {
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
   }
   .popover-section-header {
     font-size: var(--text-xs);
@@ -447,7 +447,8 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-muted);
-    margin-bottom: var(--space-xs);
+    margin-bottom: 2px;
+    padding: 4px var(--space-sm);
   }
   .popover-repo {
     display: flex;
@@ -478,10 +479,12 @@
     font-size: var(--text-xs);
     color: var(--text-muted);
     flex-shrink: 0;
-    width: 14px;
-    text-align: center;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    padding: 2px;
   }
   .pin-icon.pinned {
     color: var(--accent);

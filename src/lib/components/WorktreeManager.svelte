@@ -1,7 +1,12 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
   import { extractErrorMessage } from '$lib/utils/error';
-  import { gitGetWorktrees, gitAddWorktree, gitRemoveWorktree, openInFolder } from '$lib/git/commands';
+  import {
+    gitGetWorktrees,
+    gitAddWorktree,
+    gitRemoveWorktree,
+    openInFolder,
+  } from '$lib/git/commands';
   import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
   import type { WorktreeInfo } from '$lib/git/types';
 
@@ -13,11 +18,12 @@
 
   // ── Derived ────────────────────────────────────────────
   const filteredWorktrees = $derived(
-    app.worktrees.filter((w) => 
-      !searchQuery || 
-      w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      w.branch?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    app.worktrees.filter(
+      (w) =>
+        !searchQuery ||
+        w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        w.branch?.toLowerCase().includes(searchQuery.toLowerCase()),
+    ),
   );
 
   // ── Operations ──────────────────────────────────────────
@@ -113,10 +119,20 @@
       <span class="section-count">{app.worktrees.length}</span>
     </button>
     <div class="section-actions">
-      <button class="section-action-btn" title="重新整理" onclick={refreshWorktrees} disabled={loading}>
+      <button
+        class="section-action-btn"
+        title="重新整理"
+        onclick={refreshWorktrees}
+        disabled={loading}
+      >
         <span class:spinning={loading}>↻</span>
       </button>
-      <button class="section-action-btn" title="新增 Worktree" onclick={handleAdd} disabled={loading}>+</button>
+      <button
+        class="section-action-btn"
+        title="新增 Worktree"
+        onclick={handleAdd}
+        disabled={loading}>+</button
+      >
     </div>
   </div>
 
@@ -300,7 +316,11 @@
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>

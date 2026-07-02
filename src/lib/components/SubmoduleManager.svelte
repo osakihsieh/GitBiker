@@ -13,11 +13,12 @@
 
   // ── Derived ────────────────────────────────────────────
   const filteredSubmodules = $derived(
-    app.submodules.filter((s) => 
-      !searchQuery || 
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.path.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    app.submodules.filter(
+      (s) =>
+        !searchQuery ||
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.path.toLowerCase().includes(searchQuery.toLowerCase()),
+    ),
   );
 
   // ── Operations ──────────────────────────────────────────
@@ -109,10 +110,14 @@
 
   function getStatusColor(status: string) {
     switch (status) {
-      case 'UpToDate': return 'var(--success-color, #4caf50)';
-      case 'Outdated': return 'var(--warning-color, #ff9800)';
-      case 'Uninitialized': return 'var(--text-muted, #888)';
-      default: return 'inherit';
+      case 'UpToDate':
+        return 'var(--success-color, #4caf50)';
+      case 'Outdated':
+        return 'var(--warning-color, #ff9800)';
+      case 'Uninitialized':
+        return 'var(--text-muted, #888)';
+      default:
+        return 'inherit';
     }
   }
 </script>
@@ -125,10 +130,20 @@
       <span class="section-count">{app.submodules.length}</span>
     </button>
     <div class="section-actions">
-      <button class="section-action-btn" title="重新整理" onclick={refreshSubmodules} disabled={loading}>
+      <button
+        class="section-action-btn"
+        title="重新整理"
+        onclick={refreshSubmodules}
+        disabled={loading}
+      >
         <span class:spinning={loading}>↻</span>
       </button>
-      <button class="section-action-btn" title="新增 Submodule" onclick={handleAdd} disabled={loading}>+</button>
+      <button
+        class="section-action-btn"
+        title="新增 Submodule"
+        onclick={handleAdd}
+        disabled={loading}>+</button
+      >
     </div>
   </div>
 
@@ -292,7 +307,11 @@
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>

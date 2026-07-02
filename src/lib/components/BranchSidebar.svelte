@@ -753,7 +753,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-xs) var(--space-md) var(--space-xs) calc(var(--space-md) + 12px);
+    padding: 6px var(--space-md);
+    padding-left: calc(var(--space-md) + 10px);
     font-size: var(--text-sm);
     font-family: var(--font-mono);
     color: var(--text-primary);
@@ -763,6 +764,7 @@
     cursor: pointer;
     width: 100%;
     text-align: left;
+    min-height: 32px;
   }
   .branch-item:hover {
     background: var(--bg-hover);
