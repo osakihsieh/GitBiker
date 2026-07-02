@@ -114,3 +114,64 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* ── Toolbar action button feedback ─────────────────────────────
+   點擊立即回饋：按下時微縮 + accent 底色閃一下，讓用戶明確知道點擊已生效。
+   載入中：圖示換成旋轉載入器、文字轉 accent 色、按鈕 disabled。
+   ──────────────────────────────────────────────────────────────── */
+@keyframes action-flash {
+  0% {
+    background-color: color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.toolbar-action {
+  transition:
+    transform 80ms ease-out,
+    background-color 120ms ease-out,
+    color 120ms ease-out;
+}
+
+.toolbar-action:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.toolbar-action.is-loading {
+  pointer-events: none;
+}
+
+.toolbar-action.is-loading .action-icon {
+  display: none;
+}
+
+.toolbar-action .action-spinner {
+  display: none;
+}
+
+.toolbar-action.is-loading .action-spinner {
+  display: block;
+  animation: spin 0.8s linear infinite;
+}
+
+.toolbar-action.is-loading .action-label {
+  color: var(--accent);
+}
+
+/* 點擊瞬間的 accent 閃光（載入開始時觸發一次） */
+.toolbar-action.is-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: action-flash 0.5s ease-out forwards;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { type Snippet } from 'svelte';
   import { extractErrorMessage } from '$lib/utils/error';
   import { app } from '$lib/stores/app.svelte';
   import { conflicts } from '$lib/stores/conflictStore.svelte';
   import { multiRepo } from '$lib/stores/multiRepoStore.svelte';
   import {
     gitPush,
-    gitPushTags,
     gitPull,
     gitFetch,
     gitBranches,
@@ -19,7 +19,6 @@
   let branchDropdownOpen = $state(false);
   let branchManagerOpen = $state(false);
   let pushing = $state(false);
-  let pushingTags = $state(false);
   let pulling = $state(false);
   let fetching = $state(false);
 
@@ -70,24 +69,6 @@
       app.addToast(extractErrorMessage(e), 'error', false);
     } finally {
       pushing = false;
-    }
-  }
-
-  async function handlePushTags() {
-    if (!app.repoPath || pushingTags) return;
-    pushingTags = true;
-    try {
-      const result = await gitPushTags(app.repoPath);
-      if (result.success) {
-        app.addToast(`已推送所有 Tags 到 ${result.remote}`, 'success');
-      } else {
-        app.addToast(result.message, 'error', false);
-      }
-      await app.refreshAll();
-    } catch (e: unknown) {
-      app.addToast(extractErrorMessage(e), 'error', false);
-    } finally {
-      pushingTags = false;
     }
   }
 
@@ -188,6 +169,94 @@
 </script>
 
 <svelte:window onkeydown={handleBranchKeydown} />
+
+{#snippet pullIcon()}
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M12 17V3" /><path d="m6 11 6 6 6-6" /><path d="M19 21H5" />
+  </svg>
+{/snippet}
+
+{#snippet pushIcon()}
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M12 3v14" /><path d="m6 9 6-6 6 6" /><path d="M19 21H5" />
+  </svg>
+{/snippet}
+
+{#snippet fetchIcon()}
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path
+      d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
+    /><path d="M3 21v-5h5" />
+  </svg>
+{/snippet}
+
+{#snippet spinnerIcon()}
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  >
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+  </svg>
+{/snippet}
+
+{#snippet gitAction({
+  label,
+  title,
+  loading,
+  onclick,
+  icon,
+}: {
+  label: string;
+  title: string;
+  loading: boolean;
+  onclick: () => void;
+  icon: Snippet;
+})}
+  <button
+    class="toolbar-action relative flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 hover:text-accent {loading
+      ? 'is-loading'
+      : ''}"
+    {onclick}
+    disabled={loading}
+    {title}
+  >
+    <span class="action-icon">{@render icon()}</span>
+    <span class="action-spinner text-accent">{@render spinnerIcon()}</span>
+    <span class="text-[10px] uppercase font-bold text-text-muted mt-1 action-label">{label}</span>
+  </button>
+{/snippet}
 
 <div class="toolbar h-16 bg-bg-secondary border-b border-border flex items-center px-4 gap-2">
   <!-- Left: repo + branch info -->
@@ -422,8 +491,9 @@
     <div class="actions flex items-center gap-1">
       <!-- Undo/Redo (Visual Placeholder) -->
       <button
-        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors opacity-50 cursor-not-allowed"
+        class="toolbar-action flex flex-col items-center justify-center w-14 h-14 rounded opacity-50 cursor-not-allowed"
         title="Undo (Coming Soon)"
+        disabled
       >
         <svg
           width="18"
@@ -434,20 +504,17 @@
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="group-hover:text-accent transition-colors"
         >
           <path d="M9 14 4 9l5-5" /><path
             d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"
           />
         </svg>
-        <span
-          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
-          >Undo</span
-        >
+        <span class="text-[10px] uppercase font-bold text-text-muted mt-1">Undo</span>
       </button>
       <button
-        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors opacity-50 cursor-not-allowed"
+        class="toolbar-action flex flex-col items-center justify-center w-14 h-14 rounded opacity-50 cursor-not-allowed"
         title="Redo (Coming Soon)"
+        disabled
       >
         <svg
           width="18"
@@ -458,105 +525,47 @@
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="group-hover:text-accent transition-colors"
         >
           <path d="m15 14 5-5-5-5" /><path
             d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"
           />
         </svg>
-        <span
-          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
-          >Redo</span
-        >
+        <span class="text-[10px] uppercase font-bold text-text-muted mt-1">Redo</span>
       </button>
 
       <div class="toolbar-sep w-[1px] h-8 bg-border mx-1"></div>
 
-      <button
-        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors"
-        onclick={handlePull}
-        disabled={pulling}
-        title="Git Pull"
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="group-hover:text-accent transition-colors"
-        >
-          <path d="M12 17V3" /><path d="m6 11 6 6 6-6" /><path d="M19 21H5" />
-        </svg>
-        <span
-          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
-          >Pull</span
-        >
-      </button>
-      <button
-        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors"
-        onclick={handlePush}
-        disabled={pushing}
-        title="Git Push"
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="group-hover:text-accent transition-colors"
-        >
-          <path d="M12 3v14" /><path d="m6 9 6-6 6 6" /><path d="M19 21H5" />
-        </svg>
-        <span
-          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
-          >Push</span
-        >
-      </button>
-      <button
-        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors"
-        onclick={handleFetch}
-        disabled={fetching}
-        title="Git Fetch"
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="group-hover:text-accent transition-colors"
-        >
-          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path
-            d="M21 3v5h-5"
-          /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" />
-        </svg>
-        <span
-          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
-          >Fetch</span
-        >
-      </button>
+      {@render gitAction({
+        label: 'Pull',
+        title: 'Git Pull',
+        loading: pulling,
+        onclick: handlePull,
+        icon: pullIcon,
+      })}
+      {@render gitAction({
+        label: 'Push',
+        title: 'Git Push',
+        loading: pushing,
+        onclick: handlePush,
+        icon: pushIcon,
+      })}
+      {@render gitAction({
+        label: 'Fetch',
+        title: 'Git Fetch',
+        loading: fetching,
+        onclick: handleFetch,
+        icon: fetchIcon,
+      })}
 
       <div class="toolbar-sep w-[1px] h-8 bg-border mx-1"></div>
 
       <button
-        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors"
+        class="toolbar-action flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 hover:text-accent"
         onclick={handleCleanup}
         title="AI 分支管理"
       >
-        <span class="text-lg group-hover:scale-110 transition-transform">✨</span>
-        <span
-          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
+        <span class="text-lg action-icon">✨</span>
+        <span class="text-[10px] uppercase font-bold text-text-muted mt-1 action-label"
           >AI Clear</span
         >
       </button>
