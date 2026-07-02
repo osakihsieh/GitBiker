@@ -115,16 +115,36 @@ export async function refreshStatus(state: GitActionableState): Promise<void> {
 export async function refreshAll(state: GitActionableState): Promise<void> {
   const tab = state.activeTab;
   if (!tab) return;
+  const t0 = performance.now();
   try {
-    const [status, commits, branches, tags, lfs, submodules, worktrees] = await Promise.all([
-      gitStatus(tab.path),
-      gitLog(tab.path, MAX_COMMITS_PER_TAB, tab.state.logFilter),
-      gitBranches(tab.path),
-      gitTags(tab.path),
-      gitLfsStatus(tab.path).catch(() => null),
-      gitGetSubmodules(tab.path).catch(() => []),
-      gitGetWorktrees(tab.path).catch(() => []),
+    const results = await Promise.all([
+      gitStatus(tab.path).then(
+        (r) => (console.log(`[perf] gitStatus: ${(performance.now() - t0).toFixed(0)}ms`), r),
+      ),
+      gitLog(tab.path, MAX_COMMITS_PER_TAB, tab.state.logFilter).then(
+        (r) => (console.log(`[perf] gitLog: ${(performance.now() - t0).toFixed(0)}ms`), r),
+      ),
+      gitBranches(tab.path).then(
+        (r) => (console.log(`[perf] gitBranches: ${(performance.now() - t0).toFixed(0)}ms`), r),
+      ),
+      gitTags(tab.path).then(
+        (r) => (console.log(`[perf] gitTags: ${(performance.now() - t0).toFixed(0)}ms`), r),
+      ),
+      gitLfsStatus(tab.path)
+        .catch(() => null)
+        .then((r) => (console.log(`[perf] gitLfs: ${(performance.now() - t0).toFixed(0)}ms`), r)),
+      gitGetSubmodules(tab.path)
+        .catch(() => [])
+        .then(
+          (r) => (console.log(`[perf] submodules: ${(performance.now() - t0).toFixed(0)}ms`), r),
+        ),
+      gitGetWorktrees(tab.path)
+        .catch(() => [])
+        .then(
+          (r) => (console.log(`[perf] worktrees: ${(performance.now() - t0).toFixed(0)}ms`), r),
+        ),
     ]);
+    const [status, commits, branches, tags, lfs, submodules, worktrees] = results;
     tab.state.stagedFiles = status.filter((f) => f.staging === 'Staged');
     tab.state.unstagedFiles = status.filter((f) => f.staging === 'Unstaged');
     tab.state.commits = commits;
@@ -134,6 +154,7 @@ export async function refreshAll(state: GitActionableState): Promise<void> {
     tab.state.submodules = submodules;
     tab.state.worktrees = worktrees;
     tab.state.currentBranch = branches.find((b) => b.is_current)?.name || tab.state.currentBranch;
+    console.log(`[perf] refreshAll total: ${(performance.now() - t0).toFixed(0)}ms`);
   } catch (e: unknown) {
     state.addToast(extractErrorMessage(e), 'error');
   }
