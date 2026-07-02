@@ -41,7 +41,7 @@
     </div>
     <div class="online-badge">
       <span class="online-dot"></span>
-      <span>{agentStore.statuses.filter(s => s.pid).length} ONLINE</span>
+      <span>{agentStore.statuses.filter((s) => s.pid).length} ONLINE</span>
     </div>
   </div>
 
@@ -63,8 +63,17 @@
 
             <div class="card-header">
               <div class="card-header-left">
-                <div class="icon-box" style="background-color: {getStatusColor(agent.status)}18; color: {getStatusColor(agent.status)};">
-                  <svelte:component this={getStatusIcon(agent.status)} size={24} strokeWidth={1.5} />
+                <div
+                  class="icon-box"
+                  style="background-color: {getStatusColor(agent.status)}18; color: {getStatusColor(
+                    agent.status,
+                  )};"
+                >
+                  <svelte:component
+                    this={getStatusIcon(agent.status)}
+                    size={24}
+                    strokeWidth={1.5}
+                  />
                 </div>
                 <div class="agent-info">
                   <h3 class="agent-name">{agent.profile}</h3>
@@ -72,13 +81,18 @@
                     <span class="meta-pid">PID: {agent.pid || 'N/A'}</span>
                     {#if agent.worktree}
                       <span class="meta-sep">|</span>
-                      <span class="meta-worktree" title={agent.worktree}>{agent.worktree.split('/').pop()}</span>
+                      <span class="meta-worktree" title={agent.worktree}
+                        >{agent.worktree.split('/').pop()}</span
+                      >
                     {/if}
                   </div>
                 </div>
               </div>
               <div class="timestamp">
-                {new Date(agent.last_update * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(agent.last_update * 1000).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </div>
             </div>
 
@@ -86,7 +100,8 @@
               <div class="action-row">
                 <span class="action-label">Current Action</span>
                 <div class="status-indicator">
-                  <span class="status-dot" style="background-color: {getStatusColor(agent.status)}"></span>
+                  <span class="status-dot" style="background-color: {getStatusColor(agent.status)}"
+                  ></span>
                   <span class="status-text">{agent.status}</span>
                 </div>
               </div>
@@ -362,7 +377,12 @@
   }
 
   @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
   }
 </style>

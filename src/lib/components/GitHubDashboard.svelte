@@ -15,28 +15,32 @@
   function formatTime(dateStr?: string) {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return (
+      date.toLocaleDateString() +
+      ' ' +
+      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    );
   }
 </script>
 
 <div class="github-dashboard">
   <!-- Header Tabs -->
   <div class="dashboard-tabs">
-    <button 
+    <button
       class="tab-btn"
       class:tab-active={activeTab === 'prs'}
-      onclick={() => activeTab = 'prs'}
+      onclick={() => (activeTab = 'prs')}
     >
       Pull Requests ({app.prs.length})
     </button>
-    <button 
+    <button
       class="tab-btn"
       class:tab-active={activeTab === 'issues'}
-      onclick={() => activeTab = 'issues'}
+      onclick={() => (activeTab = 'issues')}
     >
       Issues ({app.issues.length})
     </button>
-    
+
     {#if app.isLoadingRemote}
       <div class="loading-badge">
         <span class="loading-dot"></span>
@@ -48,15 +52,17 @@
   <!-- List Content -->
   <div class="dashboard-list">
     {#each items as item}
-      <button 
-        class="list-item"
-        onclick={() => handleItemClick(item)}
-      >
+      <button class="list-item" onclick={() => handleItemClick(item)}>
         <div class="item-header">
           <span class="item-title">
-            <span class="item-number">#{item.number}</span> {item.title}
+            <span class="item-number">#{item.number}</span>
+            {item.title}
           </span>
-          <span class="item-state" class:state-open={item.state === 'OPEN'} class:state-closed={item.state !== 'OPEN'}>
+          <span
+            class="item-state"
+            class:state-open={item.state === 'OPEN'}
+            class:state-closed={item.state !== 'OPEN'}
+          >
             {item.state}
           </span>
         </div>
@@ -103,7 +109,9 @@
     padding: 0;
     height: 100%;
     border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
+    transition:
+      color 0.15s,
+      border-color 0.15s;
   }
   .tab-btn:hover {
     color: var(--text-primary);
@@ -208,7 +216,12 @@
   }
 
   @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
   }
 </style>

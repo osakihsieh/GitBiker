@@ -659,26 +659,28 @@
   .status-c {
     color: var(--error);
     font-weight: bold;
-    .filename {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: var(--text-sm);
-      line-height: 1.4;
-    }
-    .lfs-badge {
-      font-size: 9px;
-      padding: 1px 3px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      border-radius: 3px;
-      font-weight: 600;
-      margin-left: var(--space-xs);
-      flex-shrink: 0;
-    }
+  }
+  .filename {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--text-sm);
+    line-height: 1.4;
+  }
+  .lfs-badge {
+    font-size: 9px;
+    padding: 1px 3px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 3px;
+    font-weight: 600;
+    margin-left: var(--space-xs);
+    flex-shrink: 0;
+  }
 
+  .empty-section {
     padding: var(--space-md);
     color: var(--text-muted);
     font-size: var(--font-size-sm);

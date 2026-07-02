@@ -211,82 +211,81 @@
     {:else}
       <!-- Main Accelerated Workspace -->
       <main class="flex-1 flex overflow-hidden">
-      <!-- Left: Navigation (Branches, Tags, etc.) -->
-      <aside
-        class="bg-bg-secondary/70 backdrop-blur-xl border-r border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
-        style:width="{sidebarWidth}px"
-      >
-        <BranchSidebar />
-      </aside>
+        <!-- Left: Navigation (Branches, Tags, etc.) -->
+        <aside
+          class="bg-bg-secondary/70 backdrop-blur-xl border-r border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
+          style:width="{sidebarWidth}px"
+        >
+          <BranchSidebar />
+        </aside>
 
-      <!-- Resize Handle -->
-      <div
-        class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
-        onmousedown={handleResizeStart('sidebar')}
-        role="separator"
-        aria-orientation="vertical"
-        aria-valuenow={sidebarWidth}
-        tabindex="-1"
-      ></div>
+        <!-- Resize Handle -->
+        <div
+          class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
+          onmousedown={handleResizeStart('sidebar')}
+          role="separator"
+          aria-orientation="vertical"
+          aria-valuenow={sidebarWidth}
+          tabindex="-1"
+        ></div>
 
-      <!-- Center: Execution & Insight (Log, Diff) -->
-      <section class="flex-1 flex flex-col bg-bg-primary min-w-0">
-        {#if app.viewMode === 'github'}
-          <GitHubDashboard />
-        {:else if app.viewMode === 'conflict-resolution'}
-          <ConflictResolver />
-        {:else if app.selectedFile || app.currentDiff}
-          <!-- Breadcrumb Navigation -->
-          <div
-            class="h-8 flex items-center px-md gap-sm bg-bg-secondary/50 border-b border-border text-[11px]"
-          >
-            <button
-              class="text-monokai-blue hover:underline"
-              onclick={() => {
-                app.selectedFile = null;
-                app.currentDiff = null;
-              }}>Commit Log</button
+        <!-- Center: Execution & Insight (Log, Diff) -->
+        <section class="flex-1 flex flex-col bg-bg-primary min-w-0">
+          {#if app.viewMode === 'github'}
+            <GitHubDashboard />
+          {:else if app.viewMode === 'conflict-resolution'}
+            <ConflictResolver />
+          {:else if app.selectedFile || app.currentDiff}
+            <!-- Breadcrumb Navigation -->
+            <div
+              class="h-8 flex items-center px-md gap-sm bg-bg-secondary/50 border-b border-border text-[11px]"
             >
-            <span class="text-text-dimmed">/</span>
-            <span class="truncate text-text-bright italic"
-              >{app.selectedFile?.split('/').pop()}</span
-            >
-          </div>
-          <div class="flex-1 overflow-hidden">
-            <DiffViewer />
-          </div>
-        {:else}
-          <CommitLog />
-        {/if}
-      </section>
+              <button
+                class="text-monokai-blue hover:underline"
+                onclick={() => {
+                  app.selectedFile = null;
+                  app.currentDiff = null;
+                }}>Commit Log</button
+              >
+              <span class="text-text-dimmed">/</span>
+              <span class="truncate text-text-bright italic"
+                >{app.selectedFile?.split('/').pop()}</span
+              >
+            </div>
+            <div class="flex-1 overflow-hidden">
+              <DiffViewer />
+            </div>
+          {:else}
+            <CommitLog />
+          {/if}
+        </section>
 
-      <!-- Resize Handle -->
-      <div
-        class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
-        onmousedown={handleResizeStart('right')}
-        role="separator"
-        aria-orientation="vertical"
-        aria-valuenow={rightWidth}
-        tabindex="-1"
-      ></div>
+        <!-- Resize Handle -->
+        <div
+          class="w-1 cursor-col-resize hover:bg-monokai-blue/50 active:bg-monokai-blue transition-colors z-10"
+          onmousedown={handleResizeStart('right')}
+          role="separator"
+          aria-orientation="vertical"
+          aria-valuenow={rightWidth}
+          tabindex="-1"
+        ></div>
 
-      <!-- Right: Staging & Details -->
-      <aside
-        class="bg-bg-secondary/70 backdrop-blur-xl border-l border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
-        style:width="{rightWidth}px"
-      >
-        {#if app.viewMode === 'commit-detail'}
-          <CommitFileList />
-        {:else}
-          <FileTree />
-        {/if}
-      </aside>
-    </main>
+        <!-- Right: Staging & Details -->
+        <aside
+          class="bg-bg-secondary/70 backdrop-blur-xl border-l border-border flex flex-col flex-shrink-0 transition-[width] duration-75"
+          style:width="{rightWidth}px"
+        >
+          {#if app.viewMode === 'commit-detail'}
+            <CommitFileList />
+          {:else}
+            <FileTree />
+          {/if}
+        </aside>
+      </main>
 
-    <!-- Accelerated Terminal Sidecar -->
-    <InlineTerminal visible={app.showTerminal} onClose={() => (app.showTerminal = false)} />
-  {/if}
-
+      <!-- Accelerated Terminal Sidecar -->
+      <InlineTerminal visible={app.showTerminal} onClose={() => (app.showTerminal = false)} />
+    {/if}
   {:else}
     <!-- Welcome Screen (Factory Idle) -->
     <div class="flex-1 flex items-center justify-center">

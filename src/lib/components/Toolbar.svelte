@@ -224,12 +224,14 @@
 
     <button
       class="repo-btn flex-shrink-0 min-w-[120px] flex flex-col items-start px-2 py-1 rounded hover:bg-white/5 transition-colors group"
-
       onclick={onOpenPopover}
       aria-label="Open repo switcher ({app.isMac ? 'Cmd+T' : 'Ctrl+T'})"
       title="切換倉庫 ({app.isMac ? 'Cmd+T' : 'Ctrl+T'})"
     >
-      <span class="info-label text-[10px] uppercase tracking-wider text-text-muted font-bold group-hover:text-accent transition-colors">repository</span>
+      <span
+        class="info-label text-[10px] uppercase tracking-wider text-text-muted font-bold group-hover:text-accent transition-colors"
+        >repository</span
+      >
       <div class="flex items-center gap-2">
         <span class="info-name text-[13px] text-text-primary font-medium">{repoName}</span>
         <span class="chevron text-[9px] text-text-muted">▼</span>
@@ -239,12 +241,20 @@
     <div class="toolbar-sep w-[1px] h-8 bg-border mx-2 flex-shrink-0"></div>
 
     <div class="branch-wrapper relative flex-shrink-0">
-      <button class="branch-btn min-w-[120px] flex flex-col items-start px-2 py-1 rounded hover:bg-white/5 transition-colors group" onclick={toggleBranchDropdown} aria-label="Switch branch">
-
-        <span class="info-label text-[10px] uppercase tracking-wider text-text-muted font-bold group-hover:text-accent transition-colors">branch</span>
+      <button
+        class="branch-btn min-w-[120px] flex flex-col items-start px-2 py-1 rounded hover:bg-white/5 transition-colors group"
+        onclick={toggleBranchDropdown}
+        aria-label="Switch branch"
+      >
+        <span
+          class="info-label text-[10px] uppercase tracking-wider text-text-muted font-bold group-hover:text-accent transition-colors"
+          >branch</span
+        >
         <div class="flex items-center gap-2">
           <span class="branch-icon text-monokai-purple">⑇</span>
-          <span class="info-name text-[13px] text-text-primary font-medium">{app.currentBranch || 'main'}</span>
+          <span class="info-name text-[13px] text-text-primary font-medium"
+            >{app.currentBranch || 'main'}</span
+          >
           <span class="chevron text-[9px] text-text-muted">▼</span>
         </div>
       </button>
@@ -252,7 +262,9 @@
       {#if branchDropdownOpen}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div class="fixed inset-0 z-40" onclick={closeBranchDropdown}></div>
-        <div class="branch-dropdown absolute top-full left-0 mt-1 w-56 bg-bg-surface border border-border rounded-lg shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
+        <div
+          class="branch-dropdown absolute top-full left-0 mt-1 w-56 bg-bg-surface border border-border rounded-lg shadow-2xl z-50 overflow-hidden backdrop-blur-xl"
+        >
           <div class="max-h-64 overflow-y-auto py-1">
             {#each app.branches.filter((b) => !b.is_remote) as branch}
               <button
@@ -266,7 +278,10 @@
             {/each}
           </div>
           <div class="border-t border-border p-1">
-            <button class="w-full text-left px-4 py-2 text-[12px] text-text-muted hover:text-text-primary transition-colors" onclick={openBranchManager}>管理分支...</button>
+            <button
+              class="w-full text-left px-4 py-2 text-[12px] text-text-muted hover:text-text-primary transition-colors"
+              onclick={openBranchManager}>管理分支...</button
+            >
           </div>
         </div>
       {/if}
@@ -281,7 +296,7 @@
         class="conflict-badge ml-2 px-2 py-0.5 bg-error text-bg-primary text-[10px] font-bold rounded flex items-center gap-1 animate-pulse"
         onclick={() =>
           conflicts.isInConflictMode ? conflicts.exitConflictMode() : conflicts.enterConflictMode()}
-        title={app.isMac ? "Cmd+Shift+M" : "Ctrl+Shift+M"}
+        title={app.isMac ? 'Cmd+Shift+M' : 'Ctrl+Shift+M'}
       >
         <span>⚠</span>
         <span>{conflicts.files.length}</span>
@@ -300,8 +315,17 @@
         title="在檔案總管開啟 (Alt+O)"
         aria-label="Open in file explorer"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
         </svg>
       </button>
       <button
@@ -310,18 +334,42 @@
         title="在編輯器開啟 (Alt+E)"
         aria-label="Open in editor"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
         </svg>
       </button>
       <button
-        class="w-9 h-9 flex items-center justify-center rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors {app.showAgentDashboard ? 'text-accent bg-white/5' : ''}"
+        class="w-9 h-9 flex items-center justify-center rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors {app.showAgentDashboard
+          ? 'text-accent bg-white/5'
+          : ''}"
         onclick={() => app.toggleAgentDashboard()}
         title="Agent Radar"
         aria-label="Toggle Agent Dashboard"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="1" />
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /><circle
+            cx="12"
+            cy="12"
+            r="1"
+          />
         </svg>
       </button>
       <button
@@ -330,71 +378,199 @@
         title="開啟外部終端機 (Alt+T)"
         aria-label="Open external terminal"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
         </svg>
       </button>
       <button
-        class="w-9 h-9 flex items-center justify-center rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors {app.showTerminal ? 'text-accent bg-white/5' : ''}"
+        class="w-9 h-9 flex items-center justify-center rounded hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors {app.showTerminal
+          ? 'text-accent bg-white/5'
+          : ''}"
         onclick={() => app.toggleTerminal()}
         title="切換內建終端機 ({app.isMac ? 'Cmd+`' : 'Ctrl+`'})"
         aria-label="Toggle inline terminal"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="14" width="20" height="8" rx="2" ry="2" /><path d="M6 18l2-2-2-2" /><line x1="12" y1="18" x2="16" y2="18" />
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2" /><path d="M6 18l2-2-2-2" /><line
+            x1="12"
+            y1="18"
+            x2="16"
+            y2="18"
+          />
         </svg>
       </button>
     </div>
 
     <div class="actions flex items-center gap-1">
       <!-- Undo/Redo (Visual Placeholder) -->
-      <button class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors opacity-50 cursor-not-allowed" title="Undo (Coming Soon)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-accent transition-colors">
-          <path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/>
+      <button
+        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors opacity-50 cursor-not-allowed"
+        title="Undo (Coming Soon)"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="group-hover:text-accent transition-colors"
+        >
+          <path d="M9 14 4 9l5-5" /><path
+            d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"
+          />
         </svg>
-        <span class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1">Undo</span>
+        <span
+          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
+          >Undo</span
+        >
       </button>
-      <button class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors opacity-50 cursor-not-allowed" title="Redo (Coming Soon)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-accent transition-colors">
-          <path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/>
+      <button
+        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors opacity-50 cursor-not-allowed"
+        title="Redo (Coming Soon)"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="group-hover:text-accent transition-colors"
+        >
+          <path d="m15 14 5-5-5-5" /><path
+            d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"
+          />
         </svg>
-        <span class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1">Redo</span>
+        <span
+          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
+          >Redo</span
+        >
       </button>
 
       <div class="toolbar-sep w-[1px] h-8 bg-border mx-1"></div>
 
-      <button class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors" onclick={handlePull} disabled={pulling} title="Git Pull">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-accent transition-colors">
-          <path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/>
+      <button
+        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors"
+        onclick={handlePull}
+        disabled={pulling}
+        title="Git Pull"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="group-hover:text-accent transition-colors"
+        >
+          <path d="M12 17V3" /><path d="m6 11 6 6 6-6" /><path d="M19 21H5" />
         </svg>
-        <span class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1">Pull</span>
+        <span
+          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
+          >Pull</span
+        >
       </button>
-      <button class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors" onclick={handlePush} disabled={pushing} title="Git Push">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-accent transition-colors">
-          <path d="M12 3v14"/><path d="m6 9 6-6 6 6"/><path d="M19 21H5"/>
+      <button
+        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors"
+        onclick={handlePush}
+        disabled={pushing}
+        title="Git Push"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="group-hover:text-accent transition-colors"
+        >
+          <path d="M12 3v14" /><path d="m6 9 6-6 6 6" /><path d="M19 21H5" />
         </svg>
-        <span class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1">Push</span>
+        <span
+          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
+          >Push</span
+        >
       </button>
-      <button class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors" onclick={handleFetch} disabled={fetching} title="Git Fetch">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-accent transition-colors">
-          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/>
+      <button
+        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors"
+        onclick={handleFetch}
+        disabled={fetching}
+        title="Git Fetch"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="group-hover:text-accent transition-colors"
+        >
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path
+            d="M21 3v5h-5"
+          /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" />
         </svg>
-        <span class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1">Fetch</span>
+        <span
+          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
+          >Fetch</span
+        >
       </button>
 
       <div class="toolbar-sep w-[1px] h-8 bg-border mx-1"></div>
 
-      <button class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors" onclick={handleCleanup} title="AI 分支管理">
+      <button
+        class="flex flex-col items-center justify-center w-14 h-14 rounded hover:bg-white/5 group transition-colors"
+        onclick={handleCleanup}
+        title="AI 分支管理"
+      >
         <span class="text-lg group-hover:scale-110 transition-transform">✨</span>
-        <span class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1">AI Clear</span>
+        <span
+          class="text-[10px] uppercase font-bold text-text-muted group-hover:text-text-primary mt-1"
+          >AI Clear</span
+        >
       </button>
     </div>
-
   </div>
 
   <div class="drag-spacer flex-1 min-w-[20px] self-stretch" data-tauri-drag-region></div>
 
-  <button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors" onclick={onOpenSettings} title="設定" aria-label="Settings">
+  <button
+    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors"
+    onclick={onOpenSettings}
+    title="設定"
+    aria-label="Settings"
+  >
     <svg
       width="20"
       height="20"
@@ -412,6 +588,3 @@
     </svg>
   </button>
 </div>
-
-
-

@@ -1191,10 +1191,6 @@
     width: 200px;
     flex: none;
   }
-  .ai-model-input {
-    width: 160px;
-    flex: none;
-  }
   .model-select-row {
     display: flex;
     align-items: center;
