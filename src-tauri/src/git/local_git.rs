@@ -166,139 +166,6 @@ impl LocalGit {
             Err(GitError::OperationFailed(stderr))
         }
     }
-    pub fn rebase(&self, path: &Path, branch: &str, onto: &str) -> Result<RebaseResult, GitError> {
-        Self::check_index_lock(path)?;
-        // git rebase <onto> <branch>
-        match Self::run_git(path, &["rebase", onto, branch]) {
-            Ok(output) => Ok(RebaseResult {
-                success: true,
-                message: output,
-                conflicts: Vec::new(),
-            }),
-            Err(GitError::OperationFailed(stderr)) => {
-                if stderr.contains("CONFLICT") || stderr.contains("Automatic rebase failed") {
-                    let conflicts: Vec<String> = stderr
-                        .lines()
-                        .filter(|l| l.contains("CONFLICT"))
-                        .map(|l| l.to_string())
-                        .collect();
-                    Ok(RebaseResult {
-                        success: false,
-                        message: stderr,
-                        conflicts,
-                    })
-                } else {
-                    Err(GitError::OperationFailed(stderr))
-                }
-            }
-            Err(e) => Err(e),
-        }
-    }
-
-    pub fn rebase_interactive(
-        &self,
-        path: &Path,
-        onto: &str,
-        commits: Vec<RebaseCommit>,
-    ) -> Result<RebaseResult, GitError> {
-        Self::check_index_lock(path)?;
-
-        // 1. Prepare the TODO list
-        let mut todo_content = String::new();
-        for c in &commits {
-            let action_str = match c.action {
-                RebaseAction::Pick => "pick",
-                RebaseAction::Reword => "reword",
-                RebaseAction::Edit => "edit",
-                RebaseAction::Squash => "squash",
-                RebaseAction::Fixup => "fixup",
-                RebaseAction::Exec => "exec",
-                RebaseAction::Drop => "drop",
-            };
-            todo_content.push_str(&action_str);
-            todo_content.push(' ');
-            todo_content.push_str(&c.id);
-            todo_content.push(' ');
-            todo_content.push_str(&c.message.split('\n').next().unwrap_or(""));
-            todo_content.push('\n');
-        }
-
-        // 2. Write to a temporary file
-        let temp_dir = std::env::temp_dir();
-        let random_id = format!("{:x}", std::collections::hash_map::DefaultHasher::new().finish()); // Simple fallback for random
-        let todo_file_path = temp_dir.join(format!("gitbiker-rebase-todo-{}", random_id));
-        
-        std::fs::write(&todo_file_path, todo_content)
-            .map_err(|e| GitError::OperationFailed(format!("無法建立 Rebase TODO 檔: {e}")))?;
-
-        // 3. Execute rebase -i
-        // We use 'cp' as the sequence editor to overwrite git's generated TODO with ours
-        let editor_cmd = format!("cp {}", todo_file_path.display());
-        
-        let output = Self::git_command()
-            .env("GIT_SEQUENCE_EDITOR", &editor_cmd)
-            .args(["rebase", "-i", onto])
-            .current_dir(path)
-            .output()
-            .map_err(|e| GitError::OperationFailed(format!("執行 Rebase 失敗: {e}")))?;
-
-        // Clean up
-        let _ = std::fs::remove_file(todo_file_path);
-
-        if output.status.success() {
-            Ok(RebaseResult {
-                success: true,
-                message: String::from_utf8_lossy(&output.stdout).to_string(),
-                conflicts: Vec::new(),
-            })
-        } else {
-            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-            if stderr.contains("CONFLICT") || stderr.contains("Automatic rebase failed") {
-                let conflicts: Vec<String> = stderr
-                    .lines()
-                    .filter(|l| l.contains("CONFLICT"))
-                    .map(|l| l.to_string())
-                    .collect();
-                Ok(RebaseResult {
-                    success: false,
-                    message: stderr,
-                    conflicts,
-                })
-            } else {
-                Err(GitError::OperationFailed(stderr))
-            }
-        }
-    }
-
-    pub fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError> {
-        Self::check_index_lock(path)?;
-        match Self::run_git(path, &["cherry-pick", commit_id]) {
-            Ok(output) => Ok(CherryPickResult {
-                commit_id: commit_id.to_string(),
-                success: true,
-                message: output,
-                conflicts: Vec::new(),
-            }),
-            Err(GitError::OperationFailed(stderr)) => {
-                if stderr.contains("CONFLICT") || stderr.contains("Automatic cherry-pick failed") {
-                    let conflicts: Vec<String> = stderr
-                        .lines()
-                        .filter(|l| l.contains("CONFLICT"))
-                        .map(|l| l.to_string())
-                        .collect();
-                    Ok(CherryPickResult {
-                        commit_id: commit_id.to_string(),
-                        success: false,
-                        message: stderr,
-                        conflicts,
-                    })
-                } else {
-                    Err(GitError::OperationFailed(stderr))
-                }
-            }
-            Err(e) => Err(e),
-        }
-    }
 }
 
 // ── EOL check helpers ─────────────────────────────────────
@@ -539,7 +406,7 @@ impl LocalGit {
 
     fn git_version_at_least(version_str: &str, major: u32, minor: u32) -> bool {
         // "git version 2.43.0.windows.1" → extract 2.43
-        let parts: Vec<&str> = version_str.trim().split_whitespace().collect();
+        let parts: Vec<&str> = version_str.split_whitespace().collect();
         if let Some(version) = parts.get(2) {
             let nums: Vec<u32> = version.split('.').filter_map(|s| s.parse().ok()).collect();
             if nums.len() >= 2 {
@@ -580,53 +447,6 @@ impl LocalGit {
                 is_bundled: false,
             },
         }
-    }
-
-    pub fn lfs_status(&self, path: &Path) -> Result<GitLfsStatus, GitError> {
-        let lfs_version = Self::run_git(path, &["lfs", "version"]).unwrap_or_else(|_| "none".to_string());
-        let is_installed = !lfs_version.contains("none");
-
-        if !is_installed {
-            return Ok(GitLfsStatus {
-                is_installed: false,
-                version: "none".to_string(),
-                files: Vec::new(),
-            });
-        }
-
-        // List LFS files
-        let output = Self::run_git(path, &["lfs", "ls-files", "--size", "--name-only"])?;
-        let mut files = Vec::new();
-
-        for line in output.lines() {
-            // git lfs ls-files output format can vary, but --name-only is safer.
-            // However, we want size and OID if possible. 
-            // Default: <oid> <status> <path>
-            // With --size: <oid> <status> (<size>) <path>
-            files.push(LfsFile {
-                path: line.to_string(),
-                size: 0, // Parsing complexity skipped for now, focus on identification
-                oid: "".to_string(),
-                is_locked: false,
-                lock_owner: None,
-            });
-        }
-
-        Ok(GitLfsStatus {
-            is_installed: true,
-            version: lfs_version,
-            files,
-        })
-    }
-
-    pub fn lfs_track(&self, path: &Path, pattern: &str) -> Result<(), GitError> {
-        Self::run_git(path, &["lfs", "track", pattern])?;
-        Ok(())
-    }
-
-    pub fn lfs_untrack(&self, path: &Path, pattern: &str) -> Result<(), GitError> {
-        Self::run_git(path, &["lfs", "untrack", pattern])?;
-        Ok(())
     }
 
     pub fn get_conflict_files(&self, path: &Path) -> Result<Vec<ConflictFile>, GitError> {
@@ -691,8 +511,8 @@ impl LocalGit {
     ) -> Result<ConflictContent, GitError> {
         // Validate path is within repo
         let full_path = path.join(file_path);
-        let canonical_repo = path.canonicalize().map_err(|e| GitError::Io(e))?;
-        let canonical_file = full_path.canonicalize().map_err(|e| GitError::Io(e))?;
+        let canonical_repo = path.canonicalize().map_err(GitError::Io)?;
+        let canonical_file = full_path.canonicalize().map_err(GitError::Io)?;
         if !canonical_file.starts_with(&canonical_repo) {
             return Err(GitError::OperationFailed("路徑超出 repo 範圍".to_string()));
         }
@@ -835,8 +655,8 @@ impl LocalGit {
     ) -> Result<(), GitError> {
         let full_path = path.join(file_path);
         // Validate path
-        let canonical_repo = path.canonicalize().map_err(|e| GitError::Io(e))?;
-        let canonical_file = full_path.canonicalize().map_err(|e| GitError::Io(e))?;
+        let canonical_repo = path.canonicalize().map_err(GitError::Io)?;
+        let canonical_file = full_path.canonicalize().map_err(GitError::Io)?;
         if !canonical_file.starts_with(&canonical_repo) {
             return Err(GitError::OperationFailed("路徑超出 repo 範圍".to_string()));
         }
@@ -941,7 +761,7 @@ impl LocalGit {
 
         let diff = repo.diff_tree_to_index(head_tree.as_ref(), None, None)?;
 
-        let stats = diff.stats()?;
+        let _stats = diff.stats()?;
         let mut file_summaries: Vec<crate::ai::FileSummary> = Vec::new();
         let mut file_diffs: Vec<(String, String)> = Vec::new();
 
@@ -992,11 +812,11 @@ impl LocalGit {
                 if !current_file.is_empty() {
                     file_diffs.push((current_file.clone(), current_diff.clone()));
                     // Update stats for previous file
-                    if file_index > 0 && file_index - 1 < file_summaries.len() {
-                        if file_summaries[file_index - 1].stats.is_some() {
-                            file_summaries[file_index - 1].stats =
-                                Some((current_adds, current_dels));
-                        }
+                    if file_index > 0
+                        && file_index - 1 < file_summaries.len()
+                        && file_summaries[file_index - 1].stats.is_some()
+                    {
+                        file_summaries[file_index - 1].stats = Some((current_adds, current_dels));
                     }
                 }
                 current_file = file_path;
@@ -1033,10 +853,11 @@ impl LocalGit {
         // Save last file's diff
         if !current_file.is_empty() {
             file_diffs.push((current_file, current_diff));
-            if file_index > 0 && file_index - 1 < file_summaries.len() {
-                if file_summaries[file_index - 1].stats.is_some() {
-                    file_summaries[file_index - 1].stats = Some((current_adds, current_dels));
-                }
+            if file_index > 0
+                && file_index - 1 < file_summaries.len()
+                && file_summaries[file_index - 1].stats.is_some()
+            {
+                file_summaries[file_index - 1].stats = Some((current_adds, current_dels));
             }
         }
 
@@ -1097,10 +918,9 @@ impl GitOperations for LocalGit {
                             | git2::Status::WT_RENAMED
                             | git2::Status::CONFLICTED,
                     )
+                    && Self::is_eol_only_change(&repo, file_path)
                 {
-                    if Self::is_eol_only_change(&repo, file_path) {
-                        continue;
-                    }
+                    continue;
                 }
 
                 let (kind, _) = Self::map_status_kind(
@@ -1135,42 +955,40 @@ impl GitOperations for LocalGit {
             std::collections::HashMap::new();
 
         if let Ok(refs) = repo.references() {
-            for ref_result in refs {
-                if let Ok(reference) = ref_result {
-                    let name = match reference.shorthand() {
-                        Some(n) => n.to_string(),
+            for reference in refs.flatten() {
+                let name = match reference.shorthand() {
+                    Some(n) => n.to_string(),
+                    None => continue,
+                };
+                let target_oid = match reference.resolve() {
+                    Ok(resolved) => match resolved.target() {
+                        Some(oid) => oid,
                         None => continue,
-                    };
-                    let target_oid = match reference.resolve() {
-                        Ok(resolved) => match resolved.target() {
-                            Some(oid) => oid,
-                            None => continue,
-                        },
-                        Err(_) => continue,
-                    };
+                    },
+                    Err(_) => continue,
+                };
 
-                    let kind = if reference.is_tag()
-                        || name.starts_with("tags/")
-                        || reference
-                            .name()
-                            .map_or(false, |n| n.starts_with("refs/tags/"))
-                    {
-                        RefKind::Tag
-                    } else if reference.is_remote()
-                        || reference
-                            .name()
-                            .map_or(false, |n| n.starts_with("refs/remotes/"))
-                    {
-                        RefKind::Remote
-                    } else {
-                        RefKind::Local
-                    };
+                let kind = if reference.is_tag()
+                    || name.starts_with("tags/")
+                    || reference
+                        .name()
+                        .is_some_and(|n| n.starts_with("refs/tags/"))
+                {
+                    RefKind::Tag
+                } else if reference.is_remote()
+                    || reference
+                        .name()
+                        .is_some_and(|n| n.starts_with("refs/remotes/"))
+                {
+                    RefKind::Remote
+                } else {
+                    RefKind::Local
+                };
 
-                    refs_map
-                        .entry(target_oid.to_string())
-                        .or_default()
-                        .push(CommitRef { name, kind });
-                }
+                refs_map
+                    .entry(target_oid.to_string())
+                    .or_default()
+                    .push(CommitRef { name, kind });
             }
         }
 
@@ -1183,10 +1001,8 @@ impl GitOperations for LocalGit {
                 let mut found = false;
 
                 // Support range syntax like "base..compare"
-                if b.contains("..") {
-                    if revwalk.push_range(b).is_ok() {
-                        found = true;
-                    }
+                if b.contains("..") && revwalk.push_range(b).is_ok() {
+                    found = true;
                 }
 
                 if !found {
@@ -1275,7 +1091,7 @@ impl GitOperations for LocalGit {
             if let Some(hunk) = hunk {
                 let header = String::from_utf8_lossy(hunk.header()).to_string();
                 // 新 hunk 開始時檢查是否需要建立新的 DiffHunk
-                if hunks.is_empty() || hunks.last().map_or(true, |h| h.header != header) {
+                if hunks.is_empty() || hunks.last().is_none_or(|h| h.header != header) {
                     hunks.push(DiffHunk {
                         header,
                         lines: Vec::new(),
@@ -1627,7 +1443,32 @@ impl GitOperations for LocalGit {
     }
 
     fn rebase(&self, path: &Path, branch: &str, onto: &str) -> Result<RebaseResult, GitError> {
-        Self::rebase(self, path, branch, onto)
+        Self::check_index_lock(path)?;
+        // git rebase <onto> <branch>
+        match Self::run_git(path, &["rebase", onto, branch]) {
+            Ok(output) => Ok(RebaseResult {
+                success: true,
+                message: output,
+                conflicts: Vec::new(),
+            }),
+            Err(GitError::OperationFailed(stderr)) => {
+                if stderr.contains("CONFLICT") || stderr.contains("Automatic rebase failed") {
+                    let conflicts: Vec<String> = stderr
+                        .lines()
+                        .filter(|l| l.contains("CONFLICT"))
+                        .map(|l| l.to_string())
+                        .collect();
+                    Ok(RebaseResult {
+                        success: false,
+                        message: stderr,
+                        conflicts,
+                    })
+                } else {
+                    Err(GitError::OperationFailed(stderr))
+                }
+            }
+            Err(e) => Err(e),
+        }
     }
 
     fn rebase_interactive(
@@ -1636,23 +1477,154 @@ impl GitOperations for LocalGit {
         onto: &str,
         commits: Vec<RebaseCommit>,
     ) -> Result<RebaseResult, GitError> {
-        Self::rebase_interactive(self, path, onto, commits)
+        Self::check_index_lock(path)?;
+
+        // 1. Prepare the TODO list
+        let mut todo_content = String::new();
+        for c in &commits {
+            let action_str = match c.action {
+                RebaseAction::Pick => "pick",
+                RebaseAction::Reword => "reword",
+                RebaseAction::Edit => "edit",
+                RebaseAction::Squash => "squash",
+                RebaseAction::Fixup => "fixup",
+                RebaseAction::Exec => "exec",
+                RebaseAction::Drop => "drop",
+            };
+            todo_content.push_str(action_str);
+            todo_content.push(' ');
+            todo_content.push_str(&c.id);
+            todo_content.push(' ');
+            todo_content.push_str(c.message.split('\n').next().unwrap_or(""));
+            todo_content.push('\n');
+        }
+
+        // 2. Write to a temporary file
+        let temp_dir = std::env::temp_dir();
+        let random_id = format!(
+            "{:x}",
+            std::collections::hash_map::DefaultHasher::new().finish()
+        ); // Simple fallback for random
+        let todo_file_path = temp_dir.join(format!("gitbiker-rebase-todo-{}", random_id));
+
+        std::fs::write(&todo_file_path, todo_content)
+            .map_err(|e| GitError::OperationFailed(format!("無法建立 Rebase TODO 檔: {e}")))?;
+
+        // 3. Execute rebase -i
+        // We use 'cp' as the sequence editor to overwrite git's generated TODO with ours
+        let editor_cmd = format!("cp {}", todo_file_path.display());
+
+        let output = Self::git_command()
+            .env("GIT_SEQUENCE_EDITOR", &editor_cmd)
+            .args(["rebase", "-i", onto])
+            .current_dir(path)
+            .output()
+            .map_err(|e| GitError::OperationFailed(format!("執行 Rebase 失敗: {e}")))?;
+
+        // Clean up
+        let _ = std::fs::remove_file(todo_file_path);
+
+        if output.status.success() {
+            Ok(RebaseResult {
+                success: true,
+                message: String::from_utf8_lossy(&output.stdout).to_string(),
+                conflicts: Vec::new(),
+            })
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            if stderr.contains("CONFLICT") || stderr.contains("Automatic rebase failed") {
+                let conflicts: Vec<String> = stderr
+                    .lines()
+                    .filter(|l| l.contains("CONFLICT"))
+                    .map(|l| l.to_string())
+                    .collect();
+                Ok(RebaseResult {
+                    success: false,
+                    message: stderr,
+                    conflicts,
+                })
+            } else {
+                Err(GitError::OperationFailed(stderr))
+            }
+        }
     }
 
     fn lfs_status(&self, path: &Path) -> Result<GitLfsStatus, GitError> {
-        Self::lfs_status(self, path)
+        let lfs_version =
+            Self::run_git(path, &["lfs", "version"]).unwrap_or_else(|_| "none".to_string());
+        let is_installed = !lfs_version.contains("none");
+
+        if !is_installed {
+            return Ok(GitLfsStatus {
+                is_installed: false,
+                version: "none".to_string(),
+                files: Vec::new(),
+            });
+        }
+
+        // List LFS files
+        let output = Self::run_git(path, &["lfs", "ls-files", "--size", "--name-only"])?;
+        let mut files = Vec::new();
+
+        for line in output.lines() {
+            // git lfs ls-files output format can vary, but --name-only is safer.
+            // However, we want size and OID if possible.
+            // Default: <oid> <status> <path>
+            // With --size: <oid> <status> (<size>) <path>
+            files.push(LfsFile {
+                path: line.to_string(),
+                size: 0, // Parsing complexity skipped for now, focus on identification
+                oid: "".to_string(),
+                is_locked: false,
+                lock_owner: None,
+            });
+        }
+
+        Ok(GitLfsStatus {
+            is_installed: true,
+            version: lfs_version,
+            files,
+        })
     }
 
     fn lfs_track(&self, path: &Path, pattern: &str) -> Result<(), GitError> {
-        Self::lfs_track(self, path, pattern)
+        Self::run_git(path, &["lfs", "track", pattern])?;
+        Ok(())
     }
 
     fn lfs_untrack(&self, path: &Path, pattern: &str) -> Result<(), GitError> {
-        Self::lfs_untrack(self, path, pattern)
+        Self::run_git(path, &["lfs", "untrack", pattern])?;
+        Ok(())
     }
 
     fn cherry_pick(&self, path: &Path, commit_id: &str) -> Result<CherryPickResult, GitError> {
-        Self::cherry_pick(self, path, commit_id)
+        Self::check_index_lock(path)?;
+        match Self::run_git(path, &["cherry-pick", "--no-edit", commit_id]) {
+            Ok(output) => Ok(CherryPickResult {
+                commit_id: commit_id.to_string(),
+                success: true,
+                message: output,
+                conflicts: Vec::new(),
+            }),
+            Err(GitError::OperationFailed(stderr)) => {
+                if stderr.contains("CONFLICT") || stderr.contains("could not apply") {
+                    let conflicts: Vec<String> = stderr
+                        .lines()
+                        .filter(|l| l.contains("CONFLICT"))
+                        .map(|l| l.to_string())
+                        .collect();
+                    Ok(CherryPickResult {
+                        commit_id: commit_id.to_string(),
+                        success: false,
+                        message: stderr,
+                        conflicts,
+                    })
+                } else {
+                    Err(GitError::OperationFailed(stderr))
+                }
+            }
+            Err(e) => Err(e),
+        }
     }
 
     fn get_submodules(&self, path: &Path) -> Result<Vec<SubmoduleInfo>, GitError> {
@@ -1684,14 +1656,28 @@ impl GitOperations for LocalGit {
 
             // Get URL from config (Try to find the name first)
             let mut url = "Unknown".to_string();
-            if let Ok(config_output) = Self::run_git(path, &["config", "--file", ".gitmodules", "--get-regexp", "path"]) {
+            if let Ok(config_output) = Self::run_git(
+                path,
+                &["config", "--file", ".gitmodules", "--get-regexp", "path"],
+            ) {
                 for config_line in config_output.lines() {
                     let config_parts: Vec<&str> = config_line.split_whitespace().collect();
                     if config_parts.len() == 2 && config_parts[1] == sub_path {
                         // Found the path, extract the name from the key: submodule.<name>.path
                         let key = config_parts[0];
-                        if let Some(name) = key.strip_prefix("submodule.").and_then(|s| s.strip_suffix(".path")) {
-                            if let Ok(sub_url) = Self::run_git(path, &["config", "--file", ".gitmodules", &format!("submodule.{}.url", name)]) {
+                        if let Some(name) = key
+                            .strip_prefix("submodule.")
+                            .and_then(|s| s.strip_suffix(".path"))
+                        {
+                            if let Ok(sub_url) = Self::run_git(
+                                path,
+                                &[
+                                    "config",
+                                    "--file",
+                                    ".gitmodules",
+                                    &format!("submodule.{}.url", name),
+                                ],
+                            ) {
                                 url = sub_url.trim().to_string();
                             }
                         }

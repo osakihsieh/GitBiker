@@ -140,7 +140,7 @@ pub async fn analyze_branches(
 
 #[tauri::command]
 pub async fn ai_resolve_conflict(
-    state: State<'_, GitState>,
+    _state: State<'_, GitState>,
     path: String,
     hunk: crate::git::types::ConflictHunk,
     provider: String,

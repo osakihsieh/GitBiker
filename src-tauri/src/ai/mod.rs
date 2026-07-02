@@ -72,6 +72,8 @@ impl From<reqwest::Error> for AiError {
 
 #[async_trait::async_trait]
 pub trait AiProvider: Send + Sync {
+    /// 回傳 provider 識別名稱（供測試與診斷使用）。
+    #[allow(dead_code)]
     fn name(&self) -> &str;
     async fn generate(&self, context: &CommitContext) -> Result<String, AiError>;
     async fn analyze_branches(

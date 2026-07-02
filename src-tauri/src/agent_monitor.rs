@@ -61,7 +61,7 @@ impl AgentMonitor {
                     Ok(events) => {
                         for event in events {
                             if let Some(path) = event.paths.first() {
-                                if path.extension().map_or(false, |ext| ext == "jsonl") {
+                                if path.extension().is_some_and(|ext| ext == "jsonl") {
                                     if let Some(mut status) = parse_jsonl(path) {
                                         update_status(&statuses, &app_handle, &mut status);
                                     }

@@ -262,37 +262,11 @@ pub fn git_stash_hunk(
 /// Cherry-pick 指定 commit 到當前分支
 #[tauri::command]
 pub fn git_cherry_pick(
+    state: State<GitState>,
     path: String,
     commit_id: String,
 ) -> Result<crate::git::types::CherryPickResult, GitError> {
-    let repo_path = std::path::PathBuf::from(&path);
-    crate::git::LocalGit::check_index_lock(&repo_path)?;
-    match crate::git::LocalGit::run_git(&repo_path, &["cherry-pick", "--no-edit", &commit_id]) {
-        Ok(output) => Ok(crate::git::types::CherryPickResult {
-            commit_id,
-            success: true,
-            message: output,
-            conflicts: Vec::new(),
-        }),
-        Err(GitError::OperationFailed(stderr)) => {
-            if stderr.contains("CONFLICT") || stderr.contains("could not apply") {
-                let conflicts: Vec<String> = stderr
-                    .lines()
-                    .filter(|l| l.contains("CONFLICT"))
-                    .map(|l| l.to_string())
-                    .collect();
-                Ok(crate::git::types::CherryPickResult {
-                    commit_id,
-                    success: false,
-                    message: stderr,
-                    conflicts,
-                })
-            } else {
-                Err(GitError::OperationFailed(stderr))
-            }
-        }
-        Err(e) => Err(e),
-    }
+    state.git.cherry_pick(&PathBuf::from(&path), &commit_id)
 }
 
 /// Cherry-pick 中止
@@ -396,7 +370,11 @@ pub fn git_lfs_status(state: State<GitState>, path: String) -> Result<GitLfsStat
 }
 
 #[tauri::command]
-pub fn git_lfs_track(state: State<GitState>, path: String, pattern: String) -> Result<(), GitError> {
+pub fn git_lfs_track(
+    state: State<GitState>,
+    path: String,
+    pattern: String,
+) -> Result<(), GitError> {
     state.git.lfs_track(&PathBuf::from(&path), &pattern)
 }
 
@@ -410,7 +388,10 @@ pub fn git_lfs_untrack(
 }
 
 #[tauri::command]
-pub fn git_get_submodules(state: State<GitState>, path: String) -> Result<Vec<SubmoduleInfo>, GitError> {
+pub fn git_get_submodules(
+    state: State<GitState>,
+    path: String,
+) -> Result<Vec<SubmoduleInfo>, GitError> {
     state.git.get_submodules(&PathBuf::from(&path))
 }
 
@@ -422,7 +403,9 @@ pub fn git_update_submodule(
     init: bool,
     recursive: bool,
 ) -> Result<(), GitError> {
-    state.git.update_submodule(&PathBuf::from(&path), &name, init, recursive)
+    state
+        .git
+        .update_submodule(&PathBuf::from(&path), &name, init, recursive)
 }
 
 #[tauri::command]
@@ -432,11 +415,16 @@ pub fn git_add_submodule(
     url: String,
     submodule_path: String,
 ) -> Result<(), GitError> {
-    state.git.add_submodule(&PathBuf::from(&path), &url, &PathBuf::from(&submodule_path))
+    state
+        .git
+        .add_submodule(&PathBuf::from(&path), &url, &PathBuf::from(&submodule_path))
 }
 
 #[tauri::command]
-pub fn git_get_worktrees(state: State<GitState>, path: String) -> Result<Vec<WorktreeInfo>, GitError> {
+pub fn git_get_worktrees(
+    state: State<GitState>,
+    path: String,
+) -> Result<Vec<WorktreeInfo>, GitError> {
     state.git.get_worktrees(&PathBuf::from(&path))
 }
 
@@ -447,7 +435,11 @@ pub fn git_add_worktree(
     worktree_path: String,
     branch: String,
 ) -> Result<(), GitError> {
-    state.git.add_worktree(&PathBuf::from(&path), &PathBuf::from(&worktree_path), &branch)
+    state.git.add_worktree(
+        &PathBuf::from(&path),
+        &PathBuf::from(&worktree_path),
+        &branch,
+    )
 }
 
 #[tauri::command]
@@ -457,7 +449,9 @@ pub fn git_remove_worktree(
     name: String,
     force: bool,
 ) -> Result<(), GitError> {
-    state.git.remove_worktree(&PathBuf::from(&path), &name, force)
+    state
+        .git
+        .remove_worktree(&PathBuf::from(&path), &name, force)
 }
 
 #[tauri::command]

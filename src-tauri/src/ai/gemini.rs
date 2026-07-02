@@ -256,7 +256,7 @@ impl AiProvider for GeminiProvider {
         &self,
         path: &str,
         hunk: &crate::git::types::ConflictHunk,
-        language: &str,
+        _language: &str,
     ) -> Result<String, AiError> {
         if self.api_key.is_empty() {
             return Err(AiError::NoApiKey);
@@ -279,7 +279,7 @@ impl AiProvider for GeminiProvider {
         if let Some(base) = &hunk.base {
             user_message.push_str("\n||| BASE |||\n");
             user_message.push_str(base);
-            user_message.push_str("\n");
+            user_message.push('\n');
         }
 
         let request = GeminiRequest {

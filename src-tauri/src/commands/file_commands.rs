@@ -101,13 +101,13 @@ pub fn git_show_file_diff(
                 let header = raw_line.to_string();
                 if let Some(plus) = raw_line.find('+') {
                     let after_plus = &raw_line[plus + 1..];
-                    if let Some(comma_or_space) = after_plus.find(|c: char| c == ',' || c == ' ') {
+                    if let Some(comma_or_space) = after_plus.find([',', ' ']) {
                         new_line = after_plus[..comma_or_space].parse().unwrap_or(1);
                     }
                 }
                 if let Some(minus) = raw_line.find('-') {
                     let after_minus = &raw_line[minus + 1..];
-                    if let Some(comma_or_space) = after_minus.find(|c: char| c == ',' || c == ' ') {
+                    if let Some(comma_or_space) = after_minus.find([',', ' ']) {
                         old_line = after_minus[..comma_or_space].parse().unwrap_or(1);
                     }
                 }

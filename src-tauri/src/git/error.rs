@@ -20,18 +20,6 @@ pub enum GitError {
     #[error("index.lock 已存在，另一個 Git 操作可能正在進行")]
     IndexLocked,
 
-    #[error("WSL2 不可用")]
-    WslNotAvailable,
-
-    #[error("找不到 WSL2 發行版: {0}")]
-    DistroNotFound(String),
-
-    #[error("WSL2 daemon 未運行")]
-    DaemonNotRunning,
-
-    #[error("Socket 連接逾時")]
-    SocketTimeout,
-
     #[error("git2 錯誤: {0}")]
     Git2(#[from] git2::Error),
 
@@ -54,10 +42,6 @@ impl From<&GitError> for SerializableError {
             GitError::AuthError(_) => "AUTH_ERROR",
             GitError::NetworkTimeout(_) => "NETWORK_TIMEOUT",
             GitError::IndexLocked => "INDEX_LOCKED",
-            GitError::WslNotAvailable => "WSL_NOT_AVAILABLE",
-            GitError::DistroNotFound(_) => "DISTRO_NOT_FOUND",
-            GitError::DaemonNotRunning => "DAEMON_NOT_RUNNING",
-            GitError::SocketTimeout => "SOCKET_TIMEOUT",
             GitError::Git2(_) => "GIT2_ERROR",
             GitError::Io(_) => "IO_ERROR",
         };
