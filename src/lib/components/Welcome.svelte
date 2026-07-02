@@ -113,54 +113,56 @@
   </div>
 
   <!-- Recent repos -->
-  <div class="w-full max-w-md">
-    <div
-      class="mb-2 border-b border-[var(--border)] pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]"
-    >
-      Recent Repos
-    </div>
+  <div class="flex w-full flex-col items-center">
+    <div class="w-full max-w-md">
+      <div
+        class="mb-2 border-b border-[var(--border)] pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]"
+      >
+        Recent Repos
+      </div>
 
-    {#if app.recentRepos.length > 0}
-      <div class="flex flex-col">
-        {#each app.recentRepos as repoPath}
-          <button
-            class={cn(
-              'flex items-center gap-3 rounded-sm px-3 py-2 text-left',
-              'bg-transparent border-none cursor-pointer w-full',
-              'hover:bg-[var(--bg-hover)] transition-colors',
-              'focus-visible:outline-none focus-visible:bg-[var(--bg-hover)]',
-            )}
-            onclick={() => onOpenRepo(repoPath)}
-          >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--text-muted)"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="shrink-0"
+      {#if app.recentRepos.length > 0}
+        <div class="flex flex-col">
+          {#each app.recentRepos as repoPath}
+            <button
+              class={cn(
+                'flex items-center gap-3 rounded-sm px-3 py-2.5 text-left',
+                'bg-transparent border-none cursor-pointer w-full',
+                'hover:bg-[var(--bg-hover)] transition-colors',
+                'focus-visible:outline-none focus-visible:bg-[var(--bg-hover)]',
+              )}
+              onclick={() => onOpenRepo(repoPath)}
             >
-              <path
-                d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
-              />
-            </svg>
-            <div class="min-w-0 flex-1">
-              <div class="text-sm font-medium text-[var(--text-primary)]">
-                {repoPath.replace(/\\/g, '/').split('/').pop()}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--text-muted)"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="shrink-0"
+              >
+                <path
+                  d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+                />
+              </svg>
+              <div class="flex flex-col gap-0.5">
+                <div class="text-sm font-medium text-[var(--text-primary)]">
+                  {repoPath.replace(/\\/g, '/').split('/').pop()}
+                </div>
+                <div class="truncate font-mono text-[10px] text-[var(--text-muted)]">{repoPath}</div>
               </div>
-              <div class="truncate font-mono text-[10px] text-[var(--text-muted)]">{repoPath}</div>
-            </div>
-          </button>
-        {/each}
-      </div>
-    {:else}
-      <div class="py-6 text-center text-sm text-[var(--text-muted)]">
-        No repos yet. Clone or open one to get started.
-      </div>
-    {/if}
+            </button>
+          {/each}
+        </div>
+      {:else}
+        <div class="py-6 text-center text-sm text-[var(--text-muted)]">
+          No repos yet. Clone or open one to get started.
+        </div>
+      {/if}
+    </div>
   </div>
 
     <div class="fixed bottom-3 right-3 flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
