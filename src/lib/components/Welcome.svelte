@@ -152,7 +152,9 @@
                 <div class="text-sm font-medium text-[var(--text-primary)]">
                   {repoPath.replace(/\\/g, '/').split('/').pop()}
                 </div>
-                <div class="truncate font-mono text-[10px] text-[var(--text-muted)]">{repoPath}</div>
+                <div class="truncate font-mono text-[10px] text-[var(--text-muted)]">
+                  {repoPath}
+                </div>
               </div>
             </button>
           {/each}
@@ -165,10 +167,18 @@
     </div>
   </div>
 
-    <div class="fixed bottom-3 right-3 flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+  <div
+    class="fixed bottom-3 right-3 flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"
+  >
     {#if gitEnv}
-      <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--bg-surface)] border border-[var(--border)] text-[9px] font-mono">
-        <span class="w-1.5 h-1.5 rounded-full" class:bg-green-500={gitEnv.is_available} class:bg-red-500={!gitEnv.is_available}></span>
+      <div
+        class="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--bg-surface)] border border-[var(--border)] text-[9px] font-mono"
+      >
+        <span
+          class="w-1.5 h-1.5 rounded-full"
+          class:bg-green-500={gitEnv.is_available}
+          class:bg-red-500={!gitEnv.is_available}
+        ></span>
         <span class="text-[var(--text-muted)]">Git Engine:</span>
         <span class="text-[var(--text-primary)]">{gitEnv.version}</span>
       </div>
